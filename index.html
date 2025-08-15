@@ -1,0 +1,33 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geppert Familienringe – Passwortgeschützt</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="loginScreen">
+  <h2>Passwortgeschützte Familien-Web-App</h2>
+  <input type="password" id="pwd" placeholder="Passwort eingeben" />
+  <button id="btnLogin">Login</button>
+  <p id="msg"></p>
+</div>
+<div id="app" style="display:none;">
+  <iframe src="app.html" style="width:100%;height:100vh;border:none;"></iframe>
+</div>
+<script>
+const PASSWORD = "gepperT13Olli";
+document.getElementById("btnLogin").onclick = ()=>{
+  const p = document.getElementById("pwd").value;
+  if(p===PASSWORD){
+    document.getElementById("loginScreen").style.display="none";
+    document.getElementById("app").style.display="block";
+  }else{
+    document.getElementById("msg").innerText="Falsches Passwort";
+  }
+};
+</script>
+</body>
+</html>
