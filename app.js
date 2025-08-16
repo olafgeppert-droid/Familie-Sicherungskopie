@@ -1,7 +1,7 @@
-// Family Ring WebApp v3 – updated with Ring-Code column & improved dialog colors
+// Family Ring WebApp v3 – fixes & improvements
 const PASSWORD = "gepperT13Olli";
 const STORAGE_KEY = "familyRingData_v3";
-// Seed data (as requested)
+// Seed data (unchanged)
 const seed = [
   {Code:"1", Name:"Olaf Geppert", BirthDate:"13.01.1965", BirthPlace:"Herford", Gender:"m", Generation:0, ParentCode:"", PartnerCode:"1x", Note:"Stammvater", Inherited:false, InheritedFromCode:""},
   {Code:"1x", Name:"Irina Geppert", BirthDate:"13.01.1970", BirthPlace:"Halle/Westfalen", Gender:"w", Generation:0, ParentCode:"", PartnerCode:"1", Note:"Ehefrau von Olaf", Inherited:false, InheritedFromCode:""},
@@ -33,7 +33,7 @@ function loadData(){
 function saveData(data){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 let people = loadData();
 
-// ---- Code system
+// ---- Helpers
 function indexToLetters(n){ let r=""; while(n>0){ n--; r = String.fromCharCode(65 + (n % 26)) + r; n=Math.floor(n/26);} return r; }
 function childrenOf(parentCode){ return people.filter(p => p.ParentCode === parentCode); }
 function generateChildCode(parentCode){
@@ -58,13 +58,19 @@ function ringCodeFor(p){
   }
   return p.Code;
 }
+function toUpperCode(v){ return (v||"").toString().trim().toUpperCase(); }
 
 // ---- UI: table
 const tbody = document.querySelector("#peopleTable tbody");
 function renderTable(list = people){
   if(!tbody) return;
   tbody.innerHTML = "";
-  list.slice().sort((a,b)=>a.Code.localeCompare(b.Code)).forEach(p => {
+  const sorted = list.slice().sort((a,b)=>{
+    const ga = inferGeneration(a.Code), gb = inferGeneration(b.Code);
+    if(ga !== gb) return ga - gb; // 1) Generation
+    return a.Code.localeCompare(b.Code); // 2) Personen-Code
+  });
+  sorted.forEach(p => {
     p.Generation = inferGeneration(p.Code);
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -108,7 +114,7 @@ Achtung: ${kids.length} Kind(er) verweisen auf diesen Code (bleiben bestehen).`;
   saveData(people); renderTable(); drawTree();
 }
 
-// ---- Tree
+// ---- Tree (unchanged visual)
 const svg = document.getElementById("treeSvg");
 function drawTree(){
   if(!svg) return;
@@ -157,13 +163,23 @@ function drawTree(){
 function el(name, attrs){ const n = document.createElementNS("http://www.w3.org/2000/svg", name); for(const k in attrs){ n.setAttribute(k, attrs[k]); } return n; }
 drawTree();
 
-// ---- Dialogs
+// ---- Dialogs: wire up buttons and uppercase inputs
 const dlgAdd = document.getElementById("dlgAdd");
 document.getElementById("btnAdd").onclick = ()=> dlgAdd.showModal();
-document.getElementById("dlgAddOk").onclick = (e)=>{
+
+// live uppercase for code inputs
+function attachUppercase(el){ if(!el) return; el.addEventListener('input', (e)=>{ e.target.value = toUpperCode(e.target.value); }); }
+attachUppercase(document.querySelector('#formAdd input[name="parentCode"]'));
+attachUppercase(document.querySelector('#formAdd input[name="inheritedFrom"]'));
+attachUppercase(document.querySelector('#formPartner input[name="personCode"]'));
+
+// Save Person
+const btnAddOk = document.getElementById("dlgAddOk");
+btnAddOk.onclick = (e)=>{
   const fd = new FormData(document.getElementById("formAdd"));
-  const parentCode = (fd.get("parentCode")||"").toString().trim();
-  if(!parentCode){ e.preventDefault(); return; }
+  const parentCode = toUpperCode(fd.get("parentCode"));
+  if(!parentCode){ alert('Bitte einen Eltern‑Code eingeben.'); return; }
+  if(!people.some(p=>p.Code===parentCode)) { alert('Eltern‑Code nicht gefunden.'); return; }
   const code = generateChildCode(parentCode);
   const p = {
     Code: code,
@@ -176,17 +192,22 @@ document.getElementById("dlgAddOk").onclick = (e)=>{
     PartnerCode: "",
     Note: (fd.get("note")||"").toString().trim(),
     Inherited: ((fd.get("inherited")||"nein").toString()==="ja"),
-    InheritedFromCode: (fd.get("inheritedFrom")||"").toString().trim()
+    InheritedFromCode: toUpperCode(fd.get("inheritedFrom"))
   };
-  people.push(p); saveData(people); renderTable(); drawTree();
+  people.push(p); saveData(people); renderTable(); drawTree(); dlgAdd.close();
 };
 
 const dlgPartner = document.getElementById("dlgPartner");
 document.getElementById("btnAddPartner").onclick = ()=> dlgPartner.showModal();
-document.getElementById("dlgPartnerOk").onclick = (e)=>{
+
+// Save Partner
+const btnPartnerOk = document.getElementById("dlgPartnerOk");
+btnPartnerOk.onclick = (e)=>{
   const fd = new FormData(document.getElementById("formPartner"));
-  const personCode = (fd.get("personCode")||"").toString().trim();
-  if(!personCode){ e.preventDefault(); return; }
+  const personCode = toUpperCode(fd.get("personCode"));
+  if(!personCode){ alert('Bitte einen Code eingeben.'); return; }
+  const person = people.find(p=>p.Code===personCode);
+  if(!person){ alert('Code nicht gefunden. Bitte erneut eingeben.'); return; }
   const partnerCode = generatePartnerCode(personCode);
   if(people.some(p=>p.Code===partnerCode)){ alert("Partner existiert bereits."); return; }
   const partner = {
@@ -199,14 +220,12 @@ document.getElementById("dlgPartnerOk").onclick = (e)=>{
     Note: (fd.get("note")||"").toString().trim(),
     BirthDate:"", BirthPlace:"", Inherited:false, InheritedFromCode:""
   };
-  const person = people.find(p=>p.Code===personCode);
-  if(person){ person.PartnerCode = partnerCode; }
-  people.push(partner); saveData(people); renderTable(); drawTree();
+  person.PartnerCode = partnerCode;
+  people.push(partner); saveData(people); renderTable(); drawTree(); dlgPartner.close();
 };
 
-// ---- Search
-const btnSearch = document.getElementById("btnSearch");
-btnSearch.onclick = ()=>{
+// ---- Search & Print & Export/Import (unchanged)
+document.getElementById("btnSearch").onclick = ()=>{
   const q = (document.getElementById("search").value||"").toLowerCase();
   const list = people.filter(p => (p.Name||"").toLowerCase().includes(q) || (p.Code||"").toLowerCase().includes(q));
   renderTable(list);
@@ -214,7 +233,6 @@ btnSearch.onclick = ()=>{
 document.getElementById("btnShowAll").onclick = ()=> renderTable(people);
 document.getElementById("btnDraw").onclick = ()=> drawTree();
 
-// ---- Print (no popups; iOS friendly)
 function togglePrintMode(mode){
   document.body.classList.remove("print-table-only","print-tree-only");
   if(mode==="table") document.body.classList.add("print-table-only");
@@ -228,9 +246,7 @@ function doPrint(mode){
 document.getElementById("btnPrintTable").onclick = ()=> doPrint("table");
 document.getElementById("btnPrintTree").onclick = ()=> { drawTree(); doPrint("tree"); };
 
-// ---- Export / Import
-const btnExport = document.getElementById("btnExport");
-btnExport.onclick = ()=>{
+document.getElementById("btnExport").onclick = ()=>{
   const blob = new Blob([JSON.stringify(people,null,2)], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);

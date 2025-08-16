@@ -83,10 +83,10 @@
 
   <!-- Dialog: Person hinzufügen -->
   <dialog id="dlgAdd" class="dlg">
-    <form id="formAdd" method="dialog">
+    <form id="formAdd">
       <h3>➕ Person hinzufügen</h3>
       <div class="grid">
-        <label>Eltern‑Code* <input name="parentCode" placeholder="z. B. 1 oder 1A" required /></label>
+        <label>Eltern‑Code <input name="parentCode" placeholder="z. B. 1 oder 1A" /></label>
         <label>Name <input name="name" /></label>
         <label>Geburtsdatum <input name="birthDate" placeholder="TT.MM.JJJJ" /></label>
         <label>Geburtsort <input name="birthPlace" /></label>
@@ -107,21 +107,21 @@
         </label>
         <label>Geerbt von (Code) <input name="inheritedFrom" placeholder="z. B. 1" /></label>
       </div>
-      <div class="hint">* Der Ring‑Code wird automatisch generiert: Kinder von „1“ → 1A, 1B, 1C …; tiefer → Ziffern anfügen; Partner → „x“-Suffix.</div>
+      <div class="hint">Der Ring‑Code wird automatisch generiert: Kinder von „1“ → 1A, 1B, 1C …; Folgegenerationen → Ziffern anfügen; Partner → „x“-Suffix.</div>
       <div class="hint"><strong>Hinweis:</strong> hat die Person keinen Familienwappenring, bitte im Kommentar vermerken.</div>
       <menu>
-        <button value="cancel">Abbrechen</button>
-        <button id="dlgAddOk" class="primary" value="default">Speichern</button>
+        <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
+        <button id="dlgAddOk" class="primary" type="button">Speichern</button>
       </menu>
     </form>
   </dialog>
 
   <!-- Dialog: Partner hinzufügen -->
   <dialog id="dlgPartner" class="dlg">
-    <form id="formPartner" method="dialog">
+    <form id="formPartner">
       <h3>❤️ Partner hinzufügen</h3>
       <div class="grid">
-        <label>Code der Person* <input name="personCode" placeholder="z. B. 1A" required /></label>
+        <label>Partner von Code <input name="personCode" placeholder="z. B. 1A" /></label>
         <label>Name des Partners <input name="name" /></label>
         <label>Geschlecht
           <select name="gender">
@@ -134,8 +134,8 @@
         <label>Kommentar <input name="note" /></label>
       </div>
       <menu>
-        <button value="cancel">Abbrechen</button>
-        <button id="dlgPartnerOk" class="primary" value="default">Speichern</button>
+        <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
+        <button id="dlgPartnerOk" class="primary" type="button">Speichern</button>
       </menu>
     </form>
   </dialog>
