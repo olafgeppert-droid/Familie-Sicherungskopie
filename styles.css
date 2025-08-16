@@ -55,7 +55,7 @@ svg text{font-size:12px;fill:#e7eeff}
 .partner{stroke:#ff9f9f;stroke-dasharray:4 2}
 
 /* Dialogs – switch to light surfaces for readability */
-dialog.dlg{border:none;padding:0;width:min(640px,96vw);background:#fff;color:#111;border-radius:16px;box-shadow: 0 20px 50px rgba(0,0,0,.45)}
+dialog.dlg{border:none;padding:0;width:min(680px,96vw);background:#fff;color:#111;border-radius:16px;box-shadow: 0 20px 50px rgba(0,0,0,.45)}
 dialog::backdrop{background:rgba(0,0,0,.6)}
 dialog .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 dialog form{padding:18px}

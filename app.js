@@ -1,4 +1,4 @@
-// Family Ring WebApp v3 – fixes & improvements
+// Family Ring WebApp v3 – updates: normalize 'x', save picker, validation, inline edit
 const PASSWORD = "gepperT13Olli";
 const STORAGE_KEY = "familyRingData_v3";
 // Seed data (unchanged)
@@ -58,7 +58,11 @@ function ringCodeFor(p){
   }
   return p.Code;
 }
-function toUpperCode(v){ return (v||"").toString().trim().toUpperCase(); }
+function normalizeCode(v){
+  const u = (v||"").toString().trim().toUpperCase();
+  // partner-suffix always lower-case 'x'
+  return u.replace(/X/g,'x');
+}
 
 // ---- UI: table
 const tbody = document.querySelector("#peopleTable tbody");
@@ -85,36 +89,44 @@ function renderTable(list = people){
       <td>${p.InheritedFromCode||""}</td>
       <td>${ringCodeFor(p)}</td>
       <td>${p.Note||""}</td>
-      <td class="no-print"><button class="delete-btn" data-code="${p.Code}">Löschen</button></td>`;
+      <td class="no-print">
+        <button class="edit-btn" data-code="${p.Code}">Bearbeiten</button>
+        <button class="delete-btn" data-code="${p.Code}">Löschen</button>
+      </td>`;
     tbody.appendChild(tr);
   });
 }
 renderTable();
 
+// Table actions
 tbody && tbody.addEventListener("click", (e)=>{
-  const btn = e.target.closest(".delete-btn");
-  if(!btn) return;
-  const code = btn.getAttribute("data-code");
-  deletePerson(code);
+  const del = e.target.closest(".delete-btn");
+  if(del){ const code = del.getAttribute("data-code"); deletePerson(code); return; }
+  const edit = e.target.closest(".edit-btn");
+  if(edit){ const code = edit.getAttribute("data-code"); openEdit(code); return; }
 });
 
 function deletePerson(code){
   const person = people.find(p=>p.Code===code);
   if(!person) return;
   const kids = people.filter(p=>p.ParentCode === code);
-  let msg = `Soll die Person „${person.Name||code}“ wirklich gelöscht werden?`;
+  const refs = people.filter(p=>p.PartnerCode === code);
+  let msg = `Soll „${person.Name||code}“ wirklich gelöscht werden?`;
   if(kids.length>0) msg += `
-Achtung: ${kids.length} Kind(er) verweisen auf diesen Code (bleiben bestehen).`;
+Achtung: ${kids.length} Kind(er) verweisen auf diesen Personen‑Code.`;
+  if(refs.length>0) msg += `
+Hinweis: ${refs.length} Partner‑Verbindung(en) werden gelöst.`;
   if(!confirm(msg)) return;
-  if(person.PartnerCode){
-    const partner = people.find(p=>p.Code===person.PartnerCode);
-    if(partner && partner.PartnerCode === person.Code){ partner.PartnerCode = ""; }
-  }
+  // unlink partner symmetric
+  const partner = people.find(p=>p.PartnerCode === code);
+  if(partner){ partner.PartnerCode = ""; }
+  const me = people.find(p=>p.Code===code);
+  if(me && me.PartnerCode){ const p2 = people.find(p=>p.Code===me.PartnerCode); if(p2){ p2.PartnerCode = ""; } }
   people = people.filter(p=>p.Code !== code);
   saveData(people); renderTable(); drawTree();
 }
 
-// ---- Tree (unchanged visual)
+// ---- Tree
 const svg = document.getElementById("treeSvg");
 function drawTree(){
   if(!svg) return;
@@ -163,23 +175,30 @@ function drawTree(){
 function el(name, attrs){ const n = document.createElementNS("http://www.w3.org/2000/svg", name); for(const k in attrs){ n.setAttribute(k, attrs[k]); } return n; }
 drawTree();
 
-// ---- Dialogs: wire up buttons and uppercase inputs
+// ---- Dialogs & Inputs
 const dlgAdd = document.getElementById("dlgAdd");
 document.getElementById("btnAdd").onclick = ()=> dlgAdd.showModal();
+const dlgPartner = document.getElementById("dlgPartner");
+document.getElementById("btnAddPartner").onclick = ()=> dlgPartner.showModal();
+const dlgEdit = document.getElementById("dlgEdit");
 
-// live uppercase for code inputs
-function attachUppercase(el){ if(!el) return; el.addEventListener('input', (e)=>{ e.target.value = toUpperCode(e.target.value); }); }
-attachUppercase(document.querySelector('#formAdd input[name="parentCode"]'));
-attachUppercase(document.querySelector('#formAdd input[name="inheritedFrom"]'));
-attachUppercase(document.querySelector('#formPartner input[name="personCode"]'));
+function attachNormalize(el){ if(!el) return; el.addEventListener('input', (e)=>{ e.target.value = normalizeCode(e.target.value); }); }
+attachNormalize(document.querySelector('#formAdd input[name="parentCode"]'));
+attachNormalize(document.querySelector('#formAdd input[name="inheritedFrom"]'));
+attachNormalize(document.querySelector('#formPartner input[name="personCode"]'));
+attachNormalize(document.querySelector('#formEdit input[name="inheritedFrom"]'));
 
-// Save Person
+// ---- Add Person Save
 const btnAddOk = document.getElementById("dlgAddOk");
-btnAddOk.onclick = (e)=>{
+btnAddOk.onclick = ()=>{
   const fd = new FormData(document.getElementById("formAdd"));
-  const parentCode = toUpperCode(fd.get("parentCode"));
+  const parentCode = normalizeCode(fd.get("parentCode"));
   if(!parentCode){ alert('Bitte einen Eltern‑Code eingeben.'); return; }
-  if(!people.some(p=>p.Code===parentCode)) { alert('Eltern‑Code nicht gefunden.'); return; }
+  if(!people.some(p=>p.Code===parentCode)) { alert('Eltern‑Code nicht gefunden. Code bitte wie in der Tabelle eingeben (z. B. 1, 1A, 1C1).'); return; }
+  const inh = (fd.get("inherited")||"nein").toString()==="ja";
+  const inhFrom = normalizeCode(fd.get("inheritedFrom"));
+  if(inh && !inhFrom){ alert('„Vererbt?“ ist „ja“ – bitte „Geerbt von (Code)“ angeben.'); return; }
+  if(inhFrom && !people.some(p=>p.Code===inhFrom)) { alert('„Geerbt von (Code)“ nicht gefunden. Bitte vorhandenen Personen‑Code verwenden.'); return; }
   const code = generateChildCode(parentCode);
   const p = {
     Code: code,
@@ -191,25 +210,22 @@ btnAddOk.onclick = (e)=>{
     ParentCode: parentCode,
     PartnerCode: "",
     Note: (fd.get("note")||"").toString().trim(),
-    Inherited: ((fd.get("inherited")||"nein").toString()==="ja"),
-    InheritedFromCode: toUpperCode(fd.get("inheritedFrom"))
+    Inherited: inh,
+    InheritedFromCode: inhFrom
   };
   people.push(p); saveData(people); renderTable(); drawTree(); dlgAdd.close();
 };
 
-const dlgPartner = document.getElementById("dlgPartner");
-document.getElementById("btnAddPartner").onclick = ()=> dlgPartner.showModal();
-
-// Save Partner
+// ---- Add Partner Save
 const btnPartnerOk = document.getElementById("dlgPartnerOk");
-btnPartnerOk.onclick = (e)=>{
+btnPartnerOk.onclick = ()=>{
   const fd = new FormData(document.getElementById("formPartner"));
-  const personCode = toUpperCode(fd.get("personCode"));
-  if(!personCode){ alert('Bitte einen Code eingeben.'); return; }
+  const personCode = normalizeCode(fd.get("personCode"));
+  if(!personCode){ alert('Bitte „Partner von Code“ eingeben.'); return; }
   const person = people.find(p=>p.Code===personCode);
-  if(!person){ alert('Code nicht gefunden. Bitte erneut eingeben.'); return; }
+  if(!person){ alert('Code nicht gefunden. Bitte exakt wie in der Tabelle eingeben (z. B. 1A).'); return; }
   const partnerCode = generatePartnerCode(personCode);
-  if(people.some(p=>p.Code===partnerCode)){ alert("Partner existiert bereits."); return; }
+  if(people.some(p=>p.Code===partnerCode)){ alert("Für diese Person ist bereits ein Partner angelegt."); return; }
   const partner = {
     Code: partnerCode,
     Name: (fd.get("name")||"").toString().trim(),
@@ -224,7 +240,42 @@ btnPartnerOk.onclick = (e)=>{
   people.push(partner); saveData(people); renderTable(); drawTree(); dlgPartner.close();
 };
 
-// ---- Search & Print & Export/Import (unchanged)
+// ---- Edit Person
+let editTarget = null;
+function openEdit(code){
+  const p = people.find(x=>x.Code===code);
+  if(!p) return;
+  editTarget = p;
+  const f = document.getElementById('formEdit');
+  f.code.value = p.Code;
+  f.name.value = p.Name||"";
+  f.birthDate.value = p.BirthDate||"";
+  f.birthPlace.value = p.BirthPlace||"";
+  f.gender.value = p.Gender||"";
+  f.inherited.value = p.Inherited? 'ja':'nein';
+  f.inheritedFrom.value = p.InheritedFromCode||"";
+  f.note.value = p.Note||"";
+  dlgEdit.showModal();
+}
+
+document.getElementById('dlgEditOk').onclick = ()=>{
+  if(!editTarget) { dlgEdit.close(); return; }
+  const f = document.getElementById('formEdit');
+  const inh = (f.inherited.value||'nein')==='ja';
+  const inhFrom = normalizeCode(f.inheritedFrom.value);
+  if(inh && !inhFrom){ alert('„Vererbt?“ ist „ja“ – bitte „Geerbt von (Code)“ angeben.'); return; }
+  if(inhFrom && !people.some(p=>p.Code===inhFrom)) { alert('„Geerbt von (Code)“ nicht gefunden.'); return; }
+  editTarget.Name = f.name.value.trim();
+  editTarget.BirthDate = f.birthDate.value.trim();
+  editTarget.BirthPlace = f.birthPlace.value.trim();
+  editTarget.Gender = f.gender.value;
+  editTarget.Inherited = inh;
+  editTarget.InheritedFromCode = inhFrom;
+  editTarget.Note = f.note.value.trim();
+  saveData(people); renderTable(); drawTree(); dlgEdit.close();
+};
+
+// ---- Search & Print
 document.getElementById("btnSearch").onclick = ()=>{
   const q = (document.getElementById("search").value||"").toLowerCase();
   const list = people.filter(p => (p.Name||"").toLowerCase().includes(q) || (p.Code||"").toLowerCase().includes(q));
@@ -246,15 +297,30 @@ function doPrint(mode){
 document.getElementById("btnPrintTable").onclick = ()=> doPrint("table");
 document.getElementById("btnPrintTree").onclick = ()=> { drawTree(); doPrint("tree"); };
 
-document.getElementById("btnExport").onclick = ()=>{
-  const blob = new Blob([JSON.stringify(people,null,2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "familienringe_export.json";
-  a.click();
-  URL.revokeObjectURL(a.href);
-};
+// ---- Export with save file picker if available
+async function exportData(){
+  const data = JSON.stringify(people, null, 2);
+  if('showSaveFilePicker' in window){
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'familienringe_export.json',
+        types: [{ description: 'JSON', accept: {'application/json':['.json']} }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(data);
+      await writable.close();
+      alert('Export erfolgreich gespeichert.');
+      return;
+    }catch(err){ if(err && err.name !== 'AbortError'){ alert('Export fehlgeschlagen: '+err.message); } }
+  }
+  // Fallback: normal download (Speicherort abhängig von Browser‑Einstellungen)
+  const blob = new Blob([data], {type:"application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = 'familienringe_export.json'; a.click(); URL.revokeObjectURL(a.href);
+}
 
+document.getElementById('btnExport').onclick = ()=>{ exportData(); };
+
+// ---- Import
 document.getElementById("fileImport").onchange = (ev)=>{
   const f = ev.target.files[0];
   if(!f) return;
@@ -263,6 +329,8 @@ document.getElementById("fileImport").onchange = (ev)=>{
     try{
       const data = JSON.parse(reader.result);
       if(Array.isArray(data)){
+        // optional: normalize codes in imported data
+        data.forEach(p=>{ p.Code = normalizeCode(p.Code); p.ParentCode = normalizeCode(p.ParentCode); p.PartnerCode = normalizeCode(p.PartnerCode); p.InheritedFromCode = normalizeCode(p.InheritedFromCode); });
         people = data; saveData(people); renderTable(); drawTree();
       } else alert("Ungültiges Format.");
     }catch(e){ alert("Fehler beim Import: " + e.message); }

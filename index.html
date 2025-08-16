@@ -140,6 +140,40 @@
     </form>
   </dialog>
 
+  <!-- Dialog: Person bearbeiten -->
+  <dialog id="dlgEdit" class="dlg">
+    <form id="formEdit">
+      <h3>✏️ Person bearbeiten</h3>
+      <div class="grid">
+        <label>Personen‑Code <input name="code" readonly /></label>
+        <label>Name <input name="name" /></label>
+        <label>Geburtsdatum <input name="birthDate" placeholder="TT.MM.JJJJ" /></label>
+        <label>Geburtsort <input name="birthPlace" /></label>
+        <label>Geschlecht
+          <select name="gender">
+            <option value="">–</option>
+            <option value="m">m</option>
+            <option value="w">w</option>
+            <option value="divers">divers</option>
+          </select>
+        </label>
+        <label>Vererbt?
+          <select name="inherited">
+            <option>nein</option>
+            <option>ja</option>
+          </select>
+        </label>
+        <label>Geerbt von (Code) <input name="inheritedFrom" placeholder="z. B. 1" /></label>
+        <label>Kommentar <input name="note" /></label>
+      </div>
+      <div class="hint">Änderungen wirken sich sofort auf Tabelle und Baum aus. Personen‑Code ist fix, da er Referenzen (Kinder/Partner) besitzt.</div>
+      <menu>
+        <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
+        <button id="dlgEditOk" class="primary" type="button">Speichern</button>
+      </menu>
+    </form>
+  </dialog>
+
   <script src="app.js"></script>
 </body>
 </html>
