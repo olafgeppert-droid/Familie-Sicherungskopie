@@ -29,15 +29,12 @@
     <div class="toolbar">
       <button id="btnAdd" class="primary">➕ Person</button>
       <button id="btnAddPartner">❤️ Partner</button>
-      <button id="btnUndo" title="Rückgängig">↶ Rückgängig</button>
-      <button id="btnRedo" title="Wiederholen">↷ Wiederholen</button>
       <input id="search" type="search" placeholder="🔎 Suche (Name oder Code)" />
       <button id="btnSearch">Suchen</button>
       <button id="btnShowAll">Alle</button>
       <div class="spacer"></div>
       <button id="btnDraw">🌳 Baum aktualisieren</button>
       <button id="btnExport">💾 Export</button>
-      <button id="btnExportCsv">📄 CSV</button>
       <label class="file-label" title="JSON importieren">
         ⤴️ Import <input id="fileImport" type="file" accept="application/json" />
       </label>
@@ -86,10 +83,10 @@
 
   <!-- Dialog: Person hinzufügen -->
   <dialog id="dlgAdd" class="dlg">
-    <form id="formAdd">
+    <form id="formAdd" method="dialog">
       <h3>➕ Person hinzufügen</h3>
       <div class="grid">
-        <label>Eltern‑Code <input name="parentCode" placeholder="z. B. 1 oder 1A" /></label>
+        <label>Eltern‑Code* <input name="parentCode" placeholder="z. B. 1 oder 1A" required /></label>
         <label>Name <input name="name" /></label>
         <label>Geburtsdatum <input name="birthDate" placeholder="TT.MM.JJJJ" /></label>
         <label>Geburtsort <input name="birthPlace" /></label>
@@ -110,21 +107,21 @@
         </label>
         <label>Geerbt von (Code) <input name="inheritedFrom" placeholder="z. B. 1" /></label>
       </div>
-      <div class="hint">Der Ring‑Code wird automatisch generiert: Kinder von „1“ → 1A, 1B, 1C …; Folgegenerationen → Ziffern anfügen; Partner → „x“-Suffix.</div>
+      <div class="hint">* Der Ring‑Code wird automatisch generiert: Kinder von „1“ → 1A, 1B, 1C …; tiefer → Ziffern anfügen; Partner → „x“-Suffix.</div>
       <div class="hint"><strong>Hinweis:</strong> hat die Person keinen Familienwappenring, bitte im Kommentar vermerken.</div>
       <menu>
-        <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
-        <button id="dlgAddOk" class="primary" type="button">Speichern</button>
+        <button value="cancel">Abbrechen</button>
+        <button id="dlgAddOk" class="primary" value="default">Speichern</button>
       </menu>
     </form>
   </dialog>
 
   <!-- Dialog: Partner hinzufügen -->
   <dialog id="dlgPartner" class="dlg">
-    <form id="formPartner">
+    <form id="formPartner" method="dialog">
       <h3>❤️ Partner hinzufügen</h3>
       <div class="grid">
-        <label>Partner von Code <input name="personCode" placeholder="z. B. 1A" /></label>
+        <label>Code der Person* <input name="personCode" placeholder="z. B. 1A" required /></label>
         <label>Name des Partners <input name="name" /></label>
         <label>Geschlecht
           <select name="gender">
@@ -137,72 +134,8 @@
         <label>Kommentar <input name="note" /></label>
       </div>
       <menu>
-        <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
-        <button id="dlgPartnerOk" class="primary" type="button">Speichern</button>
-      </menu>
-    </form>
-  </dialog>
-
-  <!-- Dialog: Person bearbeiten -->
-  <dialog id="dlgEdit" class="dlg">
-    <form id="formEdit">
-      <h3>✏️ Person bearbeiten</h3>
-      <div class="grid">
-        <label>Personen‑Code <input name="code" readonly /></label>
-        <label>Name <input name="name" /></label>
-        <label>Geburtsdatum <input name="birthDate" placeholder="TT.MM.JJJJ" /></label>
-        <label>Geburtsort <input name="birthPlace" /></label>
-        <label>Geschlecht
-          <select name="gender">
-            <option value="">–</option>
-            <option value="m">m</option>
-            <option value="w">w</option>
-            <option value="divers">divers</option>
-          </select>
-        </label>
-        <label>Vererbt?
-          <select name="inherited">
-            <option>nein</option>
-            <option>ja</option>
-          </select>
-        </label>
-        <label>Geerbt von (Code) <input name="inheritedFrom" placeholder="z. B. 1" /></label>
-        <label>Kommentar <input name="note" /></label>
-      </div>
-      <div class="hint">Änderungen wirken sich sofort auf Tabelle und Baum aus. Personen‑Code ist fix, da er Referenzen (Kinder/Partner) besitzt.</div>
-      <menu>
-        <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
-        <button id="dlgEditOk" class="primary" type="button">Speichern</button>
-      </menu>
-    </form>
-  </dialog>
-
-  <!-- Dialog: Export -->
-  <dialog id="dlgExport" class="dlg">
-    <form id="formExport">
-      <h3>💾 Export</h3>
-      <p>Wähle deinen Speicherort aus</p>
-      <menu>
-        <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
-        <button id="btnExportSaveAs" class="primary" type="button">Speichern unter</button>
-        <button id="btnExportDownload" type="button">Im Downloadordner speichern</button>
-      </menu>
-    </form>
-  </dialog>
-
-  <!-- Dialog: Import‑Konflikte -->
-  <dialog id="dlgImportConf" class="dlg">
-    <form id="formImportConf">
-      <h3>⚠️ Import – Duplikate</h3>
-      <p id="impSummary">Es wurden Duplikate gefunden.</p>
-      <fieldset class="choices">
-        <label><input type="radio" name="impMode" value="overwrite" checked /> Überschreiben (importierte Daten ersetzen vorhandene)</label>
-        <label><input type="radio" name="impMode" value="skip" /> Überspringen (vorhandene behalten)</label>
-        <label><input type="radio" name="impMode" value="keepboth" /> Beide behalten (importierte Duplikate mit „‑DUP“ im Personen‑Code)</label>
-      </fieldset>
-      <menu>
-        <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
-        <button id="dlgImportOk" class="primary" type="button">Fortfahren</button>
+        <button value="cancel">Abbrechen</button>
+        <button id="dlgPartnerOk" class="primary" value="default">Speichern</button>
       </menu>
     </form>
   </dialog>
