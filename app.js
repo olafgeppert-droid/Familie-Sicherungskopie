@@ -1,0 +1,70 @@
+
+// Beispielhafte app.js Logik mit Ring-Code-Berechnung
+let persons = [
+  { code: "1", name: "Mario Geppert", birth: "1970-01-01", place: "Berlin", gender: "m", parents: "", partner: "", comment: "", inheritedFrom: "" },
+  { code: "1C1", name: "Max Geppert", birth: "2000-01-01", place: "Berlin", gender: "m", parents: "1", partner: "", comment: "", inheritedFrom: "1" }
+];
+
+function calculateRingCode(person) {
+  if (person.inheritedFrom) {
+    return person.inheritedFrom + " ➔ " + person.code;
+  }
+  return person.code;
+}
+
+function renderTable() {
+  const tbody = document.querySelector("#personTable tbody");
+  tbody.innerHTML = "";
+  persons.forEach(p => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.code}</td>
+      <td>${p.name}</td>
+      <td>${p.birth}</td>
+      <td>${p.place}</td>
+      <td>${p.gender}</td>
+      <td>${getGeneration(p.code)}</td>
+      <td>${p.parents}</td>
+      <td>${p.partner}</td>
+      <td>${p.inheritedFrom}</td>
+      <td>${calculateRingCode(p)}</td>
+      <td>${p.comment}</td>
+      <td><button onclick="editPerson('${p.code}')">✏️</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function getGeneration(code) {
+  return code.split(/[^A-Z0-9]/).length;
+}
+
+function editPerson(code) {
+  alert("Bearbeiten: " + code);
+}
+
+function addPerson() {
+  alert("Neue Person hinzufügen");
+}
+
+function addPartner() {
+  alert("Partner hinzufügen");
+}
+
+function searchPerson() {
+  // Dummy-Suche
+}
+
+function drawTree() {
+  // Dummy-Stammbaum
+}
+
+function exportData() {
+  // Dummy-Export
+}
+
+function importData(event) {
+  // Dummy-Import
+}
+
+document.addEventListener("DOMContentLoaded", renderTable);

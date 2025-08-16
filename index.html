@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Familienringe</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar glass">
+    <div class="brand"><div class="logo">💍</div><h1>Familienringe</h1></div>
+    <div class="toolbar no-print">
+      <button onclick="addPerson()">➕ Person</button>
+      <button onclick="addPartner()">❤️ Partner</button>
+      <input type="search" id="searchInput" placeholder="🔍 Name oder Code" oninput="searchPerson()" />
+      <button onclick="drawTree()">🌳 Stammbaum</button>
+      <button onclick="exportData()">⬇️ Export</button>
+      <label class="file-label">⬆️ Import<input type="file" onchange="importData(event)" /></label>
+      <button onclick="window.print()">🖨️ Drucken</button>
+    </div>
+  </header>
+  <main>
+    <section class="pane glass" id="paneTable">
+      <h2>Personen – Tabelle</h2>
+      <div class="table-wrap">
+        <table id="personTable">
+          <thead>
+            <tr>
+              <th>Personen-Code</th>
+              <th>Name</th>
+              <th>Geburtsdatum</th>
+              <th>Geburtsort</th>
+              <th>Geschlecht</th>
+              <th>Generation</th>
+              <th>Eltern-Code</th>
+              <th>Partner-Code</th>
+              <th>Geerbt von</th>
+              <th>Ring-Code</th>
+              <th>Kommentar</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="hint">** Hat die Person keinen Familienwappenring, bitte im Kommentar vermerken.</div>
+    </section>
+    <section class="pane glass" id="paneTree">
+      <h2>Grafischer Stammbaum</h2>
+      <div class="tree-wrap"><svg id="treeSvg" width="100%" height="100%"></svg></div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
