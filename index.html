@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Family Ring WebApp</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Familienwappenring Verwaltung</h1>
+    <form>
+        <label for="personencode">Personen-Code:</label>
+        <input type="text" id="personencode" name="personencode"><br>
+        <label for="geerbtvon">Geerbt von:</label>
+        <input type="text" id="geerbtvon" name="geerbtvon"><br>
+        <p><strong>** Hat die Person keinen Familienwappenring, bitte im Kommentar vermerken.</strong></p>
+        <input type="submit" value="Speichern">
+    </form>
+    <table>
+        <thead>
+            <tr>
+                <th>Personen-Code</th>
+                <th>Name</th>
+                <th>Geerbt von</th>
+                <th>Ring-Code</th>
+                <th>Kommentar</th>
+            </tr>
+        </thead>
+        <tbody id="personTableBody">
+        </tbody>
+    </table>
+    <script src="app.js"></script>
+</body>
+</html>
