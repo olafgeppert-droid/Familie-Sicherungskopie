@@ -1,33 +1,55 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Geppert Familienringe – Passwortgeschützt</title>
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>Familien-Web-App</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div id="loginScreen">
-  <h2>Passwortgeschützte Familien-Web-App</h2>
-  <input type="password" id="pwd" placeholder="Passwort eingeben" />
-  <button id="btnLogin">Login</button>
-  <p id="msg"></p>
-</div>
-<div id="app" style="display:none;">
-  <iframe src="app.html" style="width:100%;height:100vh;border:none;"></iframe>
-</div>
-<script>
-const PASSWORD = "gepperT13Olli";
-document.getElementById("btnLogin").onclick = ()=>{
-  const p = document.getElementById("pwd").value;
-  if(p===PASSWORD){
-    document.getElementById("loginScreen").style.display="none";
-    document.getElementById("app").style.display="block";
-  }else{
-    document.getElementById("msg").innerText="Falsches Passwort";
-  }
-};
-</script>
+  <div id="login">
+    <h2>Login</h2>
+    <input type="password" id="password" placeholder="Passwort eingeben">
+    <button onclick="checkPassword()">Login</button>
+    <p id="loginError" class="error"></p>
+  </div>
+
+  <div id="app" style="display:none;">
+    <h1>Familien-Web-App</h1>
+    <nav>
+      <button onclick="showSection('personen')">👤 Personenverwaltung</button>
+      <button onclick="showSection('tabelle')">📄 Tabelle</button>
+      <button onclick="showSection('baum')">🌳 Stammbaum</button>
+      <button onclick="printView()">🖨️ Drucken</button>
+      <button onclick="exportData()">💾 Export</button>
+      <input type="file" id="importFile" onchange="importData(event)">
+    </nav>
+
+    <section id="personen" class="section">
+      <h2>Personenverwaltung</h2>
+      <input id="name" placeholder="Name">
+      <input id="geburtsdatum" placeholder="Geburtsdatum">
+      <input id="partner" placeholder="Partner/in">
+      <input id="eltern" placeholder="Eltern-Code">
+      <button onclick="addPerson()">➕ Hinzufügen</button>
+      <ul id="personenListe"></ul>
+    </section>
+
+    <section id="tabelle" class="section" style="display:none;">
+      <h2>Personen-Tabelle</h2>
+      <table id="personenTabelle" border="1">
+        <thead>
+          <tr><th>Name</th><th>Geburtsdatum</th><th>Partner</th><th>Eltern</th><th>Aktionen</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section id="baum" class="section" style="display:none;">
+      <h2>Stammbaum</h2>
+      <div id="stammbaum"></div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>

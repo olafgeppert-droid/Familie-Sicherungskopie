@@ -1,6 +1,5 @@
-
-body {margin:0;font-family:Arial,sans-serif;}
-#loginScreen {text-align:center;margin-top:100px;}
-input {padding:8px;margin:4px;}
-button {padding:8px 12px;}
-p {color:red;}
+body { font-family: Arial, sans-serif; margin:20px; }
+nav button { margin:5px; }
+.section { margin-top:20px; }
+.error { color:red; }
+#stammbaum { margin:20px; padding:10px; border:1px solid #ccc; }
