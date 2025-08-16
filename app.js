@@ -62,14 +62,16 @@ function renderTable(list = people){
   tbody.innerHTML = "";
   list.sort((a,b)=>a.Code.localeCompare(b.Code)).forEach(p => {
     p.Generation = inferGeneration(p.Code);
+    const ringCode = p.Inherited && p.InheritedFromCode ? `${p.InheritedFromCode} ➔ ${p.Code}` : p.Code;
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${p.Code}</td><td>${p.Name||""}</td><td>${p.BirthDate||""}</td><td>${p.BirthPlace||""}</td>
       <td>${p.Gender||""}</td><td>${p.Generation}</td><td>${p.ParentCode||""}</td><td>${p.PartnerCode||""}</td>
-      <td>${p.Note||""}</td><td>${p.Inherited? "ja":"nein"}</td><td>${p.InheritedFromCode||""}</td>
+      <td>${p.InheritedFromCode||""}</td><td>${ringCode}</td><td>${p.Note||""}</td>
       <td class="no-print"><button class="delete-btn" data-code="${p.Code}">Löschen</button></td>`;
     tbody.appendChild(tr);
   });
 }
+
 renderTable();
 
 tbody.addEventListener("click", (e)=>{
