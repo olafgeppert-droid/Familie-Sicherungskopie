@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Familienringe</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="topbar glass">
@@ -12,10 +11,10 @@
     <div class="toolbar">
       <button onclick="addPerson()">➕ Person</button>
       <button onclick="addPartner()">❤️ Partner</button>
-      <input type="search" placeholder="🔍 Suche nach Name oder Code" oninput="searchPerson(this.value)">
-      <button onclick="drawTree()">🌳 Stammbaum</button>
+      <input type="search" placeholder="🔍 Suche nach Name oder Code" oninput="searchPerson(this.value)" />
+      <button onclick="updateTree()">🌳 Stammbaum</button>
       <button onclick="exportData()">📤 Export</button>
-      <label class="file-label">📥 Import<input type="file" onchange="importData(event)"></label>
+      <label class="file-label">📥 Import<input type="file" onchange="importData(event)" /></label>
       <button onclick="window.print()">🖨️ Drucken</button>
     </div>
   </header>
@@ -44,6 +43,7 @@
           <tbody></tbody>
         </table>
       </div>
+      <div class="hint">** Hat die Person keinen Familienwappenring, bitte im Kommentar vermerken.</div>
     </section>
 
     <section class="pane glass" id="paneTree">
@@ -51,10 +51,6 @@
       <div class="tree-wrap"><svg id="treeSvg" width="100%" height="400"></svg></div>
     </section>
   </main>
-
-  <footer class="footer glass no-print">
-    <small>💡 Hinweis: <strong>Hat die Person keinen Familienwappenring, bitte im Kommentar vermerken.</strong></small>
-  </footer>
 
   <script src="app.js"></script>
 </body>
