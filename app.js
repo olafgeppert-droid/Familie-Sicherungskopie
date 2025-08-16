@@ -1,15 +1,19 @@
 
-// Beispielhafte app.js Logik mit Ring-Code-Berechnung
-let persons = [
-  { code: "1", name: "Mario Geppert", birth: "1970-01-01", place: "Berlin", gender: "m", parents: "", partner: "", comment: "", inheritedFrom: "" },
-  { code: "1C1", name: "Max Geppert", birth: "2000-01-01", place: "Berlin", gender: "m", parents: "1", partner: "", comment: "", inheritedFrom: "1" }
+const persons = [
+  { code: "1", name: "Olaf", birth: "1950-01-01", place: "Hamburg", gender: "m", parents: "", partner: "2", comment: "", inheritedFrom: "" },
+  { code: "2", name: "Irina", birth: "1952-02-02", place: "Berlin", gender: "w", parents: "", partner: "1", comment: "", inheritedFrom: "" },
+  { code: "1A", name: "Mario", birth: "1975-03-03", place: "Hamburg", gender: "m", parents: "1", partner: "3", comment: "", inheritedFrom: "" },
+  { code: "3", name: "Julia", birth: "1976-04-04", place: "Berlin", gender: "w", parents: "", partner: "1A", comment: "", inheritedFrom: "" },
+  { code: "1A1", name: "Nicolas", birth: "2000-05-05", place: "Hamburg", gender: "m", parents: "1A", partner: "", comment: "", inheritedFrom: "1A" },
+  { code: "1A2", name: "Julienne", birth: "2002-06-06", place: "Hamburg", gender: "w", parents: "1A", partner: "", comment: "", inheritedFrom: "1A" }
 ];
 
 function calculateRingCode(person) {
-  if (person.inheritedFrom) {
-    return person.inheritedFrom + " ➔ " + person.code;
-  }
-  return person.code;
+  return person.inheritedFrom ? `${person.inheritedFrom} ➔ ${person.code}` : person.code;
+}
+
+function getGeneration(code) {
+  return code.split(/[^A-Z0-9]/).length;
 }
 
 function renderTable() {
@@ -33,10 +37,6 @@ function renderTable() {
     `;
     tbody.appendChild(tr);
   });
-}
-
-function getGeneration(code) {
-  return code.split(/[^A-Z0-9]/).length;
 }
 
 function editPerson(code) {
