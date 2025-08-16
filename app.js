@@ -1,8 +1,8 @@
-// Family Ring WebApp v3 – complete features
+// Family Ring WebApp v4 – based on v3 with ring-code + UI tweaks
 const PASSWORD = "gepperT13Olli";
-const STORAGE_KEY = "familyRingData_v3";
+const STORAGE_KEY = "familyRingData_v4";
 
-// Seed data (as requested)
+// Seed data from v3 (unchanged)
 const seed = [
   {Code:"1",  Name:"Olaf Geppert", BirthDate:"13.01.1965", BirthPlace:"Herford", Gender:"m", Generation:0, ParentCode:"", PartnerCode:"1x", Note:"Stammvater", Inherited:false, InheritedFromCode:""},
   {Code:"1x", Name:"Irina Geppert", BirthDate:"13.01.1970", BirthPlace:"Halle/Westfalen", Gender:"w", Generation:0, ParentCode:"", PartnerCode:"1", Note:"Ehefrau von Olaf", Inherited:false, InheritedFromCode:""},
@@ -37,7 +37,7 @@ function saveData(data){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
 
 let people = loadData();
 
-// ---- Code system
+// ---- Code system (unchanged)
 function indexToLetters(n){ let r=""; while(n>0){ n--; r = String.fromCharCode(65 + (n % 26)) + r; n=Math.floor(n/26);} return r; }
 function childrenOf(parentCode){ return people.filter(p => p.ParentCode === parentCode); }
 function generateChildCode(parentCode){
@@ -56,16 +56,32 @@ function inferGeneration(code){
   return gen;
 }
 
+// ---- Ring-Code logic
+function ringCodeOf(code, memo=new Map()){
+  if(memo.has(code)) return memo.get(code);
+  const p = people.find(pp => pp.Code === code);
+  if(!p){ const v = code; memo.set(code, v); return v; }
+  let rc;
+  if(!p.InheritedFromCode){ rc = p.Code; }
+  else {
+    const parentRing = ringCodeOf(p.InheritedFromCode, memo);
+    rc = parentRing + " ➔ " + p.Code;
+  }
+  memo.set(code, rc);
+  return rc;
+}
+
 // ---- UI: table
 const tbody = document.querySelector("#peopleTable tbody");
 function renderTable(list = people){
   tbody.innerHTML = "";
   list.sort((a,b)=>a.Code.localeCompare(b.Code)).forEach(p => {
     p.Generation = inferGeneration(p.Code);
+    const ringCode = ringCodeOf(p.Code);
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${p.Code}</td><td>${p.Name||""}</td><td>${p.BirthDate||""}</td><td>${p.BirthPlace||""}</td>
       <td>${p.Gender||""}</td><td>${p.Generation}</td><td>${p.ParentCode||""}</td><td>${p.PartnerCode||""}</td>
-      <td>${p.Note||""}</td><td>${p.Inherited? "ja":"nein"}</td><td>${p.InheritedFromCode||""}</td>
+      <td>${p.InheritedFromCode||""}</td><td>${ringCode}</td><td>${p.Note||""}</td>
       <td class="no-print"><button class="delete-btn" data-code="${p.Code}">Löschen</button></td>`;
     tbody.appendChild(tr);
   });
@@ -94,7 +110,7 @@ function deletePerson(code){
   saveData(people); renderTable(); drawTree();
 }
 
-// ---- Tree
+// ---- Tree (adds ring-code line below code/name)
 const svg = document.getElementById("treeSvg");
 function drawTree(){
   while(svg.firstChild) svg.removeChild(svg.firstChild);
@@ -113,19 +129,20 @@ function drawTree(){
     (byGen[p.Generation] ||= []).push(p);
   });
   const gens = Object.keys(byGen).map(Number).sort((a,b)=>a-b);
-  const xStep = 230, yStep = 86, marginX = 40, marginY = 40;
+  const xStep = 230, yStep = 92, marginX = 40, marginY = 40;
   const pos = {}; let maxY = 0;
 
   gens.forEach(g => {
     const col = byGen[g].sort((a,b)=>a.Code.localeCompare(b.Code));
     col.forEach((p,i)=>{
       const x = marginX + g * xStep, y = marginY + i * yStep;
-      pos[p.Code] = {x:x+92, y:y+26};
-      const rect = el("rect",{x, y, rx:10, ry:10, width:184, height:54, class:"node"});
+      pos[p.Code] = {x:x+92, y:y+30};
+      const rect = el("rect",{x, y, rx:10, ry:10, width:184, height:64, class:"node"});
       const t1 = el("text",{x:x+10, y:y+18}); t1.appendChild(document.createTextNode(`${p.Code}`));
-      const t2 = el("text",{x:x+10, y:y+36}); t2.appendChild(document.createTextNode(`${p.Name||""}`));
-      svg.append(rect,t1,t2);
-      maxY = Math.max(maxY, y+54);
+      const t2 = el("text",{x:x+10, y:y+34}); t2.appendChild(document.createTextNode(`${p.Name||""}`));
+      const t3 = el("text",{x:x+10, y:y+50}); t3.appendChild(document.createTextNode(`${ringCodeOf(p.Code)}`));
+      svg.append(rect,t1,t2,t3);
+      maxY = Math.max(maxY, y+64);
     });
   });
 
@@ -147,7 +164,7 @@ function drawTree(){
 function el(name, attrs){ const n = document.createElementNS("http://www.w3.org/2000/svg", name); for(const k in attrs){ n.setAttribute(k, attrs[k]); } return n; }
 drawTree();
 
-// ---- Dialogs
+// ---- Dialogs (person add: removed 'Vererbt?' field; uses inheritedFrom only)
 const dlgAdd = document.getElementById("dlgAdd");
 document.getElementById("btnAdd").onclick = ()=> dlgAdd.showModal();
 document.getElementById("dlgAddOk").onclick = (e)=>{
@@ -165,7 +182,7 @@ document.getElementById("dlgAddOk").onclick = (e)=>{
     ParentCode: parentCode,
     PartnerCode: "",
     Note: (fd.get("note")||"").toString().trim(),
-    Inherited: ((fd.get("inherited")||"nein").toString()==="ja"),
+    Inherited: false, // kept for backward compat, not displayed
     InheritedFromCode: (fd.get("inheritedFrom")||"").toString().trim()
   };
   people.push(p); saveData(people); renderTable(); drawTree();
@@ -194,7 +211,7 @@ document.getElementById("dlgPartnerOk").onclick = (e)=>{
   people.push(partner); saveData(people); renderTable(); drawTree();
 };
 
-// ---- Search
+// ---- Search & Tree refresh
 document.getElementById("btnSearch").onclick = ()=>{
   const q = (document.getElementById("search").value||"").toLowerCase();
   const list = people.filter(p => (p.Name||"").toLowerCase().includes(q) || (p.Code||"").toLowerCase().includes(q));
@@ -203,7 +220,7 @@ document.getElementById("btnSearch").onclick = ()=>{
 document.getElementById("btnShowAll").onclick = ()=> renderTable(people);
 document.getElementById("btnDraw").onclick = ()=> drawTree();
 
-// ---- Print (no popups; iOS friendly)
+// ---- Print (unchanged)
 function togglePrintMode(mode){
   document.body.classList.remove("print-table-only","print-tree-only");
   if(mode==="table") document.body.classList.add("print-table-only");
@@ -217,7 +234,7 @@ function doPrint(mode){
 document.getElementById("btnPrintTable").onclick = ()=> doPrint("table");
 document.getElementById("btnPrintTree").onclick = ()=> { drawTree(); doPrint("tree"); };
 
-// ---- Export / Import
+// ---- Export / Import (unchanged)
 document.getElementById("btnExport").onclick = ()=>{
   const blob = new Blob([JSON.stringify(people,null,2)], {type:"application/json"});
   const a = document.createElement("a");
