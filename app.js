@@ -605,3 +605,20 @@ window.addEventListener("DOMContentLoaded", ()=>{
     });
   }
 });
+
+
+// Robust wiring for login button (btnLogin) and Enter key on #pwd
+window.addEventListener("DOMContentLoaded", ()=>{
+  try{
+    const btn = document.getElementById("btnLogin");
+    if(btn){ btn.addEventListener("click", (e)=>{ e.preventDefault(); doLogin(); }); }
+    const pwd = document.getElementById("pwd");
+    if(pwd){
+      pwd.addEventListener("keydown", (e)=>{
+        if(e.key === "Enter"){ e.preventDefault(); doLogin(); }
+      });
+    }
+  }catch(err){
+    console.error("Login wiring error:", err);
+  }
+});
