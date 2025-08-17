@@ -111,7 +111,6 @@
         <label>Geerbt von (Code) <input name="inheritedFrom" placeholder="z. B. 1" /></label>
       </div>
       <div class="hint">Der Ring‑Code wird automatisch generiert: Kinder von „1“ → 1A, 1B, 1C …; Folgegenerationen → Ziffern anfügen; Partner → „x“-Suffix.</div>
-      <div class="hint"><strong>Hinweis:</strong> hat die Person keinen Familienwappenring, bitte im Kommentar vermerken.</div>
       <menu>
         <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
         <button id="dlgAddOk" class="primary" type="button">Speichern</button>
@@ -177,7 +176,7 @@
     </form>
   </dialog>
 
-  <!-- Dialog: Export (eigener Text & Schaltflächen) -->
+  <!-- Dialog: Export -->
   <dialog id="dlgExport" class="dlg">
     <form id="formExport">
       <h3>💾 Export</h3>
@@ -185,7 +184,7 @@
       <menu>
         <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
         <button id="btnExportSaveAs" class="primary" type="button">Speichern unter</button>
-        <button id="btnExportDownload" type="button">Im Downloadordner speichern</button>
+        <button id="btnExportDownload" class="btn-secondary" type="button">Im Downloadordner speichern</button>
       </menu>
     </form>
   </dialog>
