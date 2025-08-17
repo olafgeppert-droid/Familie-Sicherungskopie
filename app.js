@@ -138,3 +138,62 @@ let pendingImport=null, pendingDupeCodes=null;
 document.getElementById('fileImport').onchange=(ev)=>{ const f=ev.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=()=>{ try{ const data=JSON.parse(reader.result); if(!Array.isArray(data)){ alert('Ungültiges Format.'); return; } data.forEach(p=>{ p.Code=normalizeCode(p.Code); p.ParentCode=normalizeCode(p.ParentCode); p.PartnerCode=normalizeCode(p.PartnerCode); p.InheritedFromCode=normalizeCode(p.InheritedFromCode); }); const existing=new Set(people.map(p=>p.Code)); const dupes=[...new Set(data.filter(p=>existing.has(p.Code)).map(p=>p.Code))]; if(dupes.length){ pendingImport=data; pendingDupeCodes=dupes; document.getElementById('impSummary').textContent=`Es wurden ${dupes.length} Duplikat(e) nach Personen‑Code gefunden: z. B. ${dupes.slice(0,5).join(', ')}${dupes.length>5?' …':''}`; dlgImportConf.showModal(); } else { pushUndo(); people=data; saveData(people); renderTable(currentFilter); drawTree(); } }catch(e){ alert('Fehler beim Import: '+e.message); } }; reader.readAsText(f); };
 
 document.getElementById('dlgImportOk').onclick=()=>{ if(!pendingImport){ dlgImportConf.close(); return; } const mode=(new FormData(document.getElementById('formImportConf')).get('impMode'))||'overwrite'; let merged=[...people]; if(mode==='overwrite'){ const map=new Map(people.map(p=>[p.Code,p])); pendingImport.forEach(p=>{ map.set(p.Code,p); }); merged=[...map.values()]; } else if(mode==='skip'){ const exist=new Set(people.map(p=>p.Code)); const adds=pendingImport.filter(p=>!exist.has(p.Code)); merged=[...people,...adds]; } else if(mode==='keepboth'){ const exist=new Set(people.map(p=>p.Code)); const dupSet=new Set(pendingDupeCodes); const adjusted=pendingImport.map(p=>{ if(dupSet.has(p.Code)){ const old=p.Code; const newCode=p.Code+'-DUP'; pendingImport.forEach(q=>{ if(q.ParentCode===old) q.ParentCode=newCode; if(q.PartnerCode===old) q.PartnerCode=newCode; if(q.InheritedFromCode===old) q.InheritedFromCode=newCode; }); p.Code=newCode; p.Note=(p.Note?p.Note+' ':'')+'(Duplikat importiert)'; } return p; }); merged=[...people,...adjusted.filter(p=>!exist.has(p.Code))]; } pushUndo(); people=merged; saveData(people); renderTable(currentFilter); drawTree(); pendingImport=null; pendingDupeCodes=null; dlgImportConf.close(); };
+
+// Statistik anzeigen
+function showStatistics() {
+    const total = people.length;
+    const generations = [...new Set(people.map(p => inferGeneration(p.Code)))].length;
+    const partners = people.filter(p => p.PartnerCode).length;
+    const inherited = people.filter(p => p.Inherited).length;
+
+    alert(`Statistik:\n\nPersonen insgesamt: ${total}\nGenerationen: ${generations}\nPartnerschaften: ${partners}\nVererbte Ringe: ${inherited}`);
+}
+
+// PDF-Export (Platzhalter)
+function exportPDF() {
+    alert("PDF-Export ist noch nicht implementiert. Bitte später erneut versuchen.");
+}
+
+// CSV-Export
+function exportCSV() {
+    exportCsv(); // nutzt die bestehende Funktion
+}
+
+// JSON-Export
+function exportJSON() {
+    exportJsonDownload(); // nutzt die bestehende Funktion
+}
+
+// Mehrfach-Partnerschaften (Platzhalter)
+document.getElementById("btnAddPartner")?.addEventListener("click", () => {
+    alert("Mehrfach-Partnerschaften sind noch nicht vollständig implementiert.");
+});
+
+// Trennungsstatus markieren (Platzhalter)
+document.getElementById("btnMarkSeparation")?.addEventListener("click", () => {
+    const code = prompt("Bitte Personen‑Code eingeben, bei der die Trennung markiert werden soll:");
+    if (!code) return;
+    const person = people.find(p => p.Code === normalizeCode(code));
+    if (!person) {
+        alert("Person nicht gefunden.");
+        return;
+    }
+    person.Note += " (getrennt)";
+    saveData(people);
+    renderTable(currentFilter);
+    drawTree();
+    alert(`Trennung bei ${person.Name} vermerkt.`);
+});
+
+// Teilen über iOS
+function triggerIOSShare() {
+    if (navigator.share) {
+        navigator.share({
+            title: 'Familienringe',
+            text: 'Stammbaumdaten teilen',
+            url: window.location.href
+        }).catch(err => alert("Fehler beim Teilen: " + err));
+    } else {
+        alert("Teilen wird von diesem Gerät nicht unterstützt.");
+    }
+}
