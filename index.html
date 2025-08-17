@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wappenringe der Familie GEPPERT</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Login -->
+  <div class="overlay" id="loginOverlay">
+    <div class="login-card">
+      <h2>🔐 Zugriff</h2>
+      <p>Bitte Passwort eingeben.</p>
+      <input id="pwd" type="password" placeholder="Passwort" autocomplete="current-password" />
+      <div id="loginMsg" class="error"></div>
+      <menu><button id="btnLogin" class="primary">Anmelden</button></menu>
+    </div>
+  </div>
+
+  <header class="ribbon no-print">
+    <h1 class="title">Wappenringe der Familie GEPPERT</h1>
+    <div class="ribbon-rows">
+      <div class="row">
+        <button id="btnNew" class="accent">➕ Neue Person</button>
+        <button id="btnImport">⤒ Import</button>
+        <button id="btnExport">⤓ Export</button>
+        <button id="btnPrintTable">🖨️ Tabelle</button>
+        <button id="btnPrintTree">🖨️ Baum</button>
+        <button id="btnStats">📊 Statistiken</button>
+        <button id="btnRefreshTree">🌳 Aktualisieren</button>
+      </div>
+      <div class="row">
+        <button id="btnUndo" class="big">↶ Rückgängig</button>
+        <button id="btnRedo" class="big">↷ Wiederholen</button>
+        <input id="txtSearch" class="search" placeholder="Person suchen…" />
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="paneTable" class="pane">
+      <h3>📄 Personen</h3>
+      <div class="table-wrap">
+        <table id="peopleTable">
+          <thead>
+            <tr>
+              <th>Generation</th>
+              <th>Personen-Code</th>
+              <th>Ring-Code</th>
+              <th>Name*</th>
+              <th>Geburtsdatum</th>
+              <th>Geburtsort</th>
+              <th>Geschlecht</th>
+              <th>Eltern-Code</th>
+              <th>Partner-Code</th>
+              <th>Geerbt von</th>
+              <th>Kommentar</th>
+              <th class="no-print"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="legend">*Pflichtfelder. Datumsformat: TT.MM.JJJJ (z. B. 04.12.2000).</div>
+    </section>
+
+    <section id="paneTree" class="pane">
+      <h3>🌳 Stammbaum</h3>
+      <div id="treeHost" class="tree-host"></div>
+      <div class="legend">Generationen sind untereinander angeordnet, verbunden durch Linien; Tooltips bei Hover.</div>
+    </section>
+  </main>
+
+  <!-- Edit Dialog -->
+  <dialog id="dlgEdit">
+    <form method="dialog" id="frmEdit" class="form-grid">
+      <h3>Person</h3>
+      <label>Personen-Code <input name="code" readonly /></label>
+      <label>Ring-Code <input name="ringCode" readonly /></label>
+      <label>Name* <input name="name" required /></label>
+      <label>Geburtsdatum <input name="birthDate" placeholder="TT.MM.JJJJ" /></label>
+      <label>Geburtsort <input name="birthPlace" /></label>
+      <label>Geschlecht
+        <select name="gender">
+          <option value="">–</option>
+          <option value="m">m</option>
+          <option value="w">w</option>
+          <option value="d">divers</option>
+        </select>
+      </label>
+      <label>Eltern-Code <input name="parentCode" placeholder="z. B. 1 oder 1A" /></label>
+      <label>Partner-Code <input name="partnerCode" placeholder="wird automatisch  → 1x" /></label>
+      <label>Geerbt von (Code) <input name="inheritedFrom" /></label>
+      <label>Kommentar <input name="note" /></label>
+      <div class="hint">Codes werden automatisch vergeben. Kleinbuchstaben in Codes werden zu Großbuchstaben – außer das Partnersuffix „x“.</div>
+      <menu>
+        <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
+        <button id="dlgEditOk" class="primary" type="submit">Speichern</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- Export -->
+  <dialog id="dlgExport">
+    <h3>Export</h3>
+    <div class="choices">
+      <label><input type="radio" name="exfmt" value="json" checked /> JSON</label>
+      <label><input type="radio" name="exfmt" value="csv" /> CSV</label>
+      <label><input type="radio" name="exfmt" value="pdf" /> PDF (Druck)</label>
+    </div>
+    <menu>
+      <button id="btnExportSaveAs" class="primary">Speichern</button>
+      <button id="btnExportShare">Teilen (iOS)</button>
+      <button class="btn-cancel" onclick="this.closest('dialog').close()">Schließen</button>
+    </menu>
+  </dialog>
+
+  <!-- Import -->
+  <dialog id="dlgImport">
+    <h3>Import</h3>
+    <p>JSON oder CSV auswählen.</p>
+    <input id="fileImport" type="file" accept=".json,.csv,text/csv,application/json" />
+    <menu>
+      <button class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
+    </menu>
+  </dialog>
+
+  <!-- Stats -->
+  <dialog id="dlgStats">
+    <h3>📊 Statistiken</h3>
+    <div id="statsContent"></div>
+    <menu>
+      <button id="btnStatsPrint">Als PDF drucken</button>
+      <button class="btn-cancel" onclick="this.closest('dialog').close()">Schließen</button>
+    </menu>
+  </dialog>
+
+  <script src="app.js"></script>
+
+<!-- Passwort ändern Modal -->
+<div id="passwordModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>Neues Passwort setzen</h3>
+    <input type="password" id="newPasswordInput" placeholder="Neues Passwort">
+    <div class="modal-actions">
+      <button id="savePasswordBtn">OK</button>
+      <button id="cancelPasswordBtn">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
