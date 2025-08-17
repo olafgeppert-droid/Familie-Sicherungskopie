@@ -14,11 +14,41 @@ function decryptPassword(ciphertext) {
 }
 
 // ==============================
-// Beispiel-Daten
+// Beispiel-Daten (bereits vorhandene Personen)
 // ==============================
 let familyData = [
-  { name: "Max Mustermann", birthdate: "1970-01-01", generation: 0, partners: ["Anna"], children: [1], divorced: false },
-  { name: "Lisa Mustermann", birthdate: "1995-05-12", generation: 1, partners: [], children: [], divorced: false }
+  { 
+    name: "Max Mustermann", 
+    birthdate: "1970-01-01", 
+    generation: 0, 
+    partners: ["Anna Musterfrau"], 
+    children: [1,2], 
+    divorced: false 
+  },
+  { 
+    name: "Lisa Mustermann", 
+    birthdate: "1995-05-12", 
+    generation: 1, 
+    partners: [], 
+    children: [], 
+    divorced: false 
+  },
+  { 
+    name: "Paul Mustermann", 
+    birthdate: "1998-09-21", 
+    generation: 1, 
+    partners: ["Julia Beispiel"], 
+    children: [3], 
+    divorced: true 
+  },
+  { 
+    name: "Sophie Mustermann", 
+    birthdate: "2022-04-15", 
+    generation: 2, 
+    partners: [], 
+    children: [], 
+    divorced: false 
+  }
 ];
 
 // ==============================
