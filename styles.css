@@ -1,24 +1,37 @@
-/* Minimal theme */
+/* Theme */
 :root{--bg:#0b1220;--bg2:#0e1426;--glass:rgba(255,255,255,.08);--text:#eef3ff;--muted:#a8b2d1;--accent:#7aa2ff;--shadow:0 12px 30px rgba(0,0,0,.35)}
-*{box-sizing:border-box} html,body{height:100%} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:linear-gradient(180deg,var(--bg),var(--bg2))}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:linear-gradient(180deg,var(--bg),var(--bg2))}
 .glass{background:var(--glass);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);border-radius:14px;box-shadow:var(--shadow)}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin:12px;padding:12px 14px}
-.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{font-size:26px;filter:drop-shadow(0 3px 8px rgba(0,0,0,.6));}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .toolbar input[type=search]{min-width:220px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:var(--text)}
+.file-label{display:inline-flex;gap:6px;align-items:center;padding:10px 12px;border-radius:10px;border:1px dashed rgba(255,255,255,.3);cursor:pointer}
+.file-label input{display:none}
+.spacer{flex:1}
 button{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.06));color:var(--text)}
-button.primary{background:linear-gradient(180deg, var(--accent), #3d6fff);border-color:#8fb3ff;color:#fff}
+button.primary{background:linear-gradient(180deg, var(--accent), #3d6fff); border-color:#8fb3ff;color:#fff}
 .btn-cancel{background:#f1f5f9;color:#111;border:1px solid #cbd5e1}
 button.btn-secondary{background:#e2e8f0;color:#111;border:1px solid #cbd5e1}
 main{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px}
 .pane{padding:12px;min-height:420px}
 .table-wrap{overflow:auto;max-height:58vh;border-radius:10px;border:1px solid rgba(255,255,255,.12)}
-.table-wrap table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{border-bottom:1px solid rgba(255,255,255,.1);padding:8px 10px;text-align:left}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid rgba(255,255,255,.1);padding:8px 10px;text-align:left;vertical-align:top}
+.footer{margin:12px;padding:10px 14px}
 .tree-wrap{overflow:auto;border-radius:10px;border:1px solid rgba(255,255,255,.12)}
-.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
-.login-card{padding:20px;max-width:380px;width:92%;text-align:center;background:#fff;color:#111;border:1px solid #e5e7eb;border-radius:16px}
-.login-card input{width:100%;margin:10px 0;padding:12px;border-radius:12px;border:1px solid #cbd5e1}
+dialog.dlg{border:none;padding:0;width:min(720px,96vw);background:#fff;color:#111;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+dialog form{padding:18px}
+dialog h3{margin-bottom:12px;color:#0f172a}
+.grid label{display:flex;flex-direction:column;font-size:12px;gap:6px;color:#1f2937}
+.grid input, .grid select{padding:10px 12px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#111}
+.hint{color:#475569;margin:8px 0 0}
+menu{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
 .error{color:#b91c1c}
-.dialog.dlg, dialog.dlg{border:none;padding:0;background:#fff;color:#111;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.45)}
-dialog form{padding:18px} .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.hint{color:#475569;margin-top:6px}
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:1000}
+.login-card{padding:20px;max-width:380px;width:92%;text-align:center;background:#fff;color:#111;border:1px solid #e5e7eb;border-radius:16px}
+.login-card input{width:100%;margin-top:10px;margin-bottom:10px;padding:12px 14px;border-radius:12px;border:1px solid #cbd5e1;background:#fff;color:#111}
