@@ -225,19 +225,13 @@ async function saveVault(){
 }
 
 // ---- Login ----
-const btnLogin = document.getElementById("btnLogin");
-const pwdInput = document.getElementById("pwd");
 const loginOverlay = document.getElementById("loginOverlay");
 const loginMsg = document.getElementById("loginMsg");
-document.getElementById("btnLogin").addEventListener("click", (e)=>{ e.preventDefault(); doLogin(); });
-pwdInput.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); doLogin(); } });
 
 
 async function doLogin(){
-  const pwdInput = document.getElementById("pwd");
   const loginMsg = document.getElementById("loginMsg");
   loginMsg.textContent = "Starte Login …";
-  const inputVal = pwdInput.value.trim();
   console.log("Login gestartet mit:", inputVal);
   try{
     currentPassword = inputVal;
@@ -270,14 +264,12 @@ async function doLogin(){
     document.getElementById("loginOverlay").style.display = "none";
   }catch(e){
     console.error("Login-Fehler:", e);
-    pwdInput.value="";
     loginMsg.textContent="Falsches Passwort oder Fehler.";
     const card=document.querySelector(".login-card");
     if(card){
       card.classList.add("shake");
       setTimeout(()=>card.classList.remove("shake"),350);
     }
-    pwdInput.focus();
   }
 }
 
@@ -703,13 +695,9 @@ function updateUndoRedo(){
 
 
 // ---- Login button wiring ----
-const pwdInput = document.getElementById("pwd");
-const loginBtn = document.getElementById("btnLogin");
 if(loginBtn){
   loginBtn.onclick = ()=>doLogin();
 }
-if(pwdInput){
-  pwdInput.addEventListener("keypress", ev=>{
     if(ev.key==="Enter"){ doLogin(); }
   });
 }
@@ -766,10 +754,8 @@ window.addEventListener("DOMContentLoaded", ()=>{
 });
 
 
-// Robust wiring for login button (btnLogin) and Enter key on #pwd
 window.addEventListener("DOMContentLoaded", ()=>{
   try{
-    const btn = document.getElementById("btnLogin");
     if(btn){ btn.addEventListener("click", (e)=>{ e.preventDefault(); doLogin(); }); }
     const pwd = document.getElementById("pwd");
     if(pwd){
@@ -783,21 +769,18 @@ window.addEventListener("DOMContentLoaded", ()=>{
 });
 
 
-
-// --- Robust login wiring (fixed) ---
+// --- Fixed Login Binding ---
 (function(){
-  try{
-    const loginBtn = document.getElementById("btnLogin");
-    const pwd = document.getElementById("pwd");
-    if(loginBtn){
-      loginBtn.addEventListener("click", (e)=>{ e.preventDefault(); doLogin(); });
-    }
-    if(pwd){
-      pwd.addEventListener("keydown", (e)=>{
-        if(e.key === "Enter"){ e.preventDefault(); doLogin(); }
-      });
-    }
-  }catch(err){ console.error("Login wiring error:", err); }
+  const btn = document.getElementById("btnLogin");
+  const pwd = document.getElementById("pwd");
+  if(btn){
+    btn.addEventListener("click", (e)=>{ e.preventDefault(); doLogin(); });
+  }
+  if(pwd){
+    pwd.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter"){ e.preventDefault(); doLogin(); }
+    });
+  }
 })();
 </script>
 </body>
