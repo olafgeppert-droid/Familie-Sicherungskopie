@@ -503,6 +503,19 @@ function updateUndoRedo(){
 }
 
 
+
+// ---- Login button wiring ----
+const pwdInput = document.getElementById("pwd");
+const loginBtn = document.getElementById("btnLogin");
+if(loginBtn){
+  loginBtn.onclick = ()=>doLogin();
+}
+if(pwdInput){
+  pwdInput.addEventListener("keypress", ev=>{
+    if(ev.key==="Enter"){ doLogin(); }
+  });
+}
+
 // ---- Passwort ändern ----
 const dlgPw = document.getElementById("dlgPw");
 const frmPw = document.getElementById("frmPw");
