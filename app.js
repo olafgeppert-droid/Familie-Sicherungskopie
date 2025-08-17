@@ -66,6 +66,10 @@ async function saveVault(){
 }
 
 // ---- Login ----
+document.getElementById("loginBtn").addEventListener("click", doLogin);
+document.getElementById("pwd").addEventListener("keydown", (e)=>{
+  if(e.key === "Enter"){ doLogin(); }
+});
 const btnLogin = document.getElementById("btnLogin");
 const pwdInput = document.getElementById("pwd");
 const loginOverlay = document.getElementById("loginOverlay");
