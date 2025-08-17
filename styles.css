@@ -52,3 +52,10 @@ mark.hl{background:#fde68a;color:#111;padding:0 .1em;border-radius:3px}
 @media(max-width:980px){main{grid-template-columns:1fr}}
 @media print{.no-print,.no-print *{display:none!important} body{background:#fff;color:#000} main{display:block;margin:0} .pane{border:none;background:#fff;box-shadow:none} .table-wrap,.tree-wrap{max-height:none} #treeSvg{width:100%;height:auto} @page{size:A4 portrait;margin:12mm} body.print-tree-only @page{size:A4 landscape;margin:10mm}}
 @media print{ body.print-table-only #paneTree{display:none!important} body.print-tree-only #paneTable{display:none!important} }
+
+
+.generation-0 { background-color: #f9f9f9; }
+.generation-1 { background-color: #e0f7fa; }
+.generation-2 { background-color: #ffe0b2; }
+.person { margin: 5px; padding: 5px; border: 1px solid #ccc; cursor: pointer; }
+.person:hover { background-color: #c8e6c9; }

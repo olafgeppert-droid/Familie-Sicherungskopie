@@ -1,3 +1,17 @@
+
+// AES Verschlüsselung / Entschlüsselung mit CryptoJS
+function encryptPassword(password) {
+    return CryptoJS.AES.encrypt(password, "secret-key").toString();
+}
+function decryptPassword(ciphertext) {
+    try {
+        let bytes = CryptoJS.AES.decrypt(ciphertext, "secret-key");
+        return bytes.toString(CryptoJS.enc.Utf8);
+    } catch (e) {
+        return "";
+    }
+}
+
 // Family Ring WebApp v5 – robust login, Undo/Redo, search highlight, export dialog, CSV, import dupes, ring code in tree
 const PASSWORD = "gepperT13Olli";
 const STORAGE_KEY = "familyRingData_v3";
@@ -140,44 +154,85 @@ document.getElementById('fileImport').onchange=(ev)=>{ const f=ev.target.files[0
 document.getElementById('dlgImportOk').onclick=()=>{ if(!pendingImport){ dlgImportConf.close(); return; } const mode=(new FormData(document.getElementById('formImportConf')).get('impMode'))||'overwrite'; let merged=[...people]; if(mode==='overwrite'){ const map=new Map(people.map(p=>[p.Code,p])); pendingImport.forEach(p=>{ map.set(p.Code,p); }); merged=[...map.values()]; } else if(mode==='skip'){ const exist=new Set(people.map(p=>p.Code)); const adds=pendingImport.filter(p=>!exist.has(p.Code)); merged=[...people,...adds]; } else if(mode==='keepboth'){ const exist=new Set(people.map(p=>p.Code)); const dupSet=new Set(pendingDupeCodes); const adjusted=pendingImport.map(p=>{ if(dupSet.has(p.Code)){ const old=p.Code; const newCode=p.Code+'-DUP'; pendingImport.forEach(q=>{ if(q.ParentCode===old) q.ParentCode=newCode; if(q.PartnerCode===old) q.PartnerCode=newCode; if(q.InheritedFromCode===old) q.InheritedFromCode=newCode; }); p.Code=newCode; p.Note=(p.Note?p.Note+' ':'')+'(Duplikat importiert)'; } return p; }); merged=[...people,...adjusted.filter(p=>!exist.has(p.Code))]; } pushUndo(); people=merged; saveData(people); renderTable(currentFilter); drawTree(); pendingImport=null; pendingDupeCodes=null; dlgImportConf.close(); };
 
 
+// Datei-Export
+function exportData(format) {
+    let dataStr = JSON.stringify(familyData, null, 2);
+    let blob = new Blob([dataStr], {type: 'application/json'});
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = "family_data." + format;
+    a.click();
+    URL.revokeObjectURL(url);
+}
 
-// Clear password field on incorrect password and handle Return key
-document.addEventListener('DOMContentLoaded', function () {
-    const passwordInput = document.getElementById('password');
-    const loginButton = document.getElementById('login-button');
+// Datei-Import
+function importData(file) {
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let imported = JSON.parse(e.target.result);
+            familyData = imported;
+            renderTree();
+            alert("Daten erfolgreich importiert!");
+        } catch (err) {
+            alert("Fehler beim Import: " + err);
+        }
+    };
+    reader.readAsText(file);
+}
 
-    if (passwordInput && loginButton) {
-        loginButton.addEventListener('click', function () {
-            const enteredPassword = passwordInput.value;
-            if (!isValidPassword(enteredPassword)) {
-                passwordInput.value = '';
-            }
+
+function validateForm(form) {
+    let valid = true;
+    form.querySelectorAll('[required]').forEach(field => {
+        if (!field.value) {
+            field.style.border = "2px solid red";
+            valid = false;
+        } else {
+            field.style.border = "";
+        }
+    });
+    return valid;
+}
+
+
+function calculateStats() {
+    let generations = {};
+    familyData.forEach(p => {
+        let gen = p.generation || 0;
+        if (!generations[gen]) generations[gen] = [];
+        generations[gen].push(p);
+    });
+    console.log("Anzahl Personen pro Generation:", Object.keys(generations).map(g => generations[g].length));
+}
+
+
+function shareDataIOS(dataStr) {
+    if (navigator.share) {
+        navigator.share({
+            title: "Familiendaten",
+            text: "Exportierte Familiendaten",
+            files: [new File([dataStr], "family_data.json", {type: "application/json"})]
         });
-
-        passwordInput.addEventListener('keypress', function (event) {
-            if (event.key === 'Enter') {
-                loginButton.click();
-            }
-        });
+    } else {
+        alert("Teilen nicht unterstützt.");
     }
+}
 
-    function isValidPassword(pwd) {
-        // Replace with actual password validation logic
-        return pwd === 'correct-password';
+
+document.addEventListener("DOMContentLoaded", () => {
+    let pwInput = document.getElementById("password");
+    if (pwInput) {
+        pwInput.addEventListener("keyup", function(e) {
+            if (e.key === "Enter") {
+                document.getElementById("loginBtn").click();
+            }
+        });
     }
 });
 
-
-
-// iOS native share menu on export
-function triggerIOSShare(dataToShare) {
-    if (navigator.share) {
-        navigator.share({
-            title: 'Exported Data',
-            text: 'Here is the exported content.',
-            url: dataToShare
-        }).catch((error) => console.log('Error sharing:', error));
-    } else {
-        console.log('Web Share API not supported on this browser.');
-    }
+function handleWrongPassword() {
+    let pwInput = document.getElementById("password");
+    if (pwInput) pwInput.value = "";
 }
