@@ -1,0 +1,121 @@
+
+/* Grundlayout */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f4f4f4;
+  color: #333;
+}
+
+header, footer {
+  background: #005a8d;
+  color: white;
+  padding: 1em;
+  text-align: center;
+}
+
+section {
+  margin: 1em;
+  padding: 1em;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+/* Buttons */
+button {
+  margin: 0.3em;
+  padding: 0.6em 1em;
+  border: none;
+  border-radius: 5px;
+  background-color: #007acc;
+  color: white;
+  cursor: pointer;
+  font-size: 1em;
+}
+
+button:hover {
+  background-color: #005fa3;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Tabellenansicht */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1em;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 0.5em;
+  text-align: left;
+}
+
+th {
+  background-color: #e0e0e0;
+}
+
+/* Eingabefelder */
+input, textarea {
+  width: 100%;
+  padding: 0.5em;
+  margin: 0.3em 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+input:required {
+  border-color: #ff6666;
+}
+
+/* Dialog */
+dialog {
+  border: none;
+  border-radius: 8px;
+  padding: 1em;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  width: 400px;
+}
+
+dialog form label {
+  display: block;
+  margin-bottom: 0.5em;
+}
+
+dialog menu {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1em;
+}
+
+/* Stammbaum Canvas */
+#treeCanvas {
+  border: 1px solid #ccc;
+  background-color: #fafafa;
+}
+
+/* Generationenfarben */
+.generation-0 { background-color: #d0eaff; }
+.generation-1 { background-color: #c0ffd0; }
+.generation-2 { background-color: #ffe0c0; }
+.generation-3 { background-color: #f0d0ff; }
+.generation-4 { background-color: #fff0d0; }
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  background: #333;
+  color: white;
+  padding: 0.5em;
+  border-radius: 5px;
+  font-size: 0.9em;
+  pointer-events: none;
+  z-index: 1000;
+  display: none;
+}
