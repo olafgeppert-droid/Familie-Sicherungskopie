@@ -29,12 +29,15 @@
     <div class="toolbar">
       <button id="btnAdd" class="primary">➕ Person</button>
       <button id="btnAddPartner">❤️ Partner</button>
+      <button id="btnUndo" title="Rückgängig">↶ Rückgängig</button>
+      <button id="btnRedo" title="Wiederholen">↷ Wiederholen</button>
       <input id="search" type="search" placeholder="🔎 Suche (Name oder Code)" />
       <button id="btnSearch">Suchen</button>
       <button id="btnShowAll">Alle</button>
       <div class="spacer"></div>
       <button id="btnDraw">🌳 Baum aktualisieren</button>
       <button id="btnExport">💾 Export</button>
+      <button id="btnExportCsv">📄 CSV</button>
       <label class="file-label" title="JSON importieren">
         ⤴️ Import <input id="fileImport" type="file" accept="application/json" />
       </label>
@@ -108,7 +111,6 @@
         <label>Geerbt von (Code) <input name="inheritedFrom" placeholder="z. B. 1" /></label>
       </div>
       <div class="hint">Der Ring‑Code wird automatisch generiert: Kinder von „1“ → 1A, 1B, 1C …; Folgegenerationen → Ziffern anfügen; Partner → „x“-Suffix.</div>
-      <div class="hint"><strong>Hinweis:</strong> hat die Person keinen Familienwappenring, bitte im Kommentar vermerken.</div>
       <menu>
         <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
         <button id="dlgAddOk" class="primary" type="button">Speichern</button>
@@ -170,6 +172,36 @@
       <menu>
         <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
         <button id="dlgEditOk" class="primary" type="button">Speichern</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- Dialog: Export -->
+  <dialog id="dlgExport" class="dlg">
+    <form id="formExport">
+      <h3>💾 Export</h3>
+      <p>Wähle deinen Speicherort aus</p>
+      <menu>
+        <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
+        <button id="btnExportSaveAs" class="primary" type="button">Speichern unter</button>
+        <button id="btnExportDownload" class="btn-secondary" type="button">Im Downloadordner speichern</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- Dialog: Import‑Konflikte -->
+  <dialog id="dlgImportConf" class="dlg">
+    <form id="formImportConf">
+      <h3>⚠️ Import – Duplikate</h3>
+      <p id="impSummary">Es wurden Duplikate gefunden.</p>
+      <fieldset class="choices">
+        <label><input type="radio" name="impMode" value="overwrite" checked /> Überschreiben (importierte Daten ersetzen vorhandene)</label>
+        <label><input type="radio" name="impMode" value="skip" /> Überspringen (vorhandene behalten)</label>
+        <label><input type="radio" name="impMode" value="keepboth" /> Beide behalten (importierte Duplikate mit „‑DUP“ im Personen‑Code)</label>
+      </fieldset>
+      <menu>
+        <button type="button" class="btn-cancel" onclick="this.closest('dialog').close()">Abbrechen</button>
+        <button id="dlgImportOk" class="primary" type="button">Fortfahren</button>
       </menu>
     </form>
   </dialog>
