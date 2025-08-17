@@ -1,213 +1,84 @@
 <!DOCTYPE html>
-
 <html lang="de">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>Familienringe – Stammbaum &amp; Verwaltung</title>
-<link href="styles.css" rel="stylesheet"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Family Ring WebApp</title>
+  <link rel="stylesheet" href="styles.css" />
+  https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js
 </head>
 <body>
-<!-- Login Overlay -->
-<div class="overlay" id="loginOverlay">
-<div class="login-card glass">
-<h2>🔐 Familienringe</h2>
-<p>Bitte Passwort eingeben, um die App zu öffnen.</p>
-<input id="pwd" placeholder="Passwort" type="password"/>
-<button class="primary" id="btnLogin">Anmelden</button>
-<div aria-live="polite" class="error" id="loginMsg"></div>
-</div>
-</div>
-<header class="topbar glass no-print">
-<div class="brand">
-<div class="logo">💍</div>
-<div>
-<h1>Familienringe – Stammbaum</h1>
-<small>lokal gespeichert • exportierbar • druckbar</small>
-</div>
-</div>
-<div class="toolbar">
-<button class="primary" id="btnAdd">➕ Person</button>
-<button id="btnAddPartner">❤️ Partner</button>
-<button id="btnUndo" title="Rückgängig">↶ Rückgängig</button>
-<button id="btnRedo" title="Wiederholen">↷ Wiederholen</button>
-<input id="search" placeholder="🔎 Suche (Name oder Code)" type="search"/>
-<button id="btnSearch">Suchen</button>
-<button id="btnShowAll">Alle</button>
-<div class="spacer"></div>
-<button id="btnDraw">🌳 Baum aktualisieren</button>
-<button id="btnExport">💾 Export</button>
-<button id="btnExportCsv">📄 CSV</button>
-<label class="file-label" title="JSON importieren">
-        ⤴️ Import <input accept="application/json" id="fileImport" type="file"/>
-</label>
-<button id="btnPrintTable" title="Tabelle drucken">🖨️ Tabelle</button>
-<button id="btnPrintTree" title="Baum drucken">🖨️ Baum</button>
-</div>
-</header>
-<main>
-<section class="pane glass" id="paneTable">
-<h3>📄 Personen – Tabelle</h3>
-<div class="table-wrap">
-<table id="peopleTable">
-<thead>
-<tr>
-<th>Personen‑Code</th>
-<th>Name</th>
-<th>Geburtsdatum</th>
-<th>Geburtsort</th>
-<th>Geschlecht</th>
-<th>Generation</th>
-<th>Eltern‑Code</th>
-<th>Partner‑Code</th>
-<th>Geerbt von</th>
-<th>Ring‑Code</th>
-<th>Kommentar</th>
-<th class="no-print">Aktion</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
-</section>
-<section class="pane glass" id="paneTree">
-<h3>🌳 Grafischer Stammbaum</h3>
-<div class="tree-wrap">
-<svg aria-label="Stammbaum" height="700" id="treeSvg" role="img" width="1400"></svg>
-</div>
-</section>
-</main>
-<footer class="footer muted no-print">
-<small>Tipps: Suche funktioniert mit Namen oder Codes (z. B. „1C“). Daten werden im Browser gespeichert (localStorage).</small>
-</footer>
-<!-- Dialog: Person hinzufügen -->
-<dialog class="dlg" id="dlgAdd">
-<form id="formAdd">
-<h3>➕ Person hinzufügen</h3>
-<div class="grid">
-<label>Eltern‑Code <input name="parentCode" placeholder="z. B. 1 oder 1A"/></label>
-<label>Name <input name="name"/></label>
-<label>Geburtsdatum <input name="birthDate" placeholder="TT.MM.JJJJ"/></label>
-<label>Geburtsort <input name="birthPlace"/></label>
-<label>Geschlecht
-          <select name="gender">
-<option value="">–</option>
-<option value="m">m</option>
-<option value="w">w</option>
-<option value="divers">divers</option>
-</select>
-</label>
-<label>Kommentar <input name="note"/></label>
-<label>Vererbt?
-          <select name="inherited">
-<option>nein</option>
-<option>ja</option>
-</select>
-</label>
-<label>Geerbt von (Code) <input name="inheritedFrom" placeholder="z. B. 1"/></label>
-</div>
-<div class="hint">Der Ring‑Code wird automatisch generiert: Kinder von „1“ → 1A, 1B, 1C …; Folgegenerationen → Ziffern anfügen; Partner → „x“-Suffix.</div>
-<div class="hint"><strong>Hinweis:</strong> hat die Person keinen Familienwappenring, bitte im Kommentar vermerken.</div>
-<menu>
-<button class="btn-cancel" onclick="this.closest('dialog').close()" type="button">Abbrechen</button>
-<button class="primary" id="dlgAddOk" type="button">Speichern</button>
-</menu>
-</form>
-</dialog>
-<!-- Dialog: Partner hinzufügen -->
-<dialog class="dlg" id="dlgPartner">
-<form id="formPartner">
-<h3>❤️ Partner hinzufügen</h3>
-<div class="grid">
-<label>Partner von Code <input name="personCode" placeholder="z. B. 1A"/></label>
-<label>Name des Partners <input name="name"/></label>
-<label>Geschlecht
-          <select name="gender">
-<option value="">–</option>
-<option value="m">m</option>
-<option value="w">w</option>
-<option value="divers">divers</option>
-</select>
-</label>
-<label>Kommentar <input name="note"/></label>
-</div>
-<menu>
-<button class="btn-cancel" onclick="this.closest('dialog').close()" type="button">Abbrechen</button>
-<button class="primary" id="dlgPartnerOk" type="button">Speichern</button>
-</menu>
-</form>
-</dialog>
-<!-- Dialog: Person bearbeiten -->
-<dialog class="dlg" id="dlgEdit">
-<form id="formEdit">
-<h3>✏️ Person bearbeiten</h3>
-<div class="grid">
-<label>Personen‑Code <input name="code" readonly=""/></label>
-<label>Name <input name="name"/></label>
-<label>Geburtsdatum <input name="birthDate" placeholder="TT.MM.JJJJ"/></label>
-<label>Geburtsort <input name="birthPlace"/></label>
-<label>Geschlecht
-          <select name="gender">
-<option value="">–</option>
-<option value="m">m</option>
-<option value="w">w</option>
-<option value="divers">divers</option>
-</select>
-</label>
-<label>Vererbt?
-          <select name="inherited">
-<option>nein</option>
-<option>ja</option>
-</select>
-</label>
-<label>Geerbt von (Code) <input name="inheritedFrom" placeholder="z. B. 1"/></label>
-<label>Kommentar <input name="note"/></label>
-</div>
-<div class="hint">Änderungen wirken sich sofort auf Tabelle und Baum aus. Personen‑Code ist fix, da er Referenzen (Kinder/Partner) besitzt.</div>
-<menu>
-<button class="btn-cancel" onclick="this.closest('dialog').close()" type="button">Abbrechen</button>
-<button class="primary" id="dlgEditOk" type="button">Speichern</button>
-</menu>
-</form>
-</dialog>
-<!-- Dialog: Export (eigener Text & Schaltflächen) -->
-<dialog class="dlg" id="dlgExport">
-<form id="formExport">
-<h3>💾 Export</h3>
-<p>Wähle deinen Speicherort aus</p>
-<menu>
-<button class="btn-cancel" onclick="this.closest('dialog').close()" type="button">Abbrechen</button>
-<button class="primary" id="btnExportSaveAs" type="button">Speichern unter</button>
-<button id="btnExportDownload" type="button">Im Downloadordner speichern</button>
-</menu>
-</form>
-</dialog>
-<!-- Dialog: Import‑Konflikte -->
-<dialog class="dlg" id="dlgImportConf">
-<form id="formImportConf">
-<h3>⚠️ Import – Duplikate</h3>
-<p id="impSummary">Es wurden Duplikate gefunden.</p>
-<fieldset class="choices">
-<label><input checked="" name="impMode" type="radio" value="overwrite"/> Überschreiben (importierte Daten ersetzen vorhandene)</label>
-<label><input name="impMode" type="radio" value="skip"/> Überspringen (vorhandene behalten)</label>
-<label><input name="impMode" type="radio" value="keepboth"/> Beide behalten (importierte Duplikate mit „‑DUP“ im Personen‑Code)</label>
-</fieldset>
-<menu>
-<button class="btn-cancel" onclick="this.closest('dialog').close()" type="button">Abbrechen</button>
-<button class="primary" id="dlgImportOk" type="button">Fortfahren</button>
-</menu>
-</form>
-</dialog>
-<script src="app.js"></script>
+  <header>
+    <h1>👪 Familienringe Stammbaum</h1>
+  </header>
 
-<div class="button-container">
-<button id="btnStatistics">📊 Statistik anzeigen</button>
-<button id="btnExportPDF">🧾 Export als PDF</button>
-<button id="btnExportCSV">📁 Export als CSV</button>
-<button id="btnExportJSON">🧬 Export als JSON</button>
-<button id="btnAddPartner">➕ Partner hinzufügen</button>
-<button id="btnMarkSeparation">💔 Trennung markieren</button>
-<button id="btnShareIOS">📤 Teilen (iOS)</button>
-</div>
+  <section id="auth">
+    <label for="password">🔐 Passwort:</label>
+    <input type="password" id="password" />
+    <button id="btnLogin">Login</button>
+  </section>
+
+  <section id="controls" style="display:none;">
+    <button id="btnAddPerson">➕ Person hinzufügen</button>
+    <button id="btnAddPartner">👑 Partner hinzufügen</button>
+    <button id="btnMarkSeparation">💔 Trennung markieren</button>
+    <button id="btnStatistics">📊 Statistik</button>
+    <button id="btnExportPDF">🗒️ Export als PDF</button>
+    <button id="btnExportCSV">📁 Export als CSV</button>
+    <button id="btnExportJSON">🧮 Export als JSON</button>
+    <button id="btnShareIOS">📤 Teilen (iOS)</button>
+    <button id="btnImport">📥 Importieren</button>
+    <button id="btnUndo">↩️ Rückgängig</button>
+    <button id="btnRedo">↪️ Wiederholen</button>
+  </section>
+
+  <section id="tableView" style="display:none;">
+    <h2>📋 Personenliste</h2>
+    <input type="text" id="searchInput" placeholder="🔍 Suche nach Name oder Code..." />
+    <table id="peopleTable">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Geburtsdatum</th>
+          <th>Eltern</th>
+          <th>Partner</th>
+          <th>Vererbt</th>
+          <th>Notiz</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="treeView" style="display:none;">
+    <h2>🌳 Stammbaum</h2>
+    <canvas id="treeCanvas" width="1200" height="800"></canvas>
+  </section>
+
+  <dialog id="personDialog">
+    <form method="dialog">
+      <h3>Person bearbeiten</h3>
+      <label>Code: <input type="text" id="personCode" required /></label>
+      <label>Name: <input type="text" id="personName" required /></label>
+      <label>Geburtsdatum: <input type="date" id="personBirthDate" required /></label>
+      <label>Eltern-Code: <input type="text" id="personParentCode" /></label>
+      <label>Partner-Codes (Komma getrennt): <input type="text" id="personPartnerCodes" /></label>
+      <label>Vererbt: <input type="checkbox" id="personInherited" /></label>
+      <label>Vererbt von Code: <input type="text" id="personInheritedFromCode" /></label>
+      <label>Notiz: <textarea id="personNote"></textarea></label>
+      <menu>
+        <button id="btnSavePerson">💾 Speichern</button>
+        <button id="btnCancelPerson">❌ Abbrechen</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <footer>
+    <p>© Familienringe WebApp v4</p>
+  </footer>
+
+  <script src="app.js"></script>
 </body>
 </html>
