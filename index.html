@@ -28,7 +28,6 @@
       <button id="btnStats">📊 Statistiken</button>
       <button id="btnRefreshTree">🌳 Baum aktualisieren</button>
       <input id="txtSearch" placeholder="Person suchen (Name/Code)" />
-    <span class="hint">Um eine Person zu bearbeiten: Doppelklick auf die Zeile</span>
     </div>
     <div class="row">
       <button id="btnUndo" class="big">↶ Rückgängig</button>
@@ -91,7 +90,22 @@
         <button id="btnSavePerson" value="default" class="accent">Speichern</button>
       </div>
       <div class="hint">* Pflichtfelder. Datum: TT.MM.JJJJ. Personen-Code & Ring-Code werden automatisch vergeben.</div>
-    ="btnCloseStats">Schließen</button></div></dialog>
+    </form>
+  </dialog>
+
+  
+  <dialog id="dlgDelete">
+    <form method="dialog" id="frmDelete">
+      <h3>Person löschen</h3>
+      <p>Bitte <b>Name</b> oder <b>Personen-Code</b> eingeben:</p>
+      <input id="delQuery" placeholder="z. B. 1A oder Mario" />
+      <div class="dlg-actions">
+        <button value="cancel">Abbrechen</button>
+        <button id="btnConfirmDelete" value="default" class="danger">Löschen</button>
+      </div>
+    </form>
+  </dialog>
+<dialog id="dlgStats"><div id="statsContent"></div><div class="dlg-actions"><button id="btnCloseStats">Schließen</button></div></dialog>
 
   <script src="app.js"></script>
 </body>
