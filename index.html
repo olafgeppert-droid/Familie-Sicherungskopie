@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Wappenringe der Familie GEPPERT</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <h1>Wappenringe der Familie GEPPERT</h1>
+  <div id="toolbar">
+    <button onclick="addPerson()">Neue Person</button>
+    <button onclick="deletePersonPrompt()">Person löschen</button>
+    <button onclick="exportData()">Export</button>
+    <button onclick="importData()">Import</button>
+    <button onclick="printTable()">Drucken Tabelle</button>
+    <button onclick="printTree()">Drucken Stammbaum</button>
+  </div>
+  <div id="table-container">
+    <table id="personTable">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Geburtsdatum</th>
+          <th>Partner</th>
+          <th>Ring-Code</th>
+          <th>Geerbt von</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div id="tree-container"></div>
+</body>
+</html>
