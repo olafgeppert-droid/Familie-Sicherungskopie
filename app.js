@@ -1,69 +1,67 @@
-let persons = [
-    { code: "1", name: "Stammvater", birth: "1950-01-01", partner: "", inherited: "", ring: "" },
-    { code: "1x", name: "Irina", birth: "1952-02-02", partner: "1", inherited: "", ring: "" },
-    { code: "1A", name: "Kind A", birth: "1975-05-01", partner: "", inherited: "1", ring: "" },
-    { code: "1B", name: "Kind B", birth: "1978-06-01", partner: "", inherited: "1", ring: "" },
-    { code: "1C", name: "Kind C", birth: "1980-07-01", partner: "", inherited: "1", ring: "" },
-    { code: "1A1", name: "Enkel A1", birth: "2000-01-01", partner: "", inherited: "1A", ring: "" },
-    { code: "1B1", name: "Enkel B1", birth: "2002-01-01", partner: "", inherited: "1B", ring: "" },
-    { code: "1C1", name: "Enkel C1", birth: "2003-01-01", partner: "", inherited: "1C", ring: "" }
+
+// Family Rings – upd37 (no login) with auto codes, ring code, "Geerbt von", SVG tree
+
+const STORAGE_KEY = "familyRingVault_v4";
+let people = [];
+let undoStack = [];
+let redoStack = [];
+let filtered = "";
+let currentSort = {dir:1};
+
+// Seed minimal
+const seed = [
+  {Code:"1", RingCode:"1", Name:"Olaf Geppert", BirthDate:"13.01.1965", BirthPlace:"", Gender:"m", ParentCode:"", PartnerCode:"1x", InheritedFrom:"", Note:""},
+  {Code:"1x", RingCode:"1", Name:"Irina Geppert", BirthDate:"13.01.1970", BirthPlace:"", Gender:"w", ParentCode:"", PartnerCode:"1", InheritedFrom:"1", Note:""},
+  {Code:"1A", RingCode:"1", Name:"Mario Geppert", BirthDate:"28.04.1995", BirthPlace:"", Gender:"m", ParentCode:"1", PartnerCode:"1Ax", InheritedFrom:"1", Note:""},
+  {Code:"1Ax", RingCode:"1", Name:"Kim", BirthDate:"", BirthPlace:"", Gender:"w", ParentCode:"", PartnerCode:"1A", InheritedFrom:"1A", Note:""}
 ];
 
-function renderTable() {
-    persons.sort((a, b) => {
-        const genA = a.code.replace(/[^0-9]/g, '').length;
-        const genB = b.code.replace(/[^0-9]/g, '').length;
-        if (genA !== genB) return genA - genB;
-        return a.code.localeCompare(b.code);
-    });
+// Helpers
+function sget(k){ try{ return JSON.parse(localStorage.getItem(k)||"null"); }catch(e){ return null; } }
+function sset(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function qs(s){ return document.querySelector(s); }
+function qsa(s){ return Array.from(document.querySelectorAll(s)); }
 
-    const tbody = document.querySelector("#personTable tbody");
-    tbody.innerHTML = "";
-    persons.forEach(p => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${p.code}</td><td>${p.name}</td><td>${p.birth}</td><td>${p.partner}</td><td>${p.inherited}</td><td>${p.ring}</td>`;
-        tbody.appendChild(tr);
-    });
+function isPartner(code){ return code && code.endsWith("x"); }
+function baseOf(code){ return isPartner(code) ? code.slice(0,-1) : code; }
+function normalizeCode(code){
+  if(!code) return "";
+  code = code.trim();
+  const partner = code.endsWith("x") || code.endsWith("X");
+  code = code.toUpperCase();
+  return partner ? code.slice(0,-1)+"x" : code;
 }
 
-// Dialoge
-document.getElementById("btnAdd").addEventListener("click", () => {
-    document.getElementById("dialogAdd").classList.remove("hidden");
-});
-document.getElementById("btnCancelAdd").addEventListener("click", () => {
-    document.getElementById("dialogAdd").classList.add("hidden");
-});
-document.getElementById("btnSavePerson").addEventListener("click", () => {
-    const name = document.getElementById("newName").value;
-    const birth = document.getElementById("newBirth").value;
-    const partner = document.getElementById("newPartner").value;
-    const inherit = document.getElementById("inheritCode").value;
+// Generation = length of base (no 'x')
+function generationOf(code){ if(!code) return 0; return baseOf(code).length; }
 
-    if (!name) return;
 
-    // Personen-Code generieren (vereinfacht, nach Geburtsdatum sortiert)
-    let newCode = "NEW" + (persons.length + 1);
-    let ringCode = "";
-    if (inherit) {
-        ringCode = inherit + "→" + newCode;
+function recalcAll(){
+  // keep codes as-is, set Generation, compute RingCode from explicit inheritance
+  const byCode = Object.fromEntries(people.map(p => [p.Code, p]));
+  for(const p of people){
+    p.Generation = generationOf(p.Code);
+  }
+  for(const p of people){
+    const base = baseOf(p.Code);
+    // Partner teilt Ringcode mit Basis
+    if(isPartner(p.Code)){
+      const b = byCode[base];
+      p.RingCode = b ? (b.RingCode || base) : base;
+      continue;
     }
-    persons.push({ code: newCode, name, birth, partner, inherited: inherit, ring: ringCode });
+    // Inheritance chain
+    if(p.InheritedFrom){
+      const donor = byCode[p.InheritedFrom];
+      const donorChain = donor && donor.RingCode ? donor.RingCode : p.InheritedFrom;
+      p.RingCode = donorChain + "→" + p.Code;
+    }else{
+      // Default: eigener gravierter Code (Basis)
+      p.RingCode = base;
+    }
+  }
+}
 
-    renderTable();
-    document.getElementById("dialogAdd").classList.add("hidden");
-});
 
-document.getElementById("btnDelete").addEventListener("click", () => {
-    document.getElementById("dialogDelete").classList.remove("hidden");
-});
-document.getElementById("btnCancelDelete").addEventListener("click", () => {
-    document.getElementById("dialogDelete").classList.add("hidden");
-});
-document.getElementById("btnConfirmDelete").addEventListener("click", () => {
-    const input = document.getElementById("deleteInput").value.trim();
-    persons = persons.filter(p => p.code !== input && p.name !== input);
-    renderTable();
-    document.getElementById("dialogDelete").classList.add("hidden");
-});
-
-renderTable();
+function nextRootNumber

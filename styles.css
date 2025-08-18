@@ -1,58 +1,60 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    background: #f5f5f5;
-    color: #222;
+
+:root{
+  --bg: #ffffff;
+  --fg: #1a1a1a;
+  --muted: #666;
+  --accent: #2962ff;
+  --danger: #d32f2f;
+  --row: #f5f7fb;
+  --gen1:#e3f2fd; --gen2:#e8f5e9; --gen3:#fff3e0; --gen4:#fce4ec; --gen5:#ede7f6;
 }
-header {
-    background: #0078D7;
-    color: white;
-    padding: 10px;
+*{ box-sizing: border-box; }
+body{ margin:0; font-family: system-ui, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--fg); }
+.app-header{ font-size: clamp(20px, 3.2vw, 32px); padding:14px 16px; font-weight:700; text-align:center; border-bottom:1px solid #e6e8ee; }
+
+.ribbon{ padding:10px 12px; border-bottom:1px solid #e6e8ee; background:#fafbfe; position:sticky; top:0; z-index:5; }
+.ribbon .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:6px 0; }
+.ribbon input#txtSearch{ flex:1 1 220px; padding:8px 10px; border:1px solid #ccd3e0; border-radius:6px; }
+
+button{ padding:8px 12px; border:1px solid #ccd3e0; border-radius:8px; background:#fff; cursor:pointer; }
+button:hover{ background:#f3f6ff; }
+button.accent{ background:var(--accent); color:#fff; border-color:var(--accent); }
+button.danger{ background:var(--danger); color:#fff; border-color:var(--danger); }
+button.big{ font-size:16px; padding:10px 16px; }
+
+.export-group{ position:relative; }
+.export-group .export-menu{ display:none; position:absolute; top:36px; left:0; background:#fff; border:1px solid #e0e4ef; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,.08); min-width:200px; }
+.export-group .export-menu button{ display:block; width:100%; text-align:left; border:0; border-bottom:1px solid #eee; background:#fff; padding:10px 12px; }
+.export-group.open .export-menu{ display:block; }
+
+.content{ display:grid; grid-template-columns: 1fr; gap:16px; padding:16px; }
+#peopleTable{ width:100%; border-collapse: collapse; }
+#peopleTable th, #peopleTable td{ padding:8px 10px; border-bottom:1px solid #eef1f7; }
+#peopleTable thead th{ background:#f7f9fd; text-align:left; }
+#peopleTable tbody tr:nth-child(even){ background:var(--row); }
+th[data-k]{ cursor:pointer; }
+
+/* SVG Tree */
+#treeSvg{ width:100%; height:640px; background:#f7f9fd; border:1px solid #e6e8ee; border-radius:8px; }
+.node{ fill:#fff; stroke:#90a4ae; }
+.link{ stroke:#90a4ae; stroke-width:2; }
+.label{ font:12px system-ui, Arial; }
+.code{ font-weight:700; }
+
+dialog{ border:0; border-radius:12px; padding:16px; }
+dialog::backdrop{ background: rgba(0,0,0,.25); }
+#dlgPerson .grid{ display:grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap:10px; }
+#dlgPerson label{ display:flex; flex-direction:column; gap:4px; }
+#dlgPerson input, #dlgPerson select{ padding:8px 10px; border:1px solid #ccd3e0; border-radius:6px; }
+.hint{ color:var(--muted); margin-top:8px; }
+.dlg-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
+
+@media print{
+  .ribbon, .app-header, #txtSearch, .dlg-actions, dialog{ display:none !important; }
+  body{ background:#fff; color:#000; }
+  #peopleTable thead th{ background:#eee; }
 }
-h1 {
-    margin: 0;
-    text-align: center;
-}
-.ribbon {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 10px;
-}
-.ribbon button {
-    padding: 8px 14px;
-    font-size: 14px;
-}
-.ribbon .hint {
-    margin-left: 20px;
-    font-style: italic;
-}
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px auto;
-    background: white;
-}
-th, td {
-    border: 1px solid #ccc;
-    padding: 6px;
-    text-align: left;
-}
-.dialog {
-    position: fixed;
-    top: 20%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: white;
-    padding: 20px;
-    border: 1px solid #666;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
-.hidden { display: none; }
-#tree {
-    margin: 20px;
-    padding: 10px;
-    background: white;
-    border: 1px solid #ccc;
-}
+
+#dlgDelete{max-width:420px}
+#dlgDelete input{width:100%; padding:8px; margin:8px 0}
+#dlgDelete .danger{background:#c23; color:#fff}
