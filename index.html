@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wappenringe der Familie GEPPERT</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Ribbon -->
+  <header class="ribbon">
+    <div class="ribbon-title">
+      <img src="wappen.jpeg" class="wappen" alt="Familienwappen links">
+      <h1>Wappenringe der Familie GEPPERT</h1>
+      <img src="wappen.jpeg" class="wappen" alt="Familienwappen rechts">
+    </div>
+
+    <div class="ribbon-row">
+      <button id="btnNew">➕ Neue Person</button>
+      <button id="btnDelete">🗑️ Person löschen</button>
+      <button id="btnImport">📂 Import</button>
+      <button id="btnExportJSON">💾 Export JSON</button>
+      <button id="btnExportCSV">📄 Export CSV</button>
+      <button id="btnPrintTable">🖨️ Drucken Tabelle</button>
+      <button id="btnPrintTree">🌳 Drucken Baum</button>
+      <button id="btnStats">📊 Statistik</button>
+      <button id="btnUndo" class="big">↩️ Rückgängig</button>
+      <button id="btnRedo" class="big">↪️ Wiederholen</button>
+      <button id="btnHelp">❓ Hilfe</button>
+      <div class="hint">💡 Um eine Person zu bearbeiten, Doppelklick auf entsprechende Zeile</div>
+      <input id="search" type="text" placeholder="🔍 Suche in Tabelle..." />
+    </div>
+  </header>
+
+  <!-- Tabelle -->
+  <main>
+    <div class="table-wrap">
+      <table id="personTable">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Geburtsdatum</th>
+            <th>Geschlecht</th>
+            <th>Partner</th>
+            <th>Eltern</th>
+            <th>Kinder</th>
+            <th>Ringcode</th>
+            <th>Geerbt von</th>
+            <th>Bemerkung</th>
+            <th>Sonstiges</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Stammbaum -->
+    <section id="treeSection">
+      <svg id="tree" width="100%" height="700" role="img" aria-label="Stammbaum"></svg>
+    </section>
+  </main>
+
+  <!-- Modals -->
+  <div class="modal" id="personModal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-head">
+        <h2 id="personModalTitle">Neue Person</h2>
+        <button class="close" id="closePersonModal" aria-label="Schließen">×</button>
+      </div>
+      <form id="personForm">
+        <input type="hidden" id="editCode" />
+        <div class="grid2">
+          <label>Vor- und Nachname
+            <input id="name" type="text" required placeholder="z. B. Anna Geppert">
+          </label>
+          <label>Geburtsdatum
+            <input id="birth" type="date" required>
+            <small class="help">Format: JJJJ-MM-TT</small>
+          </label>
+          <label>Geschlecht
+            <select id="gender">
+              <option value="männlich">männlich</option>
+              <option value="weiblich">weiblich</option>
+              <option value="divers">divers</option>
+            </select>
+          </label>
+          <label>Eltern (Code)
+            <input id="parentsCode" type="text" placeholder="z. B. 1 oder 1A">
+          </label>
+          <label>Partner (Code, optional)
+            <input id="partnerCode" type="text" placeholder="z. B. 1x oder 1Ax">
+          </label>
+          <label>Geerbt von (Code, optional)
+            <input id="inheritedFrom" type="text" placeholder="z. B. 1A">
+          </label>
+          <label>Bemerkung
+            <input id="note" type="text" placeholder="optional">
+          </label>
+          <label>Sonstiges
+            <input id="misc" type="text" placeholder="optional">
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="primary">💾 Speichern</button>
+          <button type="button" id="cancelPerson" class="ghost">❌ Abbrechen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="helpModal" aria-hidden="true">
+    <div class="modal-content large">
+      <div class="modal-head">
+        <h2>Hilfe</h2>
+        <button class="close" id="closeHelp" aria-label="Schließen">×</button>
+      </div>
+      <div class="modal-body">
+        <iframe id="helpFrame" src="help.html" title="Hilfe"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept=".json,.csv" style="display:none" />
+
+  <script src="app.js"></script>
+</body>
+</html>
