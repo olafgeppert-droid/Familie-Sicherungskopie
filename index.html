@@ -1,44 +1,43 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Wappenringe der Familie GEPPERT</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <!-- Ribbon -->
   <header class="ribbon">
-    <div class="ribbon-title">
-      <img src="wappen.jpeg" class="wappen" alt="Familienwappen links">
+    <div class="title-wrap">
+      <img src="wappen.jpeg" alt="Wappen links" class="crest crest-left" onerror="this.style.display='none'"/>
       <h1>Wappenringe der Familie GEPPERT</h1>
-      <img src="wappen.jpeg" class="wappen" alt="Familienwappen rechts">
+      <img src="wappen.jpeg" alt="Wappen rechts" class="crest crest-right" onerror="this.style.display='none'"/>
     </div>
-
     <div class="ribbon-row">
       <button id="btnNew">➕ Neue Person</button>
       <button id="btnDelete">🗑️ Person löschen</button>
-      <button id="btnImport">📂 Import</button>
-      <button id="btnExportJSON">💾 Export JSON</button>
-      <button id="btnExportCSV">📄 Export CSV</button>
-      <button id="btnPrintTable">🖨️ Drucken Tabelle</button>
-      <button id="btnPrintTree">🌳 Drucken Baum</button>
-      <button id="btnStats">📊 Statistik</button>
+      <button id="btnExport">📦 Export</button>
+      <button id="btnImport">📥 Import</button>
       <button id="btnUndo" class="big">↩️ Rückgängig</button>
       <button id="btnRedo" class="big">↪️ Wiederholen</button>
+      <button id="btnPrint">🖨️ Drucken</button>
+      <button id="btnStats">📊 Statistik</button>
       <button id="btnHelp">❓ Hilfe</button>
-      <div class="hint">💡 Um eine Person zu bearbeiten, Doppelklick auf entsprechende Zeile</div>
-      <input id="search" type="text" placeholder="🔍 Suche in Tabelle..." />
+      <button id="btnReset" class="danger">🗑️ Daten Reset</button>
+      <span class="search-wrap">
+        🔎 <input id="searchInput" type="text" placeholder="Suche in Tabelle…" />
+      </span>
     </div>
+    <div class="hint">💡 Doppelklick auf eine Tabellenzeile öffnet „Person ändern“.</div>
   </header>
 
-  <!-- Tabelle -->
   <main>
-    <div class="table-wrap">
+    <section class="table-section">
       <table id="personTable">
         <thead>
           <tr>
-            <th>Code</th>
+            <th>Gen</th>
+            <th>Personencode</th>
             <th>Name</th>
             <th>Geburtsdatum</th>
             <th>Geschlecht</th>
@@ -48,80 +47,138 @@
             <th>Ringcode</th>
             <th>Geerbt von</th>
             <th>Bemerkung</th>
-            <th>Sonstiges</th>
           </tr>
         </thead>
-        <tbody id="tbody"></tbody>
+        <tbody></tbody>
       </table>
-    </div>
+    </section>
 
-    <!-- Stammbaum -->
-    <section id="treeSection">
-      <svg id="tree" width="100%" height="700" role="img" aria-label="Stammbaum"></svg>
+    <section class="tree-section">
+      <svg id="familyTree" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stammbaum"></svg>
     </section>
   </main>
 
-  <!-- Modals -->
-  <div class="modal" id="personModal" aria-hidden="true">
-    <div class="modal-content">
-      <div class="modal-head">
-        <h2 id="personModalTitle">Neue Person</h2>
-        <button class="close" id="closePersonModal" aria-label="Schließen">×</button>
-      </div>
-      <form id="personForm">
-        <input type="hidden" id="editCode" />
-        <div class="grid2">
-          <label>Vor- und Nachname
-            <input id="name" type="text" required placeholder="z. B. Anna Geppert">
-          </label>
-          <label>Geburtsdatum
-            <input id="birth" type="date" required>
-            <small class="help">Format: JJJJ-MM-TT</small>
-          </label>
-          <label>Geschlecht
-            <select id="gender">
-              <option value="männlich">männlich</option>
-              <option value="weiblich">weiblich</option>
-              <option value="divers">divers</option>
-            </select>
-          </label>
-          <label>Eltern (Code)
-            <input id="parentsCode" type="text" placeholder="z. B. 1 oder 1A">
-          </label>
-          <label>Partner (Code, optional)
-            <input id="partnerCode" type="text" placeholder="z. B. 1x oder 1Ax">
-          </label>
-          <label>Geerbt von (Code, optional)
-            <input id="inheritedFrom" type="text" placeholder="z. B. 1A">
-          </label>
-          <label>Bemerkung
-            <input id="note" type="text" placeholder="optional">
-          </label>
-          <label>Sonstiges
-            <input id="misc" type="text" placeholder="optional">
-          </label>
-        </div>
-        <div class="modal-actions">
-          <button type="submit" class="primary">💾 Speichern</button>
-          <button type="button" id="cancelPerson" class="ghost">❌ Abbrechen</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal" id="helpModal" aria-hidden="true">
-    <div class="modal-content large">
-      <div class="modal-head">
-        <h2>Hilfe</h2>
-        <button class="close" id="closeHelp" aria-label="Schließen">×</button>
+  <!-- Dialog: Neue / Bearbeiten Person -->
+  <div id="personDialog" class="modal" aria-hidden="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="personDialogTitle">Neue Person</h3>
+        <button class="close" aria-label="Schließen" onclick="UI.closePersonDialog()">×</button>
       </div>
       <div class="modal-body">
-        <iframe id="helpFrame" src="help.html" title="Hilfe"></iframe>
+        <form id="personForm" onsubmit="return false;">
+          <div class="form-row">
+            <label>Vor- und Nachname*<br/>
+              <input type="text" id="f_name" required placeholder="z. B. Anna Geppert"/>
+            </label>
+            <label>Geburtsdatum (TT.MM.JJJJ)*<br/>
+              <input type="text" id="f_birth" required placeholder="TT.MM.JJJJ" />
+            </label>
+            <label>Geschlecht*<br/>
+              <select id="f_gender" required>
+                <option value="">— wählen —</option>
+                <option value="m">männlich</option>
+                <option value="w">weiblich</option>
+                <option value="d">divers</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label>Partner von (Code)<br/>
+              <input type="text" id="f_partnerOf" placeholder="z. B. 1A"/>
+            </label>
+            <label>Eltern (Code 1)<br/>
+              <input type="text" id="f_parent1" placeholder="z. B. 1"/>
+            </label>
+            <label>Eltern (Code 2)<br/>
+              <input type="text" id="f_parent2" placeholder="z. B. 1x"/>
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label>Geerbt von (Code)<br/>
+              <input type="text" id="f_inherited" placeholder="z. B. 1A"/>
+            </label>
+            <label>Bemerkung<br/>
+              <input type="text" id="f_remark" placeholder="optional"/>
+            </label>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" onclick="UI.savePerson()">💾 Speichern</button>
+            <button type="button" class="secondary" onclick="UI.closePersonDialog()">Abbrechen</button>
+          </div>
+          <div class="form-hint">* Pflichtfelder. Datumsformat: <b>TT.MM.JJJJ</b>.</div>
+        </form>
       </div>
     </div>
   </div>
 
-  <input type="file" id="fileInput" accept=".json,.csv" style="display:none" />
+  <!-- Dialog: Person löschen -->
+  <div id="deleteDialog" class="modal" aria-hidden="true">
+    <div class="modal-box small">
+      <div class="modal-header">
+        <h3>Person löschen</h3>
+        <button class="close" aria-label="Schließen" onclick="UI.closeDeleteDialog()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Gib den <b>Namen</b> oder den <b>Personencode</b> der zu löschenden Person ein.</p>
+        <input type="text" id="del_query" placeholder="Name oder Code"/>
+      </div>
+      <div class="modal-actions">
+        <button onclick="UI.confirmDelete()">🗑️ Löschen</button>
+        <button class="secondary" onclick="UI.closeDeleteDialog()">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog: Export Auswahl -->
+  <div id="exportDialog" class="modal" aria-hidden="true">
+    <div class="modal-box small">
+      <div class="modal-header">
+        <h3>Export</h3>
+        <button class="close" aria-label="Schließen" onclick="UI.closeExportDialog()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Format wählen:</p>
+        <div class="choice-row">
+          <button onclick="Data.exportJSON()">Export JSON</button>
+          <button onclick="Data.exportCSV()">Export CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog: Drucken Auswahl -->
+  <div id="printDialog" class="modal" aria-hidden="true">
+    <div class="modal-box small">
+      <div class="modal-header">
+        <h3>Drucken</h3>
+        <button class="close" aria-label="Schließen" onclick="UI.closePrintDialog()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Was möchtest du drucken?</p>
+        <div class="choice-row">
+          <button onclick="UI.printTable()">Tabelle</button>
+          <button onclick="Tree.printTree()">Baum</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hilfe-Popup -->
+  <div id="helpPopup" class="overlay" aria-hidden="true">
+    <div class="overlay-box">
+      <div class="overlay-header">
+        <h3>Hilfe</h3>
+        <button class="close" aria-label="Schließen" onclick="UI.closeHelp()">×</button>
+      </div>
+      <iframe src="help.html" title="Hilfe"></iframe>
+    </div>
+  </div>
+
+  <input id="fileInput" type="file" accept=".json,.csv" style="display:none"/>
 
   <script src="app.js"></script>
 </body>
