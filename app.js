@@ -18,24 +18,18 @@ function generateCode(name, birth) {
 function renderTable() {
   const tbody = document.querySelector("#personTable tbody");
   tbody.innerHTML = "";
-  persons.forEach((p) => {
+  persons.forEach((p, idx) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${p.code}</td><td>${p.name}</td><td>${p.birth}</td>
-                    <td>${p.partner}</td><td>${p.ring}</td><td>${p.inheritedFrom}</td>`;
+                    <td>${p.partner}</td><td>${p.ring}</td><td>${p.inheritedFrom}</td>
+                    <td><button onclick="deletePerson(${idx})">Löschen</button></td>`;
     tbody.appendChild(tr);
   });
 }
 
-function deletePersonPrompt() {
-  const query = prompt("Bitte Name oder Personencode der zu löschenden Person eingeben:");
-  if (!query) return;
-  const idx = persons.findIndex(p => p.code.toLowerCase() === query.toLowerCase() || p.name.toLowerCase() === query.toLowerCase());
-  if (idx === -1) {
-    alert("Keine passende Person gefunden.");
-    return;
-  }
-  if (!confirm(`Soll die Person '${persons[idx].name}' (${persons[idx].code}) wirklich gelöscht werden?`)) return;
-  persons.splice(idx, 1);
+function deletePerson(index) {
+  if (!confirm("Person wirklich löschen?")) return;
+  persons.splice(index, 1);
   renderTable();
   renderTree();
 }

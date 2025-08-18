@@ -3,4 +3,5 @@ h1 { text-align: center; background: #004080; color: #fff; padding: 1rem; margin
 #toolbar { display: flex; gap: 1rem; justify-content: center; background: #eee; padding: .5rem; flex-wrap: wrap; }
 #personTable { width: 100%; border-collapse: collapse; margin: 1rem auto; }
 #personTable th, #personTable td { border: 1px solid #ccc; padding: .5rem; text-align: center; }
+#personTable button { padding: 0.2rem 0.5rem; }
 #tree-container { margin: 2rem; text-align: center; }
