@@ -1,98 +1,61 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Wappenringe der Familie GEPPERT</title>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <title>Wappenringe der Familie GEPPERT</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="app-header">Wappenringe der Familie GEPPERT</header>
-
-  <nav class="ribbon">
-    <div class="row">
-      <button id="btnNew" class="accent">➕ Neue Person</button>
-      <button id="btnImport">⤒ Import</button>
-      <div class="export-group">
-        <button id="btnExport">⤓ Export</button>
-        <div class="export-menu" id="exportMenu">
-          <button data-exp="json">Export als JSON</button>
-          <button data-exp="csv">Export als CSV</button>
-          <button data-exp="pdf">Export als PDF</button>
-          <button data-exp="share">iOS Teilen</button>
+    <header>
+        <h1>Wappenringe der Familie GEPPERT</h1>
+        <div class="ribbon">
+            <button id="btnAdd">Neue Person</button>
+            <button id="btnDelete">Person löschen</button>
+            <button id="btnExport">Export</button>
+            <button id="btnImport">Import</button>
+            <button id="btnTree">Stammbaum anzeigen</button>
+            <button id="btnStats">Statistik</button>
+            <button id="btnUndo">⮌ Undo</button>
+            <button id="btnRedo">⮎ Redo</button>
+            <span class="hint">Um eine Person zu bearbeiten, Doppelklick auf entsprechende Zeile</span>
         </div>
-      </div>
-      <button id="btnPrintTable">🖨️ Drucken Tabelle</button>
-      <button id="btnPrintTree">🖨️ Drucken Baum</button>
-      <button id="btnStats">📊 Statistiken</button>
-      <button id="btnRefreshTree">🌳 Baum aktualisieren</button>
-      <input id="txtSearch" placeholder="Person suchen (Name/Code)" />
+    </header>
+    <main>
+        <table id="personTable">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Geburtsdatum</th>
+                    <th>Partner</th>
+                    <th>Geerbt von</th>
+                    <th>Ring-Code</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div id="tree"></div>
+    </main>
+
+    <!-- Dialog Neue Person -->
+    <div id="dialogAdd" class="dialog hidden">
+        <h2>Neue Person anlegen</h2>
+        <label>Name: <input type="text" id="newName"></label><br>
+        <label>Geburtsdatum (JJJJ-MM-TT): <input type="date" id="newBirth"></label><br>
+        <label>Partner: <input type="text" id="newPartner"></label><br>
+        <label>Geerbt von Code: <input type="text" id="inheritCode"></label><br>
+        <button id="btnSavePerson">Speichern</button>
+        <button id="btnCancelAdd">Abbrechen</button>
     </div>
-    <div class="row">
-      <button id="btnUndo" class="big">↶ Rückgängig</button>
-      <button id="btnRedo" class="big">↷ Wiederholen</button>
-      <button id="btnReset" class="danger">⟲ Reset (nur Daten)</button>
+
+    <!-- Dialog Person löschen -->
+    <div id="dialogDelete" class="dialog hidden">
+        <h2>Person löschen</h2>
+        <label>Name oder Code: <input type="text" id="deleteInput"></label><br>
+        <button id="btnConfirmDelete">Löschen</button>
+        <button id="btnCancelDelete">Abbrechen</button>
     </div>
-  </nav>
 
-  <main class="content">
-    <section id="paneTable">
-      <table id="peopleTable">
-        <thead>
-          <tr>
-            <th data-k="Generation">Gen</th>
-            <th data-k="Code">Code</th>
-            <th data-k="RingCode">Ring-Code</th>
-            <th data-k="Name">Name</th>
-            <th data-k="BirthDate">Geburtsdatum</th>
-            <th data-k="BirthPlace">Geburtsort</th>
-            <th data-k="Gender">Geschlecht</th>
-            <th data-k="ParentCode">Eltern-Code</th>
-            <th data-k="PartnerCode">Partner-Code</th>
-            <th data-k="InheritedFrom">Geerbt von</th>
-            <th data-k="Note">Kommentar</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <section id="paneTree">
-      <svg id="treeSvg"></svg>
-    </section>
-  </main>
-
-  <!-- Dialog: Person -->
-  <dialog id="dlgPerson">
-    <form method="dialog" id="frmPerson">
-      <h3>Neue/Ändern Person</h3>
-      <div class="grid">
-        <label>Code (automatisch) <input name="Code" id="pCode" readonly /></label>
-        <label>Name* <input name="Name" id="pName" required /></label>
-        <label>Geburtsdatum <input name="BirthDate" id="pBirthDate" placeholder="TT.MM.JJJJ" /></label>
-        <label>Geburtsort <input name="BirthPlace" id="pBirthPlace" /></label>
-        <label>Geschlecht
-          <select name="Gender" id="pGender">
-            <option value="">–</option>
-            <option value="m">m</option>
-            <option value="w">w</option>
-            <option value="d">divers</option>
-          </select>
-        </label>
-        <label>Eltern-Code <input name="ParentCode" id="pParent" placeholder="z. B. 1C" /></label>
-        <label>Partner-Code <input name="PartnerCode" id="pPartner" placeholder="z. B. 1C1x" /></label>
-        <label>Kommentar <input name="Note" id="pNote" /></label>
-      </div>
-      <div class="dlg-actions">
-        <button value="cancel">Abbrechen</button>
-        <button id="btnSavePerson" value="default" class="accent">Speichern</button>
-      </div>
-      <div class="hint">* Pflichtfelder. Datum: TT.MM.JJJJ. Personen-Code & Ring-Code werden automatisch vergeben.</div>
-    </form>
-  </dialog>
-
-  <dialog id="dlgStats"><div id="statsContent"></div><div class="dlg-actions"><button id="btnCloseStats">Schließen</button></div></dialog>
-
-  <script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
