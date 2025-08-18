@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wappenringe der Familie GEPPERT</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <header class="ribbon">
+    <div class="title-wrap">
+      <img src="wappen.jpeg" alt="Wappen links" class="crest crest-left" onerror="this.style.display='none'"/>
+      <h1>Wappenringe der Familie GEPPERT</h1>
+      <img src="wappen.jpeg" alt="Wappen rechts" class="crest crest-right" onerror="this.style.display='none'"/>
+    </div>
+    <div class="ribbon-row">
+      <button id="btnNew">➕ Neue Person</button>
+      <button id="btnDelete">🗑️ Person löschen</button>
+      <button id="btnExport">📦 Export</button>
+      <button id="btnImport">📥 Import</button>
+      <button id="btnUndo" class="big">↩️ Rückgängig</button>
+      <button id="btnRedo" class="big">↪️ Wiederholen</button>
+      <button id="btnPrint">🖨️ Drucken</button>
+      <button id="btnStats">📊 Statistik</button>
+      <button id="btnHelp">❓ Hilfe</button>
+      <button id="btnReset" class="danger">🗑️ Daten Reset</button>
+      <span class="search-wrap">
+        🔎 <input id="searchInput" type="text" placeholder="Suche in Tabelle…" />
+      </span>
+    </div>
+    <div class="hint">💡 Doppelklick auf eine Tabellenzeile öffnet „Person ändern“.</div>
+  </header>
+
+  <main>
+    <section class="table-section">
+      <table id="personTable">
+        <thead>
+          <tr>
+            <th>Gen</th>
+            <th>Personencode</th>
+            <th>Name</th>
+            <th>Geburtsdatum</th>
+            <th>Geschlecht</th>
+            <th>Partner</th>
+            <th>Eltern</th>
+            <th>Kinder</th>
+            <th>Ringcode</th>
+            <th>Geerbt von</th>
+            <th>Bemerkung</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="tree-section">
+      <svg id="familyTree" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stammbaum"></svg>
+    </section>
+  </main>
+
+  <!-- Dialog: Neue / Bearbeiten Person -->
+  <div id="personDialog" class="modal" aria-hidden="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="personDialogTitle">Neue Person</h3>
+        <button class="close" aria-label="Schließen" onclick="UI.closePersonDialog()">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="personForm" onsubmit="return false;">
+          <div class="form-row">
+            <label>Vor- und Nachname*<br/>
+              <input type="text" id="f_name" required placeholder="z. B. Anna Geppert"/>
+            </label>
+            <label>Geburtsdatum (TT.MM.JJJJ)*<br/>
+              <input type="text" id="f_birth" required placeholder="TT.MM.JJJJ" />
+            </label>
+            <label>Geschlecht*<br/>
+              <select id="f_gender" required>
+                <option value="">— wählen —</option>
+                <option value="m">männlich</option>
+                <option value="w">weiblich</option>
+                <option value="d">divers</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label>Partner von (Code)<br/>
+              <input type="text" id="f_partnerOf" placeholder="z. B. 1A"/>
+            </label>
+            <label>Eltern (Code 1)<br/>
+              <input type="text" id="f_parent1" placeholder="z. B. 1"/>
+            </label>
+            <label>Eltern (Code 2)<br/>
+              <input type="text" id="f_parent2" placeholder="z. B. 1x"/>
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label>Geerbt von (Code)<br/>
+              <input type="text" id="f_inherited" placeholder="z. B. 1A"/>
+            </label>
+            <label>Bemerkung<br/>
+              <input type="text" id="f_remark" placeholder="optional"/>
+            </label>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" onclick="UI.savePerson()">💾 Speichern</button>
+            <button type="button" class="secondary" onclick="UI.closePersonDialog()">Abbrechen</button>
+          </div>
+          <div class="form-hint">* Pflichtfelder. Datumsformat: <b>TT.MM.JJJJ</b>.</div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog: Person löschen -->
+  <div id="deleteDialog" class="modal" aria-hidden="true">
+    <div class="modal-box small">
+      <div class="modal-header">
+        <h3>Person löschen</h3>
+        <button class="close" aria-label="Schließen" onclick="UI.closeDeleteDialog()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Gib den <b>Namen</b> oder den <b>Personencode</b> der zu löschenden Person ein.</p>
+        <input type="text" id="del_query" placeholder="Name oder Code"/>
+      </div>
+      <div class="modal-actions">
+        <button onclick="UI.confirmDelete()">🗑️ Löschen</button>
+        <button class="secondary" onclick="UI.closeDeleteDialog()">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog: Export Auswahl -->
+  <div id="exportDialog" class="modal" aria-hidden="true">
+    <div class="modal-box small">
+      <div class="modal-header">
+        <h3>Export</h3>
+        <button class="close" aria-label="Schließen" onclick="UI.closeExportDialog()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Format wählen:</p>
+        <div class="choice-row">
+          <button onclick="Data.exportJSON()">Export JSON</button>
+          <button onclick="Data.exportCSV()">Export CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog: Drucken Auswahl -->
+  <div id="printDialog" class="modal" aria-hidden="true">
+    <div class="modal-box small">
+      <div class="modal-header">
+        <h3>Drucken</h3>
+        <button class="close" aria-label="Schließen" onclick="UI.closePrintDialog()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Was möchtest du drucken?</p>
+        <div class="choice-row">
+          <button onclick="UI.printTable()">Tabelle</button>
+          <button onclick="Tree.printTree()">Baum</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hilfe-Popup -->
+  <div id="helpPopup" class="overlay" aria-hidden="true">
+    <div class="overlay-box">
+      <div class="overlay-header">
+        <h3>Hilfe</h3>
+        <button class="close" aria-label="Schließen" onclick="UI.closeHelp()">×</button>
+      </div>
+      <iframe src="help.html" title="Hilfe"></iframe>
+    </div>
+  </div>
+
+  <input id="fileInput" type="file" accept=".json,.csv" style="display:none"/>
+
+  <script src="app.js"></script>
+</body>
+</html>
