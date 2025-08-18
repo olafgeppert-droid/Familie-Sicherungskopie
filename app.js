@@ -1,132 +1,199 @@
-// Globale Datenbank (Beispieldaten)
-let personen = [
-    {
-        code: "1",
-        name: "Olaf Geppert",
-        geburtsdatum: "01.01.1940",
-        geschlecht: "männlich",
-        ringcode: "1",
-        partner: "",
-        eltern: "",
-        generation: 1
-    }
-];
+// app.js – Version upd53
 
-// ------------------- HILFE-POPUP -------------------
-document.getElementById("btnHelp").addEventListener("click", () => {
-    fetch("help.html")
-        .then(res => res.text())
-        .then(html => {
-            const modal = document.getElementById("helpModal");
-            document.getElementById("helpContent").innerHTML = html;
-            modal.style.display = "block";
-        });
-});
+// ----------------------
+// Globale Variablen
+// ----------------------
+let persons = [];
+let selectedRow = null;
 
-// Schließen des Popups
-document.querySelectorAll(".close").forEach(btn => {
-    btn.onclick = () => {
-        btn.closest(".modal").style.display = "none";
-    };
-});
+// ----------------------
+// Initialisierung
+// ----------------------
+window.onload = function () {
+  loadData();
+  renderTable();
+  bindButtons();
+};
 
-// ------------------- EXPORT -------------------
-document.getElementById("btnExport").addEventListener("click", () => {
-    const choice = confirm("Export als JSON? (Abbrechen für CSV)");
-    if (choice) {
-        const blob = new Blob([JSON.stringify(personen, null, 2)], {type: "application/json"});
-        downloadFile(blob, "familie.json");
-    } else {
-        let csv = "Code;Name;Geburtsdatum;Geschlecht;Ringcode;Partner;Eltern;Generation\n";
-        personen.forEach(p => {
-            csv += `${p.code};${p.name};${p.geburtsdatum};${p.geschlecht};${p.ringcode};${p.partner};${p.eltern};${p.generation}\n`;
-        });
-        const blob = new Blob([csv], {type: "text/csv"});
-        downloadFile(blob, "familie.csv");
-    }
-});
-
-function downloadFile(blob, filename) {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(a.href);
+// ----------------------
+// Buttons binden
+// ----------------------
+function bindButtons() {
+  document.getElementById("btnNew").onclick = openNewPersonDialog;
+  document.getElementById("btnDelete").onclick = deletePersonDialog;
+  document.getElementById("btnExport").onclick = exportDataDialog;
+  document.getElementById("btnImport").onclick = importDataDialog;
+  document.getElementById("btnPrint").onclick = printDataDialog;
+  document.getElementById("btnStats").onclick = showStats;
+  document.getElementById("btnReset").onclick = resetAllData;
+  document.getElementById("btnHelp").onclick = openHelpPopup;
 }
 
-// ------------------- DRUCKEN -------------------
-document.getElementById("btnPrint").addEventListener("click", () => {
-    const choice = confirm("Tabelle drucken? (Abbrechen für Stammbaum)");
-    if (choice) {
-        window.print(); // Tabelle
-    } else {
-        const treeWindow = window.open("", "", "width=800,height=600");
-        treeWindow.document.write("<h1>Wappenringe der Familie GEPPERT</h1>");
-        treeWindow.document.write(document.getElementById("treeContainer").innerHTML);
-        treeWindow.print();
-    }
-});
-
-// ------------------- RESET -------------------
-document.getElementById("btnReset").addEventListener("click", () => {
-    if (confirm("Sollen wirklich alle Personen gelöscht werden?")) {
-        personen = [];
-        renderTable();
-        renderTree();
-    }
-});
-
-// ------------------- TABELLE -------------------
-function renderTable() {
-    const tbody = document.getElementById("personenTableBody");
-    tbody.innerHTML = "";
-    personen.forEach(p => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${p.generation}</td>
-            <td>${p.code}</td>
-            <td>${p.name}</td>
-            <td>${p.geburtsdatum}</td>
-            <td>${p.geschlecht}</td>
-            <td>${p.ringcode}</td>
-            <td>${p.partner}</td>
-            <td>${p.eltern}</td>
-        `;
-        tbody.appendChild(tr);
-    });
+// ----------------------
+// Datenverwaltung
+// ----------------------
+function saveData() {
+  localStorage.setItem("familyData", JSON.stringify(persons));
 }
 
-// ------------------- STAMMBAUM -------------------
-function renderTree() {
-    const container = document.getElementById("treeContainer");
-    container.innerHTML = "";
-    const svgNS = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(svgNS, "svg");
-    svg.setAttribute("width", "100%");
-    svg.setAttribute("height", "600");
+function loadData() {
+  let stored = localStorage.getItem("familyData");
+  if (stored) {
+    persons = JSON.parse(stored);
+  } else {
+    // Beispielperson als Demo
+    persons = [{
+      code: "1",
+      name: "Olaf Geppert",
+      gender: "männlich",
+      birthdate: "01.01.1950",
+      ringcode: "1",
+      generation: 1
+    }];
+  }
+}
 
-    let y = 50;
-    personen.forEach((p, i) => {
-        const rect = document.createElementNS(svgNS, "rect");
-        rect.setAttribute("x", 50 + i * 180);
-        rect.setAttribute("y", y);
-        rect.setAttribute("width", 160);
-        rect.setAttribute("height", 60);
-        rect.setAttribute("fill", "#e6e6fa");
-        rect.setAttribute("stroke", "#333");
-        svg.appendChild(rect);
+// ----------------------
+// Tabelle rendern
+// ----------------------
+function renderTable(searchTerm = "") {
+  const tableBody = document.getElementById("personTableBody");
+  tableBody.innerHTML = "";
 
-        const text = document.createElementNS(svgNS, "text");
-        text.setAttribute("x", 60 + i * 180);
-        text.setAttribute("y", y + 25);
-        text.setAttribute("font-size", "12");
-        text.textContent = `${p.code} | ${p.name} | ${p.geburtsdatum}`;
-        svg.appendChild(text);
+  persons.forEach((p, index) => {
+    const row = document.createElement("tr");
+
+    ["generation", "code", "name", "gender", "birthdate", "ringcode"].forEach(field => {
+      const cell = document.createElement("td");
+      let value = p[field] || "";
+
+      // Suchtreffer markieren
+      if (searchTerm && value.toLowerCase().includes(searchTerm.toLowerCase())) {
+        const regex = new RegExp(`(${searchTerm})`, "gi");
+        value = value.replace(regex, "<mark>$1</mark>");
+      }
+
+      cell.innerHTML = value;
+      row.appendChild(cell);
     });
 
-    container.appendChild(svg);
+    row.ondblclick = () => openEditPersonDialog(index);
+    tableBody.appendChild(row);
+  });
 }
 
-// ------------------- INITIALISIERUNG -------------------
-renderTable();
-renderTree();
+// ----------------------
+// Personendialoge
+// ----------------------
+function openNewPersonDialog() {
+  alert("Dialog: Neue Person (UI folgt wie in upd46).");
+}
+
+function openEditPersonDialog(index) {
+  alert("Dialog: Person ändern (UI folgt wie in upd46).");
+}
+
+function deletePersonDialog() {
+  const code = prompt("Gib den Personen-Code oder Namen der zu löschenden Person ein:");
+  if (!code) return;
+
+  persons = persons.filter(p => p.code !== code && p.name !== code);
+  saveData();
+  renderTable();
+}
+
+// ----------------------
+// Export / Import
+// ----------------------
+function exportDataDialog() {
+  const choice = confirm("OK = Export JSON, Abbrechen = Export CSV");
+  if (choice) exportJSON(); else exportCSV();
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(persons, null, 2)], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "familyData.json";
+  link.click();
+}
+
+function exportCSV() {
+  const header = Object.keys(persons[0] || {}).join(";");
+  const rows = persons.map(p => Object.values(p).join(";")).join("\n");
+  const blob = new Blob([header + "\n" + rows], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "familyData.csv";
+  link.click();
+}
+
+function importDataDialog() {
+  alert("Importfunktion folgt (Dateiupload).");
+}
+
+// ----------------------
+// Drucken
+// ----------------------
+function printDataDialog() {
+  const choice = confirm("OK = Druck Tabelle, Abbrechen = Druck Stammbaum");
+  if (choice) printTable(); else printTree();
+}
+
+function printTable() {
+  const printWin = window.open("", "", "width=800,height=600");
+  printWin.document.write("<h1>Wappenringe der Familie GEPPERT</h1>");
+  printWin.document.write(document.getElementById("personTable").outerHTML);
+  printWin.document.close();
+  printWin.print();
+}
+
+function printTree() {
+  alert("Stammbaum-Druck (Platzhalter, UI folgt).");
+}
+
+// ----------------------
+// Statistik
+// ----------------------
+function showStats() {
+  const total = persons.length;
+  const male = persons.filter(p => p.gender === "männlich").length;
+  const female = persons.filter(p => p.gender === "weiblich").length;
+  const diverse = persons.filter(p => p.gender === "divers").length;
+
+  let genMap = {};
+  persons.forEach(p => {
+    genMap[p.generation] = (genMap[p.generation] || 0) + 1;
+  });
+
+  let genText = Object.entries(genMap).map(([g, c]) => `Generation ${g}: ${c}`).join("\n");
+
+  alert(
+    `Gesamtanzahl: ${total}\n` +
+    `Männlich: ${male}\nWeiblich: ${female}\nDivers: ${diverse}\n` +
+    `\nNach Generationen:\n${genText}`
+  );
+}
+
+// ----------------------
+// Reset
+// ----------------------
+function resetAllData() {
+  if (confirm("Sollen wirklich alle Personen gelöscht werden?")) {
+    persons = [];
+    saveData();
+    renderTable();
+  }
+}
+
+// ----------------------
+// Hilfe
+// ----------------------
+function openHelpPopup() {
+  const popup = window.open("", "helpPopup", "width=600,height=600,scrollbars=yes");
+  fetch("help.html")
+    .then(res => res.text())
+    .then(html => {
+      popup.document.write(html + '<br><button onclick="window.close()">Schließen</button>');
+    });
+}
