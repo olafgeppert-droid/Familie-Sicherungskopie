@@ -1,0 +1,55 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f9f9f9;
+}
+
+.ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, #004080, #0066cc);
+  color: white;
+  padding: 20px;
+}
+
+.ribbon h1 {
+  margin: 0 20px;
+  font-size: 28px;
+  text-align: center;
+}
+
+.ribbon .wappen {
+  height: 60px;
+}
+
+.toolbar {
+  background: #e6e6e6;
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+table {
+  width: 95%;
+  margin: 20px auto;
+  border-collapse: collapse;
+  background: white;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background: #004080;
+  color: white;
+}
+
+.highlight {
+  background-color: yellow;
+}
