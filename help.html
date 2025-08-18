@@ -2,43 +2,89 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Hilfe</title>
+  <title>Hilfe – Wappenringe der Familie GEPPERT</title>
   <style>
-    body{font-family:system-ui,Arial,sans-serif;margin:0}
-    header{background:#0b5fa5;color:#fff;padding:10px 14px}
-    main{padding:12px}
-    h1{margin:0}
-    h2{margin:16px 0 8px}
-    ul{margin-top:6px}
-    code{background:#f3f6fb;border:1px solid #d0d7e2;padding:2px 5px;border-radius:6px}
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      padding: 20px;
+      color: #333;
+    }
+    h1, h2 {
+      color: #182848;
+    }
+    ul {
+      margin-left: 20px;
+    }
+    .example {
+      background: #f0f4ff;
+      padding: 8px;
+      border-left: 4px solid #4b6cb7;
+      margin: 8px 0;
+      font-family: monospace;
+    }
   </style>
 </head>
 <body>
-  <header><h1>Hilfe &amp; Anleitung</h1></header>
-  <main>
-    <p>Diese Anwendung hat das Ziel, dir die Verwaltung, Visualisierung und Dokumentation der Familienmitglieder, die einen Wappenring unserer Familie führen, und die vererbten Wappenringe der Familie GEPPERT nachzuverfolgen, zu ermöglichen.</p>
-    <h2>Das Personen-Code-System</h2>
-    <ul>
-      <li>Der Personen-Code wird vom System vergeben. Die Logik hat der Stammvater, Olaf Geppert, erfunden und vorgegeben.</li>
-      <li>Stammvater: <code>1</code>, Partner: <code>1x</code>.</li>
-      <li>Kinder von <code>1</code>: <code>1A, 1B, 1C, …</code> (Reihenfolge nach Geburtsdatum).</li>
-      <li>Kinder von <code>1A</code>: <code>1A1, 1A2, …</code> (Reihenfolge nach Geburtsdatum).</li>
-    </ul>
-    <h2>Ringcodes</h2>
-    <ul>
-      <li>Ringcode = Personen-Code.</li>
-      <li>Bei Vererbung: <code>Erblasser→Erbe</code>, z. B. <code>1A→1A1</code>. So kann der bereits gravierte Ring des Erblassers durch Hinzufügung einer Anschlussgravur vollständig erhalten werden.</li>
-    </ul>
-    <h2>Export &amp; Datensicherung</h2>
-    <p>Alle Daten werden <b>nur lokal</b> im Browser gespeichert. Bitte sichere regelmäßig per <b>Export</b> (JSON/CSV) und bewahre die Datei auf.</p>
-    <h2>Bedienhinweise</h2>
-    <ul>
-      <li><b>Neue Person</b>: Name, Geburtsdatum (TT.MM.JJJJ) und Geschlecht sind Pflichtfelder. Optional Elterncodes oder „Partner von“ angeben. „Geerbt von (Code)“ füllt die Spalte „Geerbt von“ und passt den Ringcode an.</li>
-      <li><b>Bearbeiten</b>: Doppelklick auf eine Tabellenzeile.</li>
-      <li><b>Person löschen</b>: Über Namen oder Code; Verweise werden überall entfernt.</li>
-      <li><b>Drucken</b>: Tabelle oder Baum, jeweils mit Überschrift „Wappenringe der Familie GEPPERT“.</li>
-      <li><b>Statistik</b>: Gesamtanzahl sowie männlich/weiblich/divers und Personen je Generation.</li>
-    </ul>
-  </main>
+  <h1>Hilfe & Anleitung</h1>
+
+  <h2>Zweck der Anwendung</h2>
+  <p>
+    Diese Anwendung hat das Ziel, dir die Verwaltung, Visualisierung und Dokumentation der Familienmitglieder, 
+    die einen Wappenring unserer Familie führen, und die vererbten Wappenringe der Familie GEPPERT nachzuverfolgen, 
+    zu ermöglichen. Sie bietet eine Tabelle mit Personen, die du erfassen kannst, eine grafische Stammbaumdarstellung 
+    sowie Druck- und Statistikfunktionen.
+  </p>
+
+  <h2>Das Personen-Code-System</h2>
+  <ul>
+    <li>Der Stammvater beginnt mit <strong>1</strong>.</li>
+    <li>Partner erhalten den gleichen Code mit einem <strong>x</strong>-Suffix (z.B. 1x).</li>
+    <li>Kinder werden mit Großbuchstaben fortlaufend kodiert (1A, 1B, 1C …).</li>
+    <li>Enkel erhalten Nummern nach den Buchstaben (z.B. 1A1, 1A2 …).</li>
+    <li>Der Personen-Code wird vom System vergeben. Die Logik hat der Stammvater Olaf Geppert erfunden und vorgegeben.</li>
+  </ul>
+
+  <h3>Beispiele für Enkel</h3>
+  <div class="example">1A1 – erstes Kind von Person 1A</div>
+  <div class="example">1B2 – zweites Kind von Person 1B</div>
+  <div class="example">1C3 – drittes Kind von Person 1C</div>
+
+  <h2>Ringcodes</h2>
+  <ul>
+    <li>Der Ringcode ist in der Regel identisch mit dem Personen-Code.</li>
+    <li>Hat jemand den Ring geerbt, wird der Ringcode ergänzt:
+      <br>Beispiel: <code>1 ➝ 1A</code> (Ring von Person 1 geht an Person 1A).
+    </li>
+    <li>So kann der bereits gravierte Ring des Erblassers durch Hinzufügung einer Anschlussgravur vollständig erhalten werden.</li>
+  </ul>
+
+  <h2>Statistik</h2>
+  <p>Über den Button <strong>Statistik</strong> erhältst du:</p>
+  <ul>
+    <li>Gesamtanzahl Personen</li>
+    <li>Anzahl männlich</li>
+    <li>Anzahl weiblich</li>
+    <li>Anzahl divers</li>
+    <li>Anzahl Personen nach Generationen</li>
+  </ul>
+
+  <h2>Export & Import</h2>
+  <ul>
+    <li>Exportiere deine Daten als <strong>JSON</strong> oder <strong>CSV</strong>.</li>
+    <li>Die Dateien können später wieder importiert werden.</li>
+    <li><strong>Wichtig:</strong> Alle Daten werden nur lokal in deinem Browser gespeichert. Für langfristige Sicherheit solltest du sie regelmäßig exportieren und extern sichern.</li>
+  </ul>
+
+  <h2>Bedienung</h2>
+  <ul>
+    <li><strong>Neue Person:</strong> Erfasst eine neue Person.</li>
+    <li><strong>Person ändern:</strong> Ändert die Daten der markierten Person.</li>
+    <li><strong>Person löschen:</strong> Entfernt eine Person aus der Datenbank.</li>
+    <li><strong>Drucken:</strong> Wähle zwischen Druck der Tabelle oder Druck des Stammbaums.</li>
+    <li><strong>Daten Reset:</strong> Löscht alle gespeicherten Daten (mit Sicherheitsabfrage).</li>
+    <li><strong>Hilfe 📖:</strong> Öffnet dieses Handbuch als Popup.</li>
+  </ul>
+
 </body>
 </html>
