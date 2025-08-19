@@ -1,0 +1,469 @@
+/* app.js – Logik */
+const STORAGE_KEY = "familyRing_upd56b";
+let people = [];
+const undoStack = []; const redoStack = [];
+
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+/* === Utility === */
+function saveState(pushUndo=true){
+  if(pushUndo) undoStack.push(JSON.stringify(people));
+  redoStack.length = 0;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(people));
+}
+function loadState(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ people = JSON.parse(raw); }
+  else { people = seedData(); saveState(false); }
+  postLoadFixups();
+}
+
+function seedData(){
+  return [
+    {Gen:1, Code:"1", Name:"Olaf Geppert", Birth:"13.01.1965", BirthPlace:"Chemnitz", Gender:"m", ParentCode:"", PartnerCode:"1x", InheritedFrom:"", Note:"Stammvater"},
+    {Gen:1, Code:"1x", Name:"Irina Geppert", Birth:"13.01.1970", BirthPlace:"Berlin", Gender:"w", ParentCode:"", PartnerCode:"1", InheritedFrom:"", Note:"Partnerin"},
+    {Gen:2, Code:"1A", Name:"Mario Geppert", Birth:"28.04.1995", BirthPlace:"Berlin", Gender:"m", ParentCode:"1", PartnerCode:"1Ax", InheritedFrom:"", Note:"1. Sohn"},
+    {Gen:2, Code:"1Ax", Name:"Kim", Birth:"", BirthPlace:"", Gender:"w", ParentCode:"", PartnerCode:"1A", InheritedFrom:"", Note:"Partnerin"},
+    {Gen:2, Code:"1B", Name:"Nicolas Geppert", Birth:"04.12.2000", BirthPlace:"Berlin", Gender:"m", ParentCode:"1", PartnerCode:"1Bx", InheritedFrom:"", Note:"2. Sohn"},
+    {Gen:2, Code:"1Bx", Name:"Annika", Birth:"", BirthPlace:"", Gender:"w", ParentCode:"", PartnerCode:"1B", InheritedFrom:"", Note:"Partnerin"},
+    {Gen:2, Code:"1C", Name:"Julienne Geppert", Birth:"26.09.2002", BirthPlace:"Berlin", Gender:"w", ParentCode:"1", PartnerCode:"1Cx", InheritedFrom:"", Note:"Tochter"},
+    {Gen:2, Code:"1Cx", Name:"Jonas", Birth:"", BirthPlace:"", Gender:"m", ParentCode:"", PartnerCode:"1C", InheritedFrom:"", Note:"Partner"},
+    {Gen:3, Code:"1C1", Name:"Michael Geppert", Birth:"12.07.2025", BirthPlace:"Hochstätten", Gender:"m", ParentCode:"1C", PartnerCode:"", InheritedFrom:"1", Note:""}
+  ];
+}
+
+/* Compute Gen if missing (based on code pattern / parent chain) */
+function computeGenFromCode(code){
+  if(!code) return 1;
+  // Partner 'x' does not change generation
+  const base = code.replace(/x$/,''); // drop trailing x
+  // Gen 1: '1'
+  if(base === "1") return 1;
+  // direct children: 1A, 1B => Gen 2
+  if(/^1[A-Z]$/.test(base)) return 2;
+  // grandchildren: 1A1, 1B2, etc. => Gen 3
+  if(/^1[A-Z]\d+$/.test(base)) return 3;
+  // great-grandchildren: 1[A-Z]\d+[A-Z] ... etc (fallback by transitions count)
+  // heuristic: count of digits blocks + letters beyond first
+  let g = 1;
+  // Walk through: after base '1', every letter step adds a generation (children),
+  // every trailing digit block adds another generation (grandchildren levels)
+  const rest = base.slice(1);
+  if(!rest) return 1;
+  // If first char is letter => gen >=2
+  if(/[A-Z]/.test(rest[0])) g=2;
+  // Count digits groups -> each adds one
+  const m = rest.match(/\d+/g);
+  if(m) g += m.length;
+  return Math.max(1,g);
+}
+
+function postLoadFixups(){
+  // Ensure Gen & RingCode are present after import
+  for(const p of people){
+    if(!p.Gen) p.Gen = computeGenFromCode(p.Code);
+  }
+  computeRingCodes();
+}
+
+/* Ring codes (partners keep own code, inheritance forms chain) */
+function computeRingCodes(){
+  const byCode = Object.fromEntries(people.map(p=>[p.Code,p]));
+  for(const p of people){
+    if(p.InheritedFrom){
+      const donor = byCode[p.InheritedFrom];
+      const donorChain = donor && donor.RingCode ? donor.RingCode : p.InheritedFrom;
+      p.RingCode = donorChain + "→" + p.Code;
+    }else{
+      p.RingCode = p.Code; // includes partner x as-is
+    }
+  }
+}
+
+/* Render Table (with filter & highlight) */
+function renderTable(){
+  computeRingCodes();
+  const q = ($("#search").value||"").trim().toLowerCase();
+  const tb = $("#peopleTable tbody"); tb.innerHTML="";
+  const mark = (txt)=>{
+    if(!q) return txt;
+    const s = String(txt||""); const i = s.toLowerCase().indexOf(q);
+    if(i<0) return s;
+    return s.slice(0,i) + "<mark>" + s.slice(i,i+q.length) + "</mark>" + s.slice(i+q.length);
+  };
+  // sort: Gen then Code
+  people.sort((a,b)=> (a.Gen||0)-(b.Gen||0) || String(a.Code).localeCompare(String(b.Code)));
+  for(const p of people){
+    const hay = (p.Name||"") + " " + (p.Code||"");
+    if(q && hay.toLowerCase().indexOf(q)===-1) continue; // FILTER: hide non-matches
+    const tr=document.createElement("tr");
+    const cols = ["Gen","Code","RingCode","Name","Birth","BirthPlace","Gender","ParentCode","PartnerCode","InheritedFrom","Note"];
+    cols.forEach(k=>{
+      const td=document.createElement("td");
+      td.innerHTML = mark(p[k] ?? "");
+      tr.appendChild(td);
+    });
+    tr.addEventListener("dblclick", ()=> openEdit(p.Code));
+    tb.appendChild(tr);
+  }
+}
+
+/* Render Tree (SVG), generations with background colors */
+function genColor(gen){
+  const c=[null,"#d8f5d0","#fff4c2","#ffd1d1","#ead3ff","#cfe9ff","#ffe0b3","#e0f7fa"];
+  gen = parseInt(gen||1,10);
+  return c[gen] || "#f0f0f0";
+}
+
+function renderTree(){
+  computeRingCodes();
+  const el=$("#tree"); el.innerHTML="";
+  const svgNS="http://www.w3.org/2000/svg";
+  const svg=document.createElementNS(svgNS,"svg");
+  svg.setAttribute("width","1600"); svg.setAttribute("height","800");
+  el.appendChild(svg);
+
+  const gens = {};
+  for(const p of people){
+    (gens[p.Gen] ||= []).push(p);
+  }
+  Object.values(gens).forEach(arr => arr.sort((a,b)=> (a.ParentCode||"").localeCompare(b.ParentCode||"") || (a.Birth||"").localeCompare(b.Birth||"") || String(a.Code).localeCompare(String(b.Code))));
+
+  const nodeW=180, nodeH=48, vGap=100, hGap=26, margin=20;
+  const positions=new Map();
+
+  const genKeys=Object.keys(gens).map(Number).sort((a,b)=>a-b);
+  genKeys.forEach((g,gi)=>{
+    const arr=gens[g]||[];
+    arr.forEach((p,idx)=>{
+      const x = margin + idx*(nodeW+hGap);
+      const y = margin + gi*(nodeH+vGap);
+      positions.set(p.Code, {x,y,p});
+      const gEl=document.createElementNS(svgNS,"g"); gEl.setAttribute("class","node");
+      gEl.setAttribute("transform",`translate(${x},${y})`);
+      const rect=document.createElementNS(svgNS,"rect");
+      rect.setAttribute("width",nodeW); rect.setAttribute("height",nodeH); rect.setAttribute("rx",8); rect.setAttribute("ry",8);
+      rect.setAttribute("fill", genColor(p.Gen));
+      rect.setAttribute("stroke","#cbd5e1");
+      const t1=document.createElementNS(svgNS,"text");
+      t1.setAttribute("x",8); t1.setAttribute("y",18); t1.textContent=`${p.Code} / ${p.Name||""}`;
+      const t2=document.createElementNS(svgNS,"text");
+      t2.setAttribute("x",8); t2.setAttribute("y",36); t2.textContent=`Generation: ${p.Gen||""} / ${p.Birth||""}`;
+      [t1,t2].forEach(t=>{t.setAttribute("font-size","11"); t.setAttribute("fill","#111827");});
+      svg.appendChild(gEl); gEl.appendChild(rect); gEl.appendChild(t1); gEl.appendChild(t2);
+    });
+  });
+
+  // lines: partners (horizontal same level) + parent-child (vertical)
+  for(const p of people){
+    if(p.PartnerCode && positions.has(p.Code) && positions.has(p.PartnerCode)){
+      const a=positions.get(p.Code), b=positions.get(p.PartnerCode);
+      const y = a.y + nodeH/2;
+      const x1 = Math.min(a.x,b.x)+nodeW; const x2 = Math.max(a.x,b.x);
+      const line=document.createElementNS(svgNS,"line");
+      line.setAttribute("x1", x1-nodeW); line.setAttribute("y1", y);
+      line.setAttribute("x2", x2); line.setAttribute("y2", y);
+      line.setAttribute("stroke","#9ca3af"); line.setAttribute("stroke-width","2");
+      svg.appendChild(line);
+    }
+    if(p.ParentCode && positions.has(p.ParentCode) && positions.has(p.Code)){
+      const par=positions.get(p.ParentCode), ch=positions.get(p.Code);
+      const x = par.x + nodeW/2;
+      const y1 = par.y + nodeH;
+      const y2 = ch.y;
+      const line=document.createElementNS(svgNS,"line");
+      line.setAttribute("x1",x); line.setAttribute("y1",y1);
+      line.setAttribute("x2",x); line.setAttribute("y2",y2);
+      line.setAttribute("stroke","#9ca3af"); line.setAttribute("stroke-width","2");
+      svg.appendChild(line);
+    }
+  
+  // Draw child connectors as a "bus" between partnered parents
+  const handledCouples = new Set();
+  function coupleKey(a,b){ return [a,b].sort().join("+"); }
+  for(const p of people){
+    const partner = p.PartnerCode;
+    if(!partner || !positions.has(p.Code) || !positions.has(partner)) continue;
+    const key = coupleKey(p.Code, partner);
+    if(handledCouples.has(key)) continue;
+    handledCouples.add(key);
+    const posA = positions.get(p.Code), posB = positions.get(partner);
+    const centerA = posA.x + nodeW/2, centerB = posB.x + nodeW/2;
+    const midX = (centerA + centerB) / 2;
+    const yTop = Math.max(posA.y, posB.y) + nodeH;
+
+    // children belonging to either parent
+    const kids = people.filter(ch => ch.ParentCode===p.Code || ch.ParentCode===partner).filter(ch=>positions.has(ch.Code));
+    if(kids.length===0) continue;
+    // sort by x
+    kids.sort((a,b)=> (positions.get(a.Code).x - positions.get(b.Code).x));
+    const minX = positions.get(kids[0].Code).x + nodeW/2;
+    const maxX = positions.get(kids[kids.length-1].Code).x + nodeW/2;
+    const busY = yTop + 20; // small drop then horizontal bus
+
+    // vertical from middle of parents to bus
+    const v1=document.createElementNS(svgNS,"line");
+    v1.setAttribute("x1", midX); v1.setAttribute("y1", yTop);
+    v1.setAttribute("x2", midX); v1.setAttribute("y2", busY);
+    v1.setAttribute("stroke","#9ca3af"); v1.setAttribute("stroke-width","2");
+    svg.appendChild(v1);
+
+    // horizontal bus across children span
+    const h1=document.createElementNS(svgNS,"line");
+    h1.setAttribute("x1", minX); h1.setAttribute("y1", busY);
+    h1.setAttribute("x2", maxX); h1.setAttribute("y2", busY);
+    h1.setAttribute("stroke","#9ca3af"); h1.setAttribute("stroke-width","2");
+    svg.appendChild(h1);
+
+    // drop lines to each child
+    for(const ch of kids){
+      const pc = positions.get(ch.Code);
+      const cx = pc.x + nodeW/2;
+      const v=document.createElementNS(svgNS,"line");
+      v.setAttribute("x1", cx); v.setAttribute("y1", busY);
+      v.setAttribute("x2", cx); v.setAttribute("y2", pc.y);
+      v.setAttribute("stroke","#9ca3af"); v.setAttribute("stroke-width","2");
+      svg.appendChild(v);
+    }
+  }
+
+}
+/* Printing only selection */
+function isiOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+function makeSVGForTable(){
+  const tbl = $("#peopleTable").cloneNode(true);
+  const rect = $("#people").getBoundingClientRect ? $("#people").getBoundingClientRect() : {width: 1000, height: 800};
+  const w = Math.max(900, Math.round(rect.width));
+  const h = Math.max(600, Math.round(tbl.querySelector("tbody")?.rows.length*34 + 120));
+  const css = `table{border-collapse:collapse;width:100%} th,td{border:1px solid #ddd;padding:6px;font-size:12px} th{background:#f4f6f8}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif}`;
+  const html = `<div xmlns="http://www.w3.org/1999/xhtml"><style>${css}</style>
+    <h1 style="text-align:center;font-size:18px;margin:8px 0">Wappenringe der Familie GEPPERT</h1>${tbl.outerHTML}</div>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+     <foreignObject x="0" y="0" width="100%" height="100%">${html}</foreignObject></svg>`;
+  return svg;
+}
+async function sharePrint(type){
+  if(!isiOS() || !(navigator.canShare && navigator.share)) return false;
+  try{
+    let file;
+    if(type==="tree"){
+      const svg = $("#tree").querySelector("svg");
+      if(!svg) return false;
+      const svgText = new XMLSerializer().serializeToString(svg);
+      const blob = new Blob([svgText], {type:"image/svg+xml"});
+      file = new File([blob], "stammbaum.svg", {type:"image/svg+xml"});
+    }else{
+      const svgText = makeSVGForTable();
+      const blob = new Blob([svgText], {type:"image/svg+xml"});
+      file = new File([blob], "tabelle.svg", {type:"image/svg+xml"});
+    }
+    if(navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:"Wappenringe der Familie GEPPERT"});
+      return true;
+    }
+  }catch(e){ console.warn("Share failed", e); }
+  return false;
+}
+function printHTML(inner){
+  // iOS: use Share Sheet instead of popup/print to avoid blocked auto print
+  if(isiOS()){
+    // best-effort: fall back to native share based on what we are asked to print
+    // when called from printTable/printTree we'll not hit this path directly
+  }
+  const w = window.open("", "_blank", "noopener,noreferrer");
+  if(!w){ alert("Popup-Blocker verhindert das Drucken. Bitte Popups erlauben."); return; }
+  w.document.open();
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Druck</title>
+  <style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;padding:12px}
+  h1{text-align:center;font-size:20px;margin:12px 0}
+  table{border-collapse:collapse;width:100%} th,td{border:1px solid #ddd;padding:6px;font-size:12px} th{background:#f4f6f8}
+  svg{max-width:100%;height:auto}
+  </style></head><body>${inner}</body></html>`);
+  w.document.close(); w.focus();
+  setTimeout(()=>w.print(), 300);
+}
+
+function printTable(){
+  // Try iOS Share Sheet first
+  sharePrint("table").then(shared=>{
+    if(shared) return;
+    const title = "<h1>Wappenringe der Familie GEPPERT</h1>";
+    const tbl = $("#peopleTable").cloneNode(true);
+    printHTML(title + tbl.outerHTML);
+  });
+}
+function printTree(){
+  // Try iOS Share Sheet first
+  sharePrint("tree").then(shared=>{
+    if(shared) return;
+    const title = "<h1>Wappenringe der Familie GEPPERT</h1>";
+    const svg = $("#tree").querySelector("svg");
+    const clone = svg ? svg.cloneNode(true) : document.createElement("div");
+    printHTML(title + (clone.outerHTML || ""));
+  });
+}
+/* Export with iOS Share Sheet when available */
+async function shareOrDownload(filename, blob){
+  const file = new File([blob], filename, {type: blob.type || "application/octet-stream"});
+  if(navigator.canShare && navigator.canShare({ files:[file] }) && navigator.share){
+    try{
+      await navigator.share({ files:[file], title:"Export" });
+      return;
+    }catch(e){ /* user canceled => fallback to download */ }
+  }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(people,null,2)],{type:"application/json"});
+  shareOrDownload("familie.json", blob);
+}
+function exportCSV(){
+  const cols=["Gen","Code","RingCode","Name","Birth","BirthPlace","Gender","ParentCode","PartnerCode","InheritedFrom","Note"];
+  const lines=[cols.join(";")];
+  for(const p of people){ lines.push(cols.map(c=> String(p[c]??"").replace(/;/g,",")).join(";")); }
+  const blob = new Blob([lines.join("\n")],{type:"text/csv"});
+  shareOrDownload("familie.csv", blob);
+}
+
+/* CRUD */
+function parseDate(d){
+  const m = /^([0-3]?\d)\.([01]?\d)\.(\d{4})$/.exec((d||"").trim());
+  if(!m) return "";
+  return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+}
+
+function nextChildCode(parent){
+  const kids = people.filter(p=>p.ParentCode===parent && p.Code.startsWith(parent));
+  const nums = kids.map(k=> parseInt(k.Code.replace(parent,""),10)).filter(n=>!isNaN(n));
+  let next=1; while(nums.includes(next)) next++;
+  return parent + String(next);
+}
+
+function openNew(){
+  $("#pName").value=""; $("#pBirth").value=""; $("#pPlace").value="";
+  $("#pGender").value=""; $("#pParent").value=""; $("#pPartner").value=""; $("#pInherited").value=""; $("#pNote").value="";
+  $("#dlgNew").showModal();
+}
+
+function addNew(){
+  const name=$("#pName").value.trim();
+  const birth=$("#pBirth").value.trim();
+  const place=$("#pPlace").value.trim();
+  const gender=$("#pGender").value;
+  const parent=$("#pParent").value.trim();
+  const partner=$("#pPartner").value.trim();
+  const inherited=$("#pInherited").value.trim();
+  const note=$("#pNote").value.trim();
+
+  let gen=1, code="";
+  if(parent){
+    const parentP = people.find(p=>p.Code===parent);
+    gen = parentP ? (parentP.Gen||1)+1 : 2;
+    code = nextChildCode(parent);
+  }else{
+    if(partner==="1"){ code="1x"; gen=1; } else { code="1"; gen=1; }
+  }
+  const p={Gen:gen, Code:code, Name:name, Birth:birth, BirthPlace:place, Gender:gender, ParentCode:parent, PartnerCode:partner, InheritedFrom:inherited, Note:note};
+  people.push(p);
+  saveState(); renderTable(); renderTree();
+}
+
+let editCode=null;
+function openEdit(code){
+  const p=people.find(x=>x.Code===code); if(!p) return;
+  editCode=code;
+  $("#eName").value=p.Name||""; $("#eBirth").value=p.Birth||""; $("#ePlace").value=p.BirthPlace||"";
+  $("#eGender").value=p.Gender||""; $("#eParent").value=p.ParentCode||""; $("#ePartner").value=p.PartnerCode||"";
+  $("#eInherited").value=p.InheritedFrom||""; $("#eNote").value=p.Note||"";
+  $("#dlgEdit").showModal();
+}
+function saveEditFn(){
+  const p=people.find(x=>x.Code===editCode); if(!p) return;
+  p.Name=$("#eName").value.trim();
+  p.Birth=$("#eBirth").value.trim();
+  p.BirthPlace=$("#ePlace").value.trim();
+  p.Gender=$("#eGender").value;
+  p.ParentCode=$("#eParent").value.trim();
+  p.PartnerCode=$("#ePartner").value.trim();
+  p.InheritedFrom=$("#eInherited").value.trim();
+  p.Note=$("#eNote").value.trim();
+  // Recompute gen if parent changed or code pattern changed (we keep code as is; gen from code if missing)
+  if(!p.Gen) p.Gen = computeGenFromCode(p.Code);
+  saveState(); renderTable(); renderTree();
+}
+
+function deletePerson(){
+  const id = prompt("Bitte Namen oder Personen-Code der zu löschenden Person eingeben:");
+  if(!id) return;
+  const idx = people.findIndex(p=> p.Code===id || (p.Name||"").toLowerCase()===id.toLowerCase());
+  if(idx<0){ alert("Person nicht gefunden."); return; }
+  const code = people[idx].Code;
+  people.splice(idx,1);
+  people.forEach(p=>{
+    if(p.ParentCode===code) p.ParentCode="";
+    if(p.PartnerCode===code) p.PartnerCode="";
+    if(p.InheritedFrom===code) p.InheritedFrom="";
+  });
+  saveState(); renderTable(); renderTree();
+}
+
+/* Import */
+function doImport(file){
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data = JSON.parse(r.result);
+      if(!Array.isArray(data)) throw new Error("Format");
+      people = data;
+      postLoadFixups();
+      saveState(false);
+      renderTable(); renderTree();
+    }catch(e){ alert("Ungültige JSON-Datei"); }
+  };
+  r.readAsText(file);
+}
+
+/* Events */
+$("#btnNew").addEventListener("click", openNew);
+$("#saveNew").addEventListener("click", (e)=>{ e.preventDefault(); addNew(); $("#dlgNew").close(); });
+$("#saveEdit").addEventListener("click", (e)=>{ e.preventDefault(); saveEditFn(); $("#dlgEdit").close(); });
+$("#btnDelete").addEventListener("click", deletePerson);
+$("#btnImport").addEventListener("click", ()=>{ const inp=document.createElement("input"); inp.type="file"; inp.accept=".json,application/json"; inp.onchange=()=>{ if(inp.files[0]) doImport(inp.files[0]); }; inp.click(); });
+$("#btnExport").addEventListener("click", ()=> $("#dlgExport").showModal());
+$("#btnExportJSON").addEventListener("click", exportJSON);
+$("#btnExportCSV").addEventListener("click", exportCSV);
+$("#btnPrint").addEventListener("click", ()=> $("#dlgPrint").showModal());
+$("#btnPrintTable").addEventListener("click", ()=>{ printTable(); $("#dlgPrint").close(); });
+$("#btnPrintTree").addEventListener("click", ()=>{ printTree(); $("#dlgPrint").close(); });
+$("#btnStats").addEventListener("click", ()=>{ updateStats(); $("#dlgStats").showModal(); });
+$("#btnHelp").addEventListener("click", ()=>{ fetch("help.html").then(r=>r.text()).then(html=>{ $("#helpContent").innerHTML=html; $("#dlgHelp").showModal(); }); });
+$("#btnReset").addEventListener("click", ()=>{ if(confirm("Sollen wirklich alle Personen gelöscht werden?")){ people=[]; saveState(); renderTable(); renderTree(); }});
+$("#btnUndo").addEventListener("click", ()=>{ if(!undoStack.length) return; redoStack.push(JSON.stringify(people)); people=JSON.parse(undoStack.pop()); localStorage.setItem(STORAGE_KEY, JSON.stringify(people)); renderTable(); renderTree(); });
+$("#btnRedo").addEventListener("click", ()=>{ if(!redoStack.length) return; undoStack.push(JSON.stringify(people)); people=JSON.parse(redoStack.pop()); localStorage.setItem(STORAGE_KEY, JSON.stringify(people)); renderTable(); renderTree(); });
+
+$("#search").addEventListener("input", renderTable);
+
+/* Stats */
+function updateStats(){
+  let total=0,m=0,w=0,d=0; const byGen={};
+  for(const p of people){
+    total++;
+    const g=(p.Gender||"").toLowerCase();
+    if(g==="m") m++; else if(g==="w") w++; else if(g==="d") d++;
+    byGen[p.Gen] = (byGen[p.Gen]||0)+1;
+  }
+  let html = `<p>Gesamtanzahl Personen: <b>${total}</b></p>`;
+  html += `<p>davon männlich: <b>${m}</b> — weiblich: <b>${w}</b> — divers: <b>${d}</b></p>`;
+  html += `<ul>`; Object.keys(byGen).sort((a,b)=>a-b).forEach(k=> html += `<li>Generation ${k}: ${byGen[k]}</li>`); html += `</ul>`;
+  $("#statsContent").innerHTML = html;
+}
+
+/* Init */
+loadState(); renderTable(); renderTree();
