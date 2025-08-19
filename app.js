@@ -45,15 +45,15 @@ function recalcAll(){
     const base = baseOf(p.Code);
     if(isPartner(p.Code)){
       const b = byCode[base];
-      p.RingCode = b ? (b.RingCode || base) : base;
+      p.RingCode = computeRingCode(p);
       continue;
     }
     if(p.InheritedFrom){
       const donor = byCode[p.InheritedFrom];
       const donorChain = donor && donor.RingCode ? donor.RingCode : p.InheritedFrom;
-      p.RingCode = donorChain + "→" + p.Code;
+      p.RingCode = computeRingCode(p);
     } else {
-      p.RingCode = base;
+      p.RingCode = computeRingCode(p);
     }
   }
 }
@@ -154,8 +154,8 @@ function resetData(){
 
 // Undo/Redo
 function pushUndo(){ undoStack.push(clone(people)); redoStack.length = 0; updateUndoRedo(); }
-function undo(){ if(!undoStack.length) return; redoStack.push(clone(people)); people = undoStack.pop(); save(); renderTable(); renderTree(); updateUndoRedo(); }
-function redo(){ if(!redoStack.length) return; undoStack.push(clone(people)); people = redoStack.pop(); save(); renderTable(); renderTree(); updateUndoRedo(); }
+function undo(){ if(!undoStack.length) return; redoStack.push(clone(people)); people = undoStack.pop(); save(); renderTable(); renderTree(); renderTree(); updateUndoRedo(); }
+function redo(){ if(!redoStack.length) return; undoStack.push(clone(people)); people = redoStack.pop(); save(); renderTable(); renderTree(); renderTree(); updateUndoRedo(); }
 function updateUndoRedo(){ qs("#btnUndo").disabled = !undoStack.length; qs("#btnRedo").disabled = !redoStack.length; }
 
 // Load/Save
@@ -163,6 +163,16 @@ function load(){ const d = sget(STORAGE_KEY); people = Array.isArray(d)?d:seed; 
 function save(){ sset(STORAGE_KEY, people); }
 
 // Table
+
+// Ensure ring code logic: ring code equals person's Code unless inherited;
+// partners should keep their 'x' suffix; if InheritedFrom present -> "<from>→<heir>"
+function computeRingCode(p) {
+  const code = (p.Code||"").trim();
+  const inheritedFrom = (p.InheritedFrom||"").trim();
+  if (inheritedFrom) return `${inheritedFrom}→${code}`;
+  // Partners carry 'x' in their own Code already; ring is their own code
+  return code;
+}
 function renderTable(){
   const tbody = qs("#peopleTable tbody"); tbody.innerHTML = "";
   let rows = people.filter(p=>{
@@ -246,6 +256,7 @@ function drawPath(svg, d, cls){
   el.setAttribute("fill", "none");
   svg.appendChild(el);
 }
+function genColor(g){const colors=['#d1f7c4','#fff3b0','#ffc9c9','#e5d0ff','#b2f5ea','#e2e8f0'];return colors[(Math.max(1,parseInt(g||1))-1)%colors.length];}
 function drawNode(svg, x, y, w, h, p){
   const g = document.createElementNS("http://www.w3.org/2000/svg","g");
   const r = document.createElementNS("http://www.w3.org/2000/svg","rect");
