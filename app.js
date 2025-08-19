@@ -254,11 +254,11 @@ function drawNode(svg, x, y, w, h, p){
   g.appendChild(r);
   const t1 = document.createElementNS("http://www.w3.org/2000/svg","text");
   t1.setAttribute("x", x+8); t1.setAttribute("y", y+18); t1.setAttribute("class","label code");
-  t1.textContent = p.Code + (p.RingCode ? ` · ${p.RingCode}` : "");
+  t1.textContent = `${p.Code} / ${p.Name||""}`;
   g.appendChild(t1);
   const t2 = document.createElementNS("http://www.w3.org/2000/svg","text");
   t2.setAttribute("x", x+8); t2.setAttribute("y", y+36); t2.setAttribute("class","label");
-  t2.textContent = p.Name||"";
+  t2.textContent = `Generation: ${p.Generation||""} / ${p.BirthDate||""}`;
   g.appendChild(t2);
   svg.appendChild(g);
 }

@@ -76,3 +76,12 @@ dialog::backdrop{ background: rgba(0,0,0,.25); }
 .modal-close { position:absolute; right:8px; top:8px; border:none; background:transparent; font-size:24px; cursor:pointer; }
 
 #dlgExport .backup-note { margin-top:10px; font-size:0.9em; color:#555; }
+
+
+/* Modern blue header background */
+.app-header {
+  background: #0d6efd;
+  color: #fff;
+}
+.app-header .crest { filter: drop-shadow(0 1px 1px rgba(0,0,0,.15)); }
+.app-header span { font-weight: 700; letter-spacing: .2px; }
