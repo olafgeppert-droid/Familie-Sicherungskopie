@@ -352,20 +352,18 @@ window.addEventListener("DOMContentLoaded", ()=>{
       const arr = JSON.parse(text);
       if(Array.isArray(arr)){
         pushUndo();
-        people = arr.map(p => ({...p, Code: normalizeCode(p.Code), ParentCode: normalizeCode(p.ParentCode), PartnerCode: normalizeCode(p.PartnerCode)}));
-        recalcAll(); save(); renderTable(); renderTree();
+        people = arr.map(p => ({
+        ...p,
+        Code: normalizeCode(p.Code || ""),
+        ParentCode: normalizeCode(p.ParentCode || ""),
+        PartnerCode: normalizeCode(p.PartnerCode || ""),
+        InheritedFrom: normalizeCode(p.InheritedFrom || ""),
+      }));recalcAll(); save(); renderTable(); renderTree();
       } else alert("JSON-Array erwartet.");
     }catch(e){ alert("Import fehlgeschlagen: " + e.message); }
   });
   qs("#btnExport").addEventListener("click", ()=> qs("#dlgExport").showModal());
-      const mode = b.getAttribute("data-exp");
-    if(mode==="json") exportJSON();
-    if(mode==="csv") exportCSV();
-    if(mode==="pdf") exportPDF();
-    if(mode==="share") exportShare();
-    qs(".export-group").classList.remove("open");
-  });
-  qs("#btnPrint").addEventListener("click", ()=> qs("#dlgPrint").showModal());
+qs("#btnPrint").addEventListener("click", ()=> qs("#dlgPrint").showModal());
   
   qs("#btnStats").addEventListener("click", showStats);
   qs("#btnRefreshTree").addEventListener("click", ()=> renderTree() );
