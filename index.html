@@ -1,144 +1,136 @@
 <!DOCTYPE html>
+
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>Wappenringe der Familie GEPPERT</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background: #f9f9f9;
-        }
-        header {
-            background: linear-gradient(90deg, #4b6cb7, #182848);
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .ribbon {
-            display: flex;
-            gap: 10px;
-            background: #ececec;
-            padding: 10px;
-            border-bottom: 1px solid #bbb;
-        }
-        button {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            background: #4b6cb7;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #35508a;
-        }
-        #btnReset {
-            background: #cc0000;
-        }
-        #btnReset:hover {
-            background: #990000;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 6px;
-            text-align: left;
-        }
-        th {
-            background: #4b6cb7;
-            color: white;
-        }
-        #treeContainer {
-            margin: 20px;
-            border: 1px solid #aaa;
-            background: white;
-            padding: 10px;
-            height: 600px;
-            overflow: auto;
-        }
-
-        /* Popup Hilfe */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 10;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-        }
-        .modal-content {
-            background: #fff;
-            margin: 10% auto;
-            padding: 20px;
-            border-radius: 6px;
-            width: 70%;
-            position: relative;
-        }
-        .close {
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            font-size: 22px;
-            font-weight: bold;
-            color: #333;
-            cursor: pointer;
-        }
-    </style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Wappenringe der Familie GEPPERT</title>
+<link href="styles.css" rel="stylesheet"/>
 </head>
 <body>
-    <header>Wappenringe der Familie GEPPERT</header>
+<header class="app-header"><img class="crest" src="wappen.jpeg"/><span>Wappenringe der Familie GEPPERT</span><img class="crest" src="wappen.jpeg"/></header>
+<nav class="ribbon">
+<div class="row">
+<button class="accent" id="btnNew">➕ Neue Person</button>
+<button id="btnDelete">🗑️ Person löschen</button>
+<button id="btnImport">⤒ Import</button>
+<button id="btnExport">⤓ Export</button>
+<button id="btnPrint">🖨️ Drucken</button>
 
-    <div class="ribbon">
-        <button id="btnNew">Neue Person</button>
-        <button id="btnEdit">Person ändern</button>
-        <button id="btnDelete">Person löschen</button>
-        <button id="btnExport">Export</button>
-        <button id="btnImport">Import</button>
-        <button id="btnPrint">Drucken</button>
-        <button id="btnUndo">Rückgängig</button>
-        <button id="btnRedo">Wiederholen</button>
-        <button id="btnStats">Statistik</button>
-        <button id="btnHelp">Hilfe 📖</button>
-        <button id="btnReset">Daten Reset</button>
-    </div>
+<button id="btnStats">📊 Statistiken</button>
+<button id="btnRefreshTree">🌳 Baum aktualisieren</button>
+<input id="txtSearch" placeholder="Person suchen (Name/Code)"/>
+<button id="btnHelp">❔ Hilfe</button></div>
+<div class="row">
+<button class="big" id="btnUndo">↶ Rückgängig</button>
+<button class="big" id="btnRedo">↷ Wiederholen</button>
+<button class="danger" id="btnReset">⟲ Reset (nur Daten)</button>
+</div>
+</nav>
+<main class="content">
+<section id="paneTable">
+<table id="peopleTable">
+<thead>
+<tr>
+<th data-k="Generation">Gen</th>
+<th data-k="Code">Code</th>
+<th data-k="RingCode">Ring-Code</th>
+<th data-k="Name">Name</th>
+<th data-k="BirthDate">Geburtsdatum</th>
+<th data-k="BirthPlace">Geburtsort</th>
+<th data-k="Gender">Geschlecht</th>
+<th data-k="ParentCode">Eltern-Code</th>
+<th data-k="PartnerCode">Partner-Code</th>
+<th data-k="InheritedFrom">Geerbt von</th>
+<th data-k="Note">Kommentar</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</section>
+<section id="paneTree">
+<svg id="treeSvg"></svg>
+</section>
+</main>
+<!-- Dialog: Person -->
+<dialog id="dlgPerson">
+<form id="frmPerson" method="dialog">
+<h3>Neue/Ändern Person</h3>
+<div class="grid">
+<label>Code (automatisch) <input id="pCode" name="Code" readonly=""/></label>
+<label>Name* <input id="pName" name="Name" required=""/></label>
+<label>Geburtsdatum <input id="pBirthDate" name="BirthDate" placeholder="TT.MM.JJJJ"/></label>
+<label>Geburtsort <input id="pBirthPlace" name="BirthPlace"/></label>
+<label>Geschlecht
+          <select id="pGender" name="Gender">
+<option value="">–</option>
+<option value="m">m</option>
+<option value="w">w</option>
+<option value="d">divers</option>
+</select>
+</label>
+<label>Eltern-Code <input id="pParent" name="ParentCode" placeholder="z. B. 1C"/></label>
+<label>Partner-Code <input id="pPartner" name="PartnerCode" placeholder="z. B. 1C1x"/></label>
+<label>Geerbt von Code <input id="pInherited" name="InheritedFrom" placeholder="z. B. 1A"/></label>
+<label>Kommentar <input id="pNote" name="Note"/></label>
+</div>
+<div class="dlg-actions">
+<button value="cancel">Abbrechen</button>
+<button class="accent" id="btnSavePerson" value="default">Speichern</button>
+</div>
+<div class="hint">* Pflichtfelder. Datum: TT.MM.JJJJ. Personen-Code &amp; Ring-Code werden automatisch vergeben.</div>
+</form>
+</dialog>
+<dialog id="dlgDelete">
+<form id="frmDelete" method="dialog">
+<h3>Person löschen</h3>
+<p>Bitte <b>Name</b> oder <b>Personen-Code</b> eingeben:</p>
+<input id="delQuery" placeholder="z. B. 1A oder Mario"/>
+<div class="dlg-actions">
+<button value="cancel">Abbrechen</button>
+<button class="danger" id="btnConfirmDelete" value="default">Löschen</button>
+</div>
+</form>
+</dialog>
+<dialog id="dlgStats"><div id="statsContent"></div><div class="dlg-actions"><button id="btnCloseStats">Schließen</button></div></dialog>
+<script src="app.js"></script>
 
-    <main>
-        <table>
-            <thead>
-                <tr>
-                    <th>Gen</th>
-                    <th>Code</th>
-                    <th>Name</th>
-                    <th>Geburtsdatum</th>
-                    <th>Geschlecht</th>
-                    <th>Ringcode</th>
-                    <th>Partner</th>
-                    <th>Eltern</th>
-                </tr>
-            </thead>
-            <tbody id="personenTableBody"></tbody>
-        </table>
+<dialog id="dlgExport">
+<form id="frmExport" method="dialog">
+<h3>Daten exportieren</h3>
+<p>Wähle Formate. Optional: an iOS-Teilen-Menü übergeben.</p>
+<label><input name="fmt" type="checkbox" value="json"/> JSON</label>
+<label><input name="fmt" type="checkbox" value="csv"/> CSV</label>
+<label style="margin-top:8px;"><input id="expShare" type="checkbox"/> An iOS / Web‑Share übergeben</label>
+<div class="backup-note">Hinweis: Die Daten werden nur lokal gespeichert. Bitte regelmäßig exportieren und sichern.</div>
+<div class="dlg-actions">
+<button value="cancel">Abbrechen</button>
+<button class="accent" id="btnDoExport" value="default">Exportieren</button>
+</div>
+</form>
+</dialog>
 
-        <div id="treeContainer"></div>
-    </main>
+<dialog id="dlgPrint">
+<form id="frmPrint" method="dialog">
+<h3>Drucken</h3>
+<label><input checked="" name="printWhat" type="radio" value="table"/> Tabelle</label>
+<label><input name="printWhat" type="radio" value="tree"/> Stammbaum</label>
+<div class="dlg-actions">
+<button value="cancel">Abbrechen</button>
+<button class="accent" id="btnDoPrint" value="default">Drucken</button>
+</div>
+</form>
+</dialog>
 
-    <!-- Hilfe Popup -->
-    <div id="helpModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <div id="helpContent">Hilfe wird geladen…</div>
-        </div>
-    </div>
-
-    <script src="app.js"></script>
+<div aria-labelledby="helpTitle" aria-modal="true" class="modal hidden" id="dlgHelp" role="dialog">
+<div class="modal-content">
+<button aria-label="Schließen" class="modal-close" id="btnCloseHelp">×</button>
+<h3 id="helpTitle">Hilfe &amp; Anleitung</h3>
+<div class="modal-body" id="helpBody">
+<em>Lade Hilfe …</em>
+</div>
+</div>
+<div class="modal-backdrop" id="helpBackdrop"></div>
+</div>
 </body>
 </html>

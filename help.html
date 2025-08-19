@@ -1,90 +1,30 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <title>Hilfe – Wappenringe der Familie GEPPERT</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      padding: 20px;
-      color: #333;
-    }
-    h1, h2 {
-      color: #182848;
-    }
-    ul {
-      margin-left: 20px;
-    }
-    .example {
-      background: #f0f4ff;
-      padding: 8px;
-      border-left: 4px solid #4b6cb7;
-      margin: 8px 0;
-      font-family: monospace;
-    }
-  </style>
-</head>
-<body>
-  <h1>Hilfe & Anleitung</h1>
-
-  <h2>Zweck der Anwendung</h2>
-  <p>
-    Diese Anwendung hat das Ziel, dir die Verwaltung, Visualisierung und Dokumentation der Familienmitglieder, 
-    die einen Wappenring unserer Familie führen, und die vererbten Wappenringe der Familie GEPPERT nachzuverfolgen, 
-    zu ermöglichen. Sie bietet eine Tabelle mit Personen, die du erfassen kannst, eine grafische Stammbaumdarstellung 
-    sowie Druck- und Statistikfunktionen.
-  </p>
-
-  <h2>Das Personen-Code-System</h2>
-  <ul>
-    <li>Der Stammvater beginnt mit <strong>1</strong>.</li>
-    <li>Partner erhalten den gleichen Code mit einem <strong>x</strong>-Suffix (z.B. 1x).</li>
-    <li>Kinder werden mit Großbuchstaben fortlaufend kodiert (1A, 1B, 1C …).</li>
-    <li>Enkel erhalten Nummern nach den Buchstaben (z.B. 1A1, 1A2 …).</li>
-    <li>Der Personen-Code wird vom System vergeben. Die Logik hat der Stammvater Olaf Geppert erfunden und vorgegeben.</li>
-  </ul>
-
-  <h3>Beispiele für Enkel</h3>
-  <div class="example">1A1 – erstes Kind von Person 1A</div>
-  <div class="example">1B2 – zweites Kind von Person 1B</div>
-  <div class="example">1C3 – drittes Kind von Person 1C</div>
-
-  <h2>Ringcodes</h2>
-  <ul>
-    <li>Der Ringcode ist in der Regel identisch mit dem Personen-Code.</li>
-    <li>Hat jemand den Ring geerbt, wird der Ringcode ergänzt:
-      <br>Beispiel: <code>1 ➝ 1A</code> (Ring von Person 1 geht an Person 1A).
-    </li>
-    <li>So kann der bereits gravierte Ring des Erblassers durch Hinzufügung einer Anschlussgravur vollständig erhalten werden.</li>
-  </ul>
-
-  <h2>Statistik</h2>
-  <p>Über den Button <strong>Statistik</strong> erhältst du:</p>
-  <ul>
-    <li>Gesamtanzahl Personen</li>
-    <li>Anzahl männlich</li>
-    <li>Anzahl weiblich</li>
-    <li>Anzahl divers</li>
-    <li>Anzahl Personen nach Generationen</li>
-  </ul>
-
-  <h2>Export & Import</h2>
-  <ul>
-    <li>Exportiere deine Daten als <strong>JSON</strong> oder <strong>CSV</strong>.</li>
-    <li>Die Dateien können später wieder importiert werden.</li>
-    <li><strong>Wichtig:</strong> Alle Daten werden nur lokal in deinem Browser gespeichert. Für langfristige Sicherheit solltest du sie regelmäßig exportieren und extern sichern.</li>
-  </ul>
-
-  <h2>Bedienung</h2>
-  <ul>
-    <li><strong>Neue Person:</strong> Erfasst eine neue Person.</li>
-    <li><strong>Person ändern:</strong> Ändert die Daten der markierten Person.</li>
-    <li><strong>Person löschen:</strong> Entfernt eine Person aus der Datenbank.</li>
-    <li><strong>Drucken:</strong> Wähle zwischen Druck der Tabelle oder Druck des Stammbaums.</li>
-    <li><strong>Daten Reset:</strong> Löscht alle gespeicherten Daten (mit Sicherheitsabfrage).</li>
-    <li><strong>Hilfe 📖:</strong> Öffnet dieses Handbuch als Popup.</li>
-  </ul>
-
-</body>
+<!doctype html>
+<html lang="de"><meta charset="utf-8">
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.45;margin:0;padding:0 0 24px 0;}
+  header{position:sticky;top:0;background:#fff;padding:12px 16px;border-bottom:1px solid #ddd;font-weight:600;}
+  main{padding:16px;max-width:900px;margin:0 auto;}
+  h1,h2{margin:1em 0 .4em}
+  code,kbd{background:#f2f2f8;padding:.1em .35em;border-radius:4px}
+  ul{margin:.3em 0 1em 1.4em}
+</style>
+<header>Hilfe & Anleitung</header>
+<main>
+<p>Diese Anwendung hilft dir, Personen der Familie GEPPERT zu verwalten, den grafischen Stammbaum zu sehen und die Daten zu sichern.</p>
+<h2>Grundprinzip</h2>
+<ul>
+<li><b>Personen-Code</b> wird automatisch vergeben (Logik von Stammvater Olaf Geppert).</li>
+<li><b>Ring-Code</b> entspricht dem Personen-Code. Bei Vererbung: <i>alter Ringcode → Erben-Code</i>.</li>
+<li>Daten werden <b>nur lokal</b> gespeichert – bitte regelmäßig exportieren (JSON/CSV) und sichern.</li>
+</ul>
+<h2>Bedienung</h2>
+<ul>
+<li><b>Neue Person</b>: Formular ausfüllen. <kbd>Geburtsdatum</kbd> im Format <b>TT.MM.JJJJ</b>.</li>
+<li><b>Bearbeiten</b>: Doppelklick auf eine Tabellenzeile.</li>
+<li><b>Löschen</b>: Schaltet Verweise (Eltern, Partner, Geerbt von) aus und entfernt die Person.</li>
+<li><b>Export</b>: Formate wählen (JSON/CSV). Optional an iOS-Teilen-Menü übergeben.</li>
+<li><b>Drucken</b>: Tabelle oder Stammbaum drucken.</li>
+<li><b>Statistik</b>: Überblick über Anzahl, Geschlechter, Generationen.</li>
+</ul>
+</main>
 </html>
