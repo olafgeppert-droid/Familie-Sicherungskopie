@@ -1,0 +1,42 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;line-height:1.55;padding:8px 2px}
+h2{font-size:1.05rem;margin:.8rem 0 .3rem}
+ul{margin:.2rem 0 .6rem 1.2rem}
+code{background:#f4f6f8;padding:1px 4px;border-radius:4px}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;margin:6px 0 10px}
+.legend div{display:flex;align-items:center;gap:8px;border:1px solid #e5e7eb;border-radius:6px;padding:6px 8px}
+.legend span{display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #cbd5e1}
+</style>
+<h2>ℹ️ Überblick</h2>
+<p>Diese Anwendung hilft dir, die Familienmitglieder und die Vererbung der Wappenringe der Familie GEPPERT zu verwalten, zu visualisieren und zu dokumentieren.</p>
+<h2>Personen‑Code</h2>
+<ul>
+  <li>Der Personen‑Code wird automatisch vergeben. Die Logik hat der Stammvater, Olaf Geppert, erfunden und vorgegeben.</li>
+  <li>Partner erhalten den Suffix <code>x</code> (z. B. <code>1x</code>, <code>1Ax</code>).</li>
+  <li>Die Reihenfolge innerhalb einer Linie richtet sich nach dem Geburtsdatum.</li>
+</ul>
+<p><b>Beispiele Enkel‑Codes:</b> <code>1A1</code>, <code>1B1</code>, <code>1C2</code></p>
+<h2>Ringcodes</h2>
+<ul>
+  <li>Standard: Ringcode = eigener Personen‑Code.</li>
+  <li>Vererbung: <code>Erblasser → Erbe</code>, z. B. <code>1 → 1C1</code>. Ketten wachsen weiter.</li>
+  <li>So bleibt eine vorhandene Gravur erhalten; es kommt eine Anschlussgravur hinzu.</li>
+</ul>
+<h2>Farben der Generationen im Stammbaum</h2>
+<div class="legend">
+  <div><span style="background:#d8f5d0"></span> Generation 1</div>
+  <div><span style="background:#fff4c2"></span> Generation 2</div>
+  <div><span style="background:#ffd1d1"></span> Generation 3</div>
+  <div><span style="background:#ead3ff"></span> Generation 4</div>
+  <div><span style="background:#cfe9ff"></span> Generation 5</div>
+</div>
+<h2>Bedienung</h2>
+<ul>
+  <li><b>Neue Person</b> – Dialog ausfüllen (<i>Abbrechen</i> geht immer). Doppelklick auf eine Tabellenzeile öffnet <i>Person ändern</i>.</li>
+  <li><b>Suche</b> – Filtert Tabelle nach Name/Code; Treffer werden zusätzlich gelb markiert.</li>
+  <li><b>Export</b> – JSON/CSV (iOS: Teilen‑Menü, sonst Download). <b>Import</b> lädt gesicherte Daten.</li>
+  <li><b>Drucken</b> – Nur Tabelle oder nur Stammbaum.</li>
+  <li><b>Statistiken</b> – Gesamt, Geschlechter, Personen pro Generation.</li>
+</ul>
