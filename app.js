@@ -1,426 +1,570 @@
-/* app.js – Logik */
-const STORAGE_KEY = "familyRing_upd56b";
-let people = [];
-const undoStack = []; const redoStack = [];
+/* Family-Ring v59r minimal patch: printing + tree lines */
+(() => {
 
+// ---------- Utilities ----------
 const $ = sel => document.querySelector(sel);
-const $$ = sel => Array.from(document.querySelectorAll(sel));
+const $$ = sel => [...document.querySelectorAll(sel)];
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-/* === Utility === */
-function saveState(pushUndo=true){
-  if(pushUndo) undoStack.push(JSON.stringify(people));
-  redoStack.length = 0;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(people));
+function fmtDate(s){ // normalize TT.MM.JJJJ
+  if(!s) return '';
+  const m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
+  if(!m) return s;
+  const [_,d,mo,y] = m;
+  return `${d.padStart(2,'0')}.${mo.padStart(2,'0')}.${y.length===2?('19'+y):y}`;
 }
-function loadState(){
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if(raw){ people = JSON.parse(raw); }
-  else { people = seedData(); saveState(false); }
-  postLoadFixups();
+function normalizeCode(code){
+  if(!code) return '';
+  let c = code.toString().trim();
+  // letters uppercase, partner suffix x always lowercase
+  // e.g. 1a -> 1A; 1bX -> 1Bx
+  c = c.replace(/([a-zA-Z]+)/g, m => m.toUpperCase());
+  c = c.replace(/X$/,'x');
+  c = c.replace(/x+/,'x'); // single x
+  return c;
+}
+function generationFromCode(code){
+  if(!code) return 1;
+  const core = code.replace(/x$/,''); // ignore partner suffix
+  const count = (core.match(/[A-Z0-9]/g)||[]).length;
+  // core like "1" -> 1; "1A" -> 2; "1A1" -> 3 etc.
+  return count;
 }
 
-function seedData(){
+// ---------- Data (sample minimal set; real data persists in localStorage) ----------
+const LS_KEY = 'family-ring-data-v59';
+let people = load() || sample();
+
+function sample(){
   return [
-    {Gen:1, Code:"1", Name:"Olaf Geppert", Birth:"13.01.1965", BirthPlace:"Chemnitz", Gender:"m", ParentCode:"", PartnerCode:"1x", InheritedFrom:"", Note:"Stammvater"},
-    {Gen:1, Code:"1x", Name:"Irina Geppert", Birth:"13.01.1970", BirthPlace:"Berlin", Gender:"w", ParentCode:"", PartnerCode:"1", InheritedFrom:"", Note:"Partnerin"},
-    {Gen:2, Code:"1A", Name:"Mario Geppert", Birth:"28.04.1995", BirthPlace:"Berlin", Gender:"m", ParentCode:"1", PartnerCode:"1Ax", InheritedFrom:"", Note:"1. Sohn"},
-    {Gen:2, Code:"1Ax", Name:"Kim", Birth:"", BirthPlace:"", Gender:"w", ParentCode:"", PartnerCode:"1A", InheritedFrom:"", Note:"Partnerin"},
-    {Gen:2, Code:"1B", Name:"Nicolas Geppert", Birth:"04.12.2000", BirthPlace:"Berlin", Gender:"m", ParentCode:"1", PartnerCode:"1Bx", InheritedFrom:"", Note:"2. Sohn"},
-    {Gen:2, Code:"1Bx", Name:"Annika", Birth:"", BirthPlace:"", Gender:"w", ParentCode:"", PartnerCode:"1B", InheritedFrom:"", Note:"Partnerin"},
-    {Gen:2, Code:"1C", Name:"Julienne Geppert", Birth:"26.09.2002", BirthPlace:"Berlin", Gender:"w", ParentCode:"1", PartnerCode:"1Cx", InheritedFrom:"", Note:"Tochter"},
-    {Gen:2, Code:"1Cx", Name:"Jonas", Birth:"", BirthPlace:"", Gender:"m", ParentCode:"", PartnerCode:"1C", InheritedFrom:"", Note:"Partner"},
-    {Gen:3, Code:"1C1", Name:"Michael Geppert", Birth:"12.07.2025", BirthPlace:"Hochstätten", Gender:"m", ParentCode:"1C", PartnerCode:"", InheritedFrom:"1", Note:""}
+    { code:'1', name:'Geppert, Olaf', birth:'01.01.1960', gender:'m', father:'', mother:'', partners:['1x'], inheritedFrom:'' },
+    { code:'1x', name:'Geppert, Irina', birth:'02.02.1962', gender:'w', father:'', mother:'', partners:['1'], inheritedFrom:'' },
+    { code:'1A', name:'Geppert, Anna', birth:'03.03.1985', gender:'w', father:'1', mother:'1x', partners:[], inheritedFrom:'' },
+    { code:'1B', name:'Geppert, Bernd', birth:'04.04.1988', gender:'m', father:'1', mother:'1x', partners:[], inheritedFrom:'' },
+    { code:'1A1', name:'Muster, Clara', birth:'05.05.2010', gender:'w', father:'1A', mother:'', partners:[], inheritedFrom:'' },
   ];
 }
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(people)); }
+function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'null'); }catch{ return null; } }
 
-/* Compute Gen if missing (based on code pattern / parent chain) */
-function computeGenFromCode(code){
-  if(!code) return 1;
-  // Partner 'x' does not change generation
-  const base = code.replace(/x$/,''); // drop trailing x
-  // Gen 1: '1'
-  if(base === "1") return 1;
-  // direct children: 1A, 1B => Gen 2
-  if(/^1[A-Z]$/.test(base)) return 2;
-  // grandchildren: 1A1, 1B2, etc. => Gen 3
-  if(/^1[A-Z]\d+$/.test(base)) return 3;
-  // great-grandchildren: 1[A-Z]\d+[A-Z] ... etc (fallback by transitions count)
-  // heuristic: count of digits blocks + letters beyond first
-  let g = 1;
-  // Walk through: after base '1', every letter step adds a generation (children),
-  // every trailing digit block adds another generation (grandchildren levels)
-  const rest = base.slice(1);
-  if(!rest) return 1;
-  // If first char is letter => gen >=2
-  if(/[A-Z]/.test(rest[0])) g=2;
-  // Count digits groups -> each adds one
-  const m = rest.match(/\d+/g);
-  if(m) g += m.length;
-  return Math.max(1,g);
+function upsertPerson(p){
+  // normalize codes
+  p.code = normalizeCode(p.code);
+  p.father = normalizeCode(p.father);
+  p.mother = normalizeCode(p.mother);
+  p.partners = (p.partners||[]).map(normalizeCode).filter(Boolean);
+  p.birth = fmtDate(p.birth);
+
+  const i = people.findIndex(x => x.code === p.code);
+  if(i>=0) people[i] = p; else people.push(p);
+  save();
+  renderAll();
 }
 
-function postLoadFixups(){
-  // Ensure Gen & RingCode are present after import
-  for(const p of people){
-    if(!p.Gen) p.Gen = computeGenFromCode(p.Code);
-  }
-  computeRingCodes();
+function deletePersonByQuery(q){
+  const query = q.trim().toLowerCase();
+  // find by code exact or by name contains
+  const victim = people.find(p => p.code.toLowerCase() === query) || 
+                 people.find(p => (p.name||'').toLowerCase().includes(query));
+  if(!victim) return false;
+  const code = victim.code;
+  // remove person
+  people = people.filter(p => p.code !== code);
+  // remove references
+  people.forEach(p => {
+    if(p.father === code) p.father = '';
+    if(p.mother === code) p.mother = '';
+    p.partners = (p.partners||[]).filter(pc => pc !== code);
+    if(p.inheritedFrom === code) p.inheritedFrom = '';
+  });
+  save();
+  renderAll();
+  return true;
 }
 
-/* Ring codes (partners keep own code, inheritance forms chain) */
-function computeRingCodes(){
-  const byCode = Object.fromEntries(people.map(p=>[p.Code,p]));
-  for(const p of people){
-    if(p.InheritedFrom){
-      const donor = byCode[p.InheritedFrom];
-      const donorChain = donor && donor.RingCode ? donor.RingCode : p.InheritedFrom;
-      p.RingCode = donorChain + "→" + p.Code;
-    }else{
-      p.RingCode = p.Code; // includes partner x as-is
+// Ringcode: default = own person code; if inherits, append " -> {heirCode}"?
+// Based on earlier rule: partner keeps x suffix in ring code
+function computeRingCode(p){
+  // own code by default
+  let rc = p.code;
+  // normalize x
+  rc = rc.replace(/X$/,'x');
+  // if inheritedFrom exists, append arrow + own code to erblasser code (erblasser already engraved)
+  if(p.inheritedFrom){
+    const e = people.find(x => x.code === normalizeCode(p.inheritedFrom));
+    if(e){
+      rc = `${e.code}→${p.code}`;
     }
   }
+  return rc;
 }
 
-/* Render Table (with filter & highlight) */
+// ---------- Table ----------
 function renderTable(){
-  computeRingCodes();
-  const q = ($("#search").value||"").trim().toLowerCase();
-  const tb = $("#peopleTable tbody"); tb.innerHTML="";
-  const mark = (txt)=>{
-    if(!q) return txt;
-    const s = String(txt||""); const i = s.toLowerCase().indexOf(q);
-    if(i<0) return s;
-    return s.slice(0,i) + "<mark>" + s.slice(i,i+q.length) + "</mark>" + s.slice(i+q.length);
-  };
-  // sort: Gen then Code
-  people.sort((a,b)=> (a.Gen||0)-(b.Gen||0) || String(a.Code).localeCompare(String(b.Code)));
-  for(const p of people){
-    const hay = (p.Name||"") + " " + (p.Code||"");
-    if(q && hay.toLowerCase().indexOf(q)===-1) continue; // FILTER: hide non-matches
-    const tr=document.createElement("tr");
-    const cols = ["Gen","Code","RingCode","Name","Birth","BirthPlace","Gender","ParentCode","PartnerCode","InheritedFrom","Note"];
-    cols.forEach(k=>{
-      const td=document.createElement("td");
-      td.innerHTML = mark(p[k] ?? "");
-      tr.appendChild(td);
-    });
-    tr.addEventListener("dblclick", ()=> openEdit(p.Code));
-    tb.appendChild(tr);
+  const tbody = $("#peopleTable tbody");
+  tbody.innerHTML = '';
+  const term = ($("#search").value||'').trim().toLowerCase();
+  for(const p of peopleSorted()){
+    const gen = generationFromCode(p.code);
+    const row = document.createElement('tr');
+    const fields = [
+      gen,
+      p.code,
+      computeRingCode(p),
+      p.name||'',
+      p.birth||'',
+      p.gender||'',
+      p.inheritedFrom||'',
+      p.father||'',
+      p.mother||'',
+      (p.partners||[]).join(', ')
+    ];
+    for(const f of fields){
+      const td = document.createElement('td');
+      const text = (f==null?'':String(f));
+      if(term && text.toLowerCase().includes(term)){
+        const re = new RegExp(`(${escapeRegExp(term)})`,'ig');
+        td.innerHTML = text.replace(re, '<mark>$1</mark>');
+      }else{
+        td.textContent = text;
+      }
+      row.appendChild(td);
+    }
+    row.addEventListener('dblclick', () => openEdit(p.code));
+    if(term){
+      const inRow = fields.some(f => String(f||'').toLowerCase().includes(term));
+      if(!inRow) row.style.display='none';
+    }
+    tbody.appendChild(row);
   }
 }
+function escapeRegExp(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+function peopleSorted(){
+  // sort by generation, then by code
+  const arr = [...people];
+  arr.sort((a,b)=>{
+    const ga = generationFromCode(a.code), gb = generationFromCode(b.code);
+    if(ga!==gb) return ga-gb;
+    return a.code.localeCompare(b.code, 'de');
+  });
+  return arr;
+}
 
-/* Render Tree (SVG), generations with background colors */
-function genColor(gen){
-  const c=[null,"#d8f5d0","#fff4c2","#ffd1d1","#ead3ff","#cfe9ff","#ffe0b3","#e0f7fa"];
-  gen = parseInt(gen||1,10);
-  return c[gen] || "#f0f0f0";
+// ---------- Tree (SVG) ----------
+const TREE = { nodeW: 150, nodeH: 46, vGap: 90, hGap: 40, margin: 30 };
+
+function buildIndex(){
+  const idx = new Map(people.map(p => [p.code, p]));
+  const childrenOf = new Map();
+  for(const c of people){
+    if(c.father) (childrenOf.get(c.father) || childrenOf.set(c.father,[]).get(c.father)).push(c.code);
+    if(c.mother) (childrenOf.get(c.mother) || childrenOf.set(c.mother,[]).get(c.mother)).push(c.code);
+  }
+  return {idx, childrenOf};
+}
+
+function couples(){
+  const seen = new Set();
+  const cps = [];
+  for(const p of people){
+    for(const partner of (p.partners||[])){
+      const pair = [p.code, partner].sort().join('|');
+      if(seen.has(pair)) continue;
+      seen.add(pair); cps.push([p.code, partner]);
+    }
+  }
+  return cps;
+}
+
+function childrenOfCouple(a,b){
+  // children where parents are exactly {a,b} in any order
+  return people.filter(c => {
+    const parents = [normalizeCode(c.father), normalizeCode(c.mother)].filter(Boolean).sort().join('|');
+    const ab = [normalizeCode(a), normalizeCode(b)].sort().join('|');
+    return parents && parents === ab;
+  });
+}
+
+function layoutNodes(){
+  // group by generation
+  const byGen = new Map();
+  for(const p of people){
+    const g = generationFromCode(p.code);
+    (byGen.get(g) || byGen.set(g,[]).get(g)).push(p);
+  }
+  // within each generation, stable sort by code
+  for(const g of byGen.keys()){
+    byGen.get(g).sort((a,b)=>a.code.localeCompare(b.code,'de'));
+  }
+  // positions
+  const pos = new Map();
+  let maxGen = 1;
+  for(const g of [...byGen.keys()].sort((a,b)=>a-b)){
+    maxGen = Math.max(maxGen,g);
+    const row = byGen.get(g);
+    row.forEach((p,i)=>{
+      const x = TREE.margin + i*(TREE.nodeW+TREE.hGap);
+      const y = TREE.margin + (g-1)*(TREE.nodeH+TREE.vGap);
+      pos.set(p.code, {x,y,g});
+    });
+  }
+  return {pos, maxGen};
 }
 
 function renderTree(){
-  computeRingCodes();
-  const el=$("#tree"); el.innerHTML="";
-  const svgNS="http://www.w3.org/2000/svg";
-  const svg=document.createElementNS(svgNS,"svg");
-  svg.setAttribute("width","1600"); svg.setAttribute("height","800");
-  el.appendChild(svg);
+  const svg = $("#treeSVG");
+  svg.innerHTML = '';
+  const {pos, maxGen} = layoutNodes();
 
-  const gens = {};
-  for(const p of people){
-    (gens[p.Gen] ||= []).push(p);
+  // resize svg
+  const cols = Math.max(1, people.length);
+  svg.setAttribute('width', Math.max(1600, TREE.margin*2 + cols*(TREE.nodeW+TREE.hGap)));
+  svg.setAttribute('height', TREE.margin*2 + (maxGen)*(TREE.nodeH+TREE.vGap)+80);
+
+  // generation bands
+  for(let g=1; g<=maxGen; g++){
+    const y = TREE.margin + (g-1)*(TREE.nodeH+TREE.vGap) - 12;
+    const h = TREE.nodeH + 24;
+    const band = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    band.setAttribute('x','0'); band.setAttribute('y', String(y));
+    band.setAttribute('width', '100%'); band.setAttribute('height', String(h));
+    band.setAttribute('class','gen-band');
+    band.setAttribute('fill', ['var(--gen1)','var(--gen2)','var(--gen3)','var(--gen4)'][(g-1)%4]);
+    svg.appendChild(band);
   }
-  Object.values(gens).forEach(arr => arr.sort((a,b)=> (a.ParentCode||"").localeCompare(b.ParentCode||"") || (a.Birth||"").localeCompare(b.Birth||"") || String(a.Code).localeCompare(String(b.Code))));
 
-  const nodeW=180, nodeH=48, vGap=100, hGap=26, margin=20;
-  const positions=new Map();
-
-  const genKeys=Object.keys(gens).map(Number).sort((a,b)=>a-b);
-  genKeys.forEach((g,gi)=>{
-    const arr=gens[g]||[];
-    arr.forEach((p,idx)=>{
-      const x = margin + idx*(nodeW+hGap);
-      const y = margin + gi*(nodeH+vGap);
-      positions.set(p.Code, {x,y,p});
-      const gEl=document.createElementNS(svgNS,"g"); gEl.setAttribute("class","node");
-      gEl.setAttribute("transform",`translate(${x},${y})`);
-      const rect=document.createElementNS(svgNS,"rect");
-      rect.setAttribute("width",nodeW); rect.setAttribute("height",nodeH); rect.setAttribute("rx",8); rect.setAttribute("ry",8);
-      rect.setAttribute("fill", genColor(p.Gen));
-      rect.setAttribute("stroke","#cbd5e1");
-      const t1=document.createElementNS(svgNS,"text");
-      t1.setAttribute("x",8); t1.setAttribute("y",18); t1.textContent=`${p.Code} / ${p.Name||""}`;
-      const t2=document.createElementNS(svgNS,"text");
-      t2.setAttribute("x",8); t2.setAttribute("y",36); t2.textContent=`Generation: ${p.Gen||""} / ${p.Birth||""}`;
-      [t1,t2].forEach(t=>{t.setAttribute("font-size","11"); t.setAttribute("fill","#111827");});
-      svg.appendChild(gEl); gEl.appendChild(rect); gEl.appendChild(t1); gEl.appendChild(t2);
-    });
-  });
-
-  // lines: partners (horizontal same level) + parent-child (vertical)
-  for(const p of people){
-    if(p.PartnerCode && positions.has(p.Code) && positions.has(p.PartnerCode)){
-      const a=positions.get(p.Code), b=positions.get(p.PartnerCode);
-      const y = a.y + nodeH/2;
-      const x1 = Math.min(a.x,b.x)+nodeW; const x2 = Math.max(a.x,b.x);
-      const line=document.createElementNS(svgNS,"line");
-      line.setAttribute("x1", x1-nodeW); line.setAttribute("y1", y);
-      line.setAttribute("x2", x2); line.setAttribute("y2", y);
-      line.setAttribute("stroke","#9ca3af"); line.setAttribute("stroke-width","2");
-      svg.appendChild(line);
+  // draw partner bus lines for couples with children and without children
+  const cps = couples();
+  for(const [a,b] of cps){
+    const pa = pos.get(a), pb = pos.get(b);
+    if(!pa || !pb) continue;
+    const y = (pa.y + pb.y)/2; // try align at same row; if not same row, draw at higher one
+    const yLine = Math.min(pa.y, pb.y) + TREE.nodeH/2;
+    const x1 = pa.x + TREE.nodeW; // right edge of a
+    const x2 = pb.x;              // left edge of b
+    const hx1 = Math.min(pa.x, pb.x) + TREE.nodeW/2;
+    const hx2 = Math.max(pa.x, pb.x) + TREE.nodeW/2;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', String(hx1));
+    line.setAttribute('x2', String(hx2));
+    line.setAttribute('y1', String(pa.y + TREE.nodeH/2));
+    line.setAttribute('y2', String(pb.y + TREE.nodeH/2));
+    line.setAttribute('class','link bus');
+    if(childrenOfCouple(a,b).length===0){
+      line.classList.add('partner-only');
     }
-    // child vertical handled in bus pass
+    svg.appendChild(line);
+  }
+
+  // parent-child verticals (from couple-bus if exists, else from single parent)
+  for(const child of people){
+    const pCodes = [child.father, child.mother].filter(Boolean);
+    if(pCodes.length===0) continue;
+    const pc = pCodes.map(normalizeCode);
+    let anchorX=null, anchorY=null;
+    if(pc.length===2){
+      const [paCode, pbCode] = pc;
+      const pa = pos.get(paCode), pb = pos.get(pbCode);
+      if(pa && pb){
+        anchorX = (pa.x + pb.x)/2 + TREE.nodeW/2;
+        anchorY = (pa.y + pb.y)/2 + TREE.nodeH/2;
+        // ensure a horizontal bus between parents is visible (if not already exact row)
+        // (already drawn above)
+      }
+    }
+    if(anchorX==null){
+      // single parent
+      const p0 = pos.get(pc[0]);
+      if(!p0) continue;
+      anchorX = p0.x + TREE.nodeW/2;
+      anchorY = p0.y + TREE.nodeH;
+    }
+    const cpos = pos.get(child.code);
+    if(!cpos) continue;
+    const vert = document.createElementNS('http://www.w3.org/2000/svg','line');
+    vert.setAttribute('x1', String(anchorX));
+    vert.setAttribute('x2', String(anchorX));
+    vert.setAttribute('y1', String(anchorY));
+    vert.setAttribute('y2', String(cpos.y));
+    vert.setAttribute('class','line-vert');
+    svg.appendChild(vert);
+  }
+
+  // draw nodes
+  for(const p of peopleSorted()){
+    const posP = pos.get(p.code); if(!posP) continue;
+    const g = posP.g;
+    const group = document.createElementNS('http://www.w3.org/2000/svg','g');
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x', String(posP.x));
+    rect.setAttribute('y', String(posP.y));
+    rect.setAttribute('width', String(TREE.nodeW));
+    rect.setAttribute('height', String(TREE.nodeH));
+    rect.setAttribute('rx','8'); rect.setAttribute('ry','8');
+    rect.setAttribute('class','node');
+    group.appendChild(rect);
+
+    const t1 = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t1.setAttribute('x', String(posP.x+8));
+    t1.setAttribute('y', String(posP.y+16));
+    t1.textContent = `${p.code} / ${p.name||''}`;
+    group.appendChild(t1);
+
+    const t2 = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t2.setAttribute('x', String(posP.x+8));
+    t2.setAttribute('y', String(posP.y+32));
+    t2.textContent = `Gen ${generationFromCode(p.code)} / ${p.birth||''}`;
+    group.appendChild(t2);
+
+    svg.appendChild(group);
   }
 }
 
-/* Printing only selection */
-function printHTML(inner){
-  const w = window.open("", "_blank", "noopener,noreferrer");
-  if(!w){ alert("Popup-Blocker aktiv. Bitte erlauben."); return; }
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Druck</title>
-  <style>
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;padding:12px}
-  h1{text-align:center;font-size:20px;margin:12px 0}
-  table{border-collapse:collapse;width:100%} th,td{border:1px solid #ddd;padding:6px;font-size:12px} th{background:#f4f6f8}
-  svg{max-width:100%;height:auto}
-  </style></head><body>${inner}</body></html>`);
-  w.document.close(); w.focus();
-  setTimeout(()=>w.print(), 300);
+// ---------- Printing (select table or tree) ----------
+function openPrintDialog(){
+  $("#dlgPrint").showModal();
+}
+function doPrint(){
+  const what = ($("#formPrint input[name='what']:checked")?.value)||'table';
+  printSection(what);
 }
 
-function printTable(){
+function printSection(what){
+  // Create a print-only document with header + selected content + footer date
+  const title = 'Wappenringe der Familie GEPPERT';
+  const when = new Date().toLocaleString('de-DE');
 
-  const dlg = $("#dlgPrint"); if(dlg.open) dlg.close();
-  const el = document.querySelector('#tableWrap');
-  elementToPdfBlob(el, 'Tabelle').then(blob => shareOrDownloadPDF(blob, 'tabelle.pdf'));
+  const content = document.createElement('div');
+  content.style.padding = '16px';
+  const h = document.createElement('div');
+  h.style.display='flex'; h.style.justifyContent='center'; h.style.alignItems='center'; h.style.gap='12px';
+  h.innerHTML = `<img src="wappen.jpeg" style="height:40px"/><h2 style="margin:0">${title}</h2><img src="wappen.jpeg" style="height:40px"/>`;
+  content.appendChild(h);
 
-}
-function printTree(){
-
-  const dlg = $("#dlgPrint"); if(dlg.open) dlg.close();
-  const el = document.querySelector('#treeWrap');
-  elementToPdfBlob(el, 'Stammbaum').then(blob => shareOrDownloadPDF(blob, 'stammbaum.pdf'));
-
-}
-
-/* Export with iOS Share Sheet when available */
-async function shareOrDownload(filename, blob){
-  const file = new File([blob], filename, {type: blob.type || "application/octet-stream"});
-  if(navigator.canShare && navigator.canShare({ files:[file] }) && navigator.share){
-    try{
-      await navigator.share({ files:[file], title:"Export" });
-      return;
-    }catch(e){ /* user canceled => fallback to download */ }
-  }
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
-}
-
-function exportJSON(){
-  const blob = new Blob([JSON.stringify(people,null,2)],{type:"application/json"});
-  shareOrDownload("familie.json", blob);
-}
-function exportCSV(){
-  const cols=["Gen","Code","RingCode","Name","Birth","BirthPlace","Gender","ParentCode","PartnerCode","InheritedFrom","Note"];
-  const lines=[cols.join(";")];
-  for(const p of people){ lines.push(cols.map(c=> String(p[c]??"").replace(/;/g,",")).join(";")); }
-  const blob = new Blob([lines.join("\n")],{type:"text/csv"});
-  shareOrDownload("familie.csv", blob);
-}
-
-/* CRUD */
-function parseDate(d){
-  const m = /^([0-3]?\d)\.([01]?\d)\.(\d{4})$/.exec((d||"").trim());
-  if(!m) return "";
-  return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
-}
-
-
-function normalizePersonCode(code){
-  if(!code) return "";
-  let s = String(code).trim();
-  s = s.replace(/[a-z]/g, ch => ch.toUpperCase());
-  s = s.replace(/X$/, 'x');
-  return s;
-}
-
-function nextChildCode(parent){
-  const kids = people.filter(p=>p.ParentCode===parent && p.Code.startsWith(parent));
-  const nums = kids.map(k=> parseInt(k.Code.replace(parent,""),10)).filter(n=>!isNaN(n));
-  let next=1; while(nums.includes(next)) next++;
-  return parent + String(next);
-}
-
-function openNew(){
-  $("#pName").value=""; $("#pBirth").value=""; $("#pPlace").value="";
-  $("#pGender").value=""; $("#pParent").value=""; $("#pPartner").value=""; $("#pInherited").value=""; $("#pNote").value="";
-  $("#dlgNew").showModal();
-}
-
-function addNew(){
-  const name=$("#pName").value.trim();
-  const birth=$("#pBirth").value.trim();
-  const place=$("#pPlace").value.trim();
-  const gender=$("#pGender").value;
-  const parent=normalizePersonCode($("#pParent").value.trim());
-  const partner=normalizePersonCode($("#pPartner").value.trim());
-  const inherited=normalizePersonCode($("#pInherited").value.trim());
-  const note=$("#pNote").value.trim();
-
-  let gen=1, code="";
-  if(parent){
-    const parentP = people.find(p=>p.Code===parent);
-    gen = parentP ? (parentP.Gen||1)+1 : 2;
-    code = nextChildCode(parent);
+  const section = document.createElement('div');
+  if(what==='table'){
+    section.innerHTML = document.querySelector('.table-wrap').innerHTML;
   }else{
-    if(partner==="1"){ code="1x"; /* ensure x lowercase */ gen=1; } else { code="1"; gen=1; }
+    // clone current tree SVG
+    section.appendChild(document.getElementById('treeContainer').cloneNode(true));
   }
-  const p={Gen:gen, Code:code, Name:name, Birth:birth, BirthPlace:place, Gender:gender, ParentCode:parent, PartnerCode:partner, InheritedFrom:inherited, Note:note};
-  people.push(p);
-  saveState(); renderTable(); renderTree();
-}
+  content.appendChild(section);
 
-let editCode=null;
-function openEdit(code){
-  const p=people.find(x=>x.Code===code); if(!p) return;
-  editCode=code;
-  $("#eName").value=p.Name||""; $("#eBirth").value=p.Birth||""; $("#ePlace").value=p.BirthPlace||"";
-  $("#eGender").value=p.Gender||""; $("#eParent").value=p.ParentCode||""; $("#ePartner").value=p.PartnerCode||"";
-  $("#eInherited").value=p.InheritedFrom||""; $("#eNote").value=p.Note||"";
-  $("#dlgEdit").showModal();
-}
-function saveEditFn(){
-  const p=people.find(x=>x.Code===editCode); if(!p) return;
-  p.Name=$("#eName").value.trim();
-  p.Birth=$("#eBirth").value.trim();
-  p.BirthPlace=$("#ePlace").value.trim();
-  p.Gender=$("#eGender").value;
-  p.ParentCode=$("#eParent").value.trim();
-  p.PartnerCode=$("#ePartner").value.trim();
-  p.InheritedFrom=$("#eInherited").value.trim();
-  p.Note=$("#eNote").value.trim();
-  // Recompute gen if parent changed or code pattern changed (we keep code as is; gen from code if missing)
-  if(!p.Gen) p.Gen = computeGenFromCode(p.Code);
-  saveState(); renderTable(); renderTree();
-}
+  const f = document.createElement('div');
+  f.style.marginTop='12px'; f.style.fontSize='12px'; f.style.textAlign='right'; f.textContent = `Stand: ${when}`;
+  content.appendChild(f);
 
-function deletePerson(){
-  const id = prompt("Bitte Namen oder Personen-Code der zu löschenden Person eingeben:");
-  if(!id) return;
-  const idx = people.findIndex(p=> p.Code===id || (p.Name||"").toLowerCase()===id.toLowerCase());
-  if(idx<0){ alert("Person nicht gefunden."); return; }
-  const code = people[idx].Code;
-  people.splice(idx,1);
-  people.forEach(p=>{
-    if(p.ParentCode===code) p.ParentCode="";
-    if(p.PartnerCode===code) p.PartnerCode="";
-    if(p.InheritedFrom===code) p.InheritedFrom="";
-  });
-  saveState(); renderTable(); renderTree();
-}
-
-/* Import */
-function doImport(file){
-  const r=new FileReader();
-  r.onload=()=>{
-    try{
-      const data = JSON.parse(r.result);
-      if(!Array.isArray(data)) throw new Error("Format");
-      people = data;
-      postLoadFixups();
-      saveState(false);
-      renderTable(); renderTree();
-    }catch(e){ alert("Ungültige JSON-Datei"); }
+  const win = window.open('', '_blank');
+  if(!win){ alert('Popup-Blocker verhindert den Druck. Bitte erlauben.'); return; }
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
+    <style>
+      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+      table{width:100%;border-collapse:collapse}
+      th,td{border:1px solid #ddd;padding:6px}
+      thead th{background:#f1f5f9}
+      #treeContainer{height:auto;overflow:visible;border:none}
+      svg{width:100%}
+      @media print{body{margin:0}}
+    </style>
+  </head><body></body></html>`);
+  win.document.body.appendChild(content);
+  // wait for images to load
+  const imgs = win.document.images;
+  let pending = imgs.length;
+  const go = () => {
+    if(isIOS()){
+      // iOS native print dialog (user can share as PDF)
+      win.focus(); win.print();
+    }else{
+      // default print dialog
+      win.focus(); win.print();
+    }
   };
-  r.readAsText(file);
-}
-
-/* Events */
-$("#btnNew").addEventListener("click", openNew);
-$("#saveNew").addEventListener("click", (e)=>{ e.preventDefault(); addNew(); $("#dlgNew").close(); });
-$("#saveEdit").addEventListener("click", (e)=>{ e.preventDefault(); saveEditFn(); $("#dlgEdit").close(); });
-$("#btnDelete").addEventListener("click", deletePerson);
-$("#btnImport").addEventListener("click", ()=>{ const inp=document.createElement("input"); inp.type="file"; inp.accept=".json,application/json"; inp.onchange=()=>{ if(inp.files[0]) doImport(inp.files[0]); }; inp.click(); });
-$("#btnExport").addEventListener("click", ()=> $("#dlgExport").showModal());
-$("#btnExportJSON").addEventListener("click", exportJSON);
-$("#btnExportCSV").addEventListener("click", exportCSV);
-$("#btnPrint").addEventListener("click", ()=> $("#dlgPrint").showModal());
-$("#btnPrintTable").addEventListener("click", ()=>{ printTable(); $("#dlgPrint").close(); });
-$("#btnPrintTree").addEventListener("click", ()=>{ printTree(); $("#dlgPrint").close(); });
-$("#btnStats").addEventListener("click", ()=>{ updateStats(); $("#dlgStats").showModal(); });
-$("#btnHelp").addEventListener("click", ()=>{ fetch("help.html").then(r=>r.text()).then(html=>{ $("#helpContent").innerHTML=html; $("#dlgHelp").showModal(); }); });
-$("#btnReset").addEventListener("click", ()=>{ if(confirm("Sollen wirklich alle Personen gelöscht werden?")){ people=[]; saveState(); renderTable(); renderTree(); }});
-$("#btnUndo").addEventListener("click", ()=>{ if(!undoStack.length) return; redoStack.push(JSON.stringify(people)); people=JSON.parse(undoStack.pop()); localStorage.setItem(STORAGE_KEY, JSON.stringify(people)); renderTable(); renderTree(); });
-$("#btnRedo").addEventListener("click", ()=>{ if(!redoStack.length) return; undoStack.push(JSON.stringify(people)); people=JSON.parse(redoStack.pop()); localStorage.setItem(STORAGE_KEY, JSON.stringify(people)); renderTable(); renderTree(); });
-
-$("#search").addEventListener("input", renderTable);
-
-/* Stats */
-function updateStats(){
-  let total=0,m=0,w=0,d=0; const byGen={};
-  for(const p of people){
-    total++;
-    const g=(p.Gender||"").toLowerCase();
-    if(g==="m") m++; else if(g==="w") w++; else if(g==="d") d++;
-    byGen[p.Gen] = (byGen[p.Gen]||0)+1;
+  if(pending===0){
+    setTimeout(go, 100);
+  }else{
+    for(const im of imgs){
+      im.addEventListener('load', ()=>{ if(--pending===0) setTimeout(go,100); });
+      im.addEventListener('error', ()=>{ if(--pending===0) setTimeout(go,100); });
+    }
   }
-  let html = `<p>Gesamtanzahl Personen: <b>${total}</b></p>`;
-  html += `<p>davon männlich: <b>${m}</b> — weiblich: <b>${w}</b> — divers: <b>${d}</b></p>`;
-  html += `<ul>`; Object.keys(byGen).sort((a,b)=>a-b).forEach(k=> html += `<li>Generation ${k}: ${byGen[k]}</li>`); html += `</ul>`;
-  $("#statsContent").innerHTML = html;
+  // close after print (best-effort; some browsers ignore)
+  win.addEventListener('afterprint', ()=> setTimeout(()=>win.close(), 200));
 }
 
-/* Init */
-loadState(); renderTable(); renderTree();
-
-
-/* === PDF Export (Table or Tree) === */
-async function elementToPdfBlob(el, title){
-  // Clone to avoid layout shifts
-  const clone = el.cloneNode(true);
-  const wrapper = document.createElement('div');
-  // Header with wappen & title
-  const header = document.querySelector('.ribbon .title-wrap').cloneNode(true);
-  header.style.marginBottom = '12px';
-  wrapper.appendChild(header);
-  wrapper.appendChild(clone);
-  wrapper.style.padding = '16px';
-  wrapper.style.background = '#ffffff';
-  document.body.appendChild(wrapper);
-  // Render to canvas
-  const canvas = await html2canvas(wrapper, {scale: 2, backgroundColor: '#ffffff', useCORS: true});
-  wrapper.remove();
-  const img = canvas.toDataURL('image/jpeg', 0.92);
-
-  // Auto orientation
-  const { jsPDF } = window.jspdf;
-  const orientation = canvas.width > canvas.height ? 'l' : 'p';
-  const doc = new jsPDF({orientation, unit:'pt', format:'a4'});
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  const margin = 24;
-  // Fit image into page while preserving aspect
-  let w = pageW - margin*2;
-  let h = canvas.height * (w / canvas.width);
-  if(h > pageH - margin*2){ h = pageH - margin*2; w = canvas.width * (h / canvas.height); }
-  const x = (pageW - w)/2, y = margin;
-  doc.addImage(img, 'JPEG', x, y, w, h);
-  const blob = doc.output('blob');
-  return blob;
+// ---------- Import / Export ----------
+function exportData(){
+  $("#dlgExport").showModal();
 }
-
-async function shareOrDownloadPDF(blob, filename){
-  const file = new File([blob], filename, {type:'application/pdf'});
-  // iOS / share sheet support
-  if(navigator.share && navigator.canShare && navigator.canShare({ files: [file] })){
-    try{
-      await navigator.share({ files: [file], title: filename, text: filename });
-      return;
-    }catch(e){ /* fall through to download */ }
+function doExport(){
+  const fmt = ($("#formExport input[name='fmt']:checked")?.value)||'json';
+  const data = JSON.stringify(people, null, fmt==='json'?2:0);
+  let blob, filename;
+  if(fmt==='json'){
+    blob = new Blob([data], {type:'application/json'});
+    filename = 'family-ring.json';
+  }else{
+    // CSV
+    const header = ['Gen','Code','Ringcode','Name','Geburtsdatum','Geschlecht','GeerbtVon','Vater','Mutter','Partner'];
+    const rows = peopleSorted().map(p=>[
+      generationFromCode(p.code), p.code, computeRingCode(p), p.name||'', p.birth||'', p.gender||'',
+      p.inheritedFrom||'', p.father||'', p.mother||'', (p.partners||[]).join(' ; ')
+    ]);
+    const csv = [header, ...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
+    blob = new Blob([csv], {type:'text/csv'});
+    filename = 'family-ring.csv';
   }
-  // Fallback download
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click();
-  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+  const file = new File([blob], filename, {type: blob.type});
+  if(isIOS() && navigator.share && navigator.canShare && navigator.canShare({ files:[file] })){
+    navigator.share({ files:[file], title:'Family-Ring Export', text:'Sicherung der Datenbank' }).catch(()=>{});
+  }else{
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
 }
 
+// ---------- Dialoge ----------
+function openNew(){
+  const dlg = $("#dlgNew");
+  $("#formNew").reset();
+  dlg.showModal();
+}
+function saveNew(e){
+  e?.preventDefault();
+  const fd = new FormData($("#formNew"));
+  const name = (fd.get('name')||'').toString().trim();
+  if(!name){
+    // allow cancel even without name; but do not save
+    $("#dlgNew").close(); 
+    return;
+  }
+  const person = {
+    code: suggestCode(fd),
+    name,
+    birth: fmtDate(fd.get('birth')),
+    gender: fd.get('gender')||'',
+    father: normalizeCode(fd.get('father')),
+    mother: normalizeCode(fd.get('mother')),
+    partners: (fd.get('partners')||'').toString().split(',').map(s=>normalizeCode(s.trim())).filter(Boolean),
+    inheritedFrom: normalizeCode(fd.get('inheritedFrom'))
+  };
+  upsertPerson(person);
+  $("#dlgNew").close();
+}
+function suggestCode(fd){
+  // very simplified suggestion: inherit base line from father or mother, else "1"
+  const f = normalizeCode(fd.get('father'));
+  const m = normalizeCode(fd.get('mother'));
+  if(f) return nextChildCode(f);
+  if(m) return nextChildCode(m.replace(/x$/,''));
+  // default first root child of Stammvater 1
+  return nextChildCode('1');
+}
+function nextChildCode(parentCode){
+  // children codes append incrementing number suffix within that line based on existing siblings' birthdate order
+  const kids = people.filter(p => p.father===parentCode || p.mother===parentCode)
+  .sort((a,b)=>((a.birth||'').localeCompare(b.birth||'')));
+  // parent might be like 1A; first child 1A1, second 1A2, ...
+  const used = new Set(kids.map(k => (k.code.match(/^(.+?)(\d+)$/)||[])[2]).filter(Boolean));
+  let n=1; while(used.has(String(n))) n++;
+  return normalizeCode(parentCode + String(n));
+}
+function openEdit(code){
+  const p = people.find(x=>x.code===code); if(!p) return;
+  const dlg = $("#dlgNew");
+  $("#formNew").reset();
+  dlg.querySelector("h3").textContent = "Person ändern";
+  const f = $("#formNew");
+  f.elements['name'].value = p.name||'';
+  f.elements['birth'].value = p.birth||'';
+  f.elements['gender'].value = p.gender||'';
+  f.elements['father'].value = p.father||'';
+  f.elements['mother'].value = p.mother||'';
+  f.elements['partners'].value = (p.partners||[]).join(', ');
+  f.elements['inheritedFrom'].value = p.inheritedFrom||'';
+  dlg.showModal();
+  // on save, keep existing code
+  const oldSave = saveNew;
+  $("#btnSaveNew").onclick = (ev)=>{
+    ev?.preventDefault();
+    const fd = new FormData($("#formNew"));
+    const name = (fd.get('name')||'').toString().trim();
+    if(!name){ $("#dlgNew").close(); return; }
+    const updated = {
+      code: p.code,
+      name,
+      birth: fmtDate(fd.get('birth')),
+      gender: fd.get('gender')||'',
+      father: normalizeCode(fd.get('father')),
+      mother: normalizeCode(fd.get('mother')),
+      partners: (fd.get('partners')||'').toString().split(',').map(s=>normalizeCode(s.trim())).filter(Boolean),
+      inheritedFrom: normalizeCode(fd.get('inheritedFrom'))
+    };
+    upsertPerson(updated);
+    $("#dlgNew").close();
+    // restore default handler
+    $("#btnSaveNew").onclick = saveNew;
+  };
+}
+
+// ---------- Stats ----------
+function openStats(){
+  const total = people.length;
+  const m = people.filter(p=>p.gender==='m').length;
+  const w = people.filter(p=>p.gender==='w').length;
+  const d = people.filter(p=>p.gender==='d').length;
+  const byGen = {};
+  for(const p of people){ const g=generationFromCode(p.code); byGen[g]=(byGen[g]||0)+1; }
+  const lines = [
+    `<h3>Statistik</h3>`,
+    `<p><strong>Gesamtanzahl Personen:</strong> ${total}</p>`,
+    `<p><strong>Davon männlich:</strong> ${m} &nbsp; <strong>weiblich:</strong> ${w} &nbsp; <strong>divers:</strong> ${d}</p>`,
+    `<h4>Pro Generation</h4>`,
+    `<ul>${Object.keys(byGen).sort((a,b)=>a-b).map(g=>`<li>Gen ${g}: ${byGen[g]}</li>`).join('')}</ul>`
+  ].join('');
+  $("#statsContent").innerHTML = lines;
+  $("#dlgStats").showModal();
+}
+
+// ---------- Bindings ----------
+function bind(){
+  $("#btnNew").addEventListener('click', openNew);
+  $("#btnSaveNew").addEventListener('click', saveNew);
+  $("#btnCancelNew").addEventListener('click', (e)=>{ e.preventDefault(); $("#dlgNew").close(); }); // allow cancel any time
+  $("#btnDelete").addEventListener('click', ()=>$("#dlgDelete").showModal());
+  $("#btnConfirmDelete").addEventListener('click', (e)=>{
+    e.preventDefault();
+    const ok = deletePersonByQuery(new FormData($("#formDelete")).get('query')||'');
+    $("#dlgDelete").close();
+    if(!ok) alert('Keine passende Person gefunden.');
+  });
+  $("#btnExport").addEventListener('click', exportData);
+  $("#btnDoExport").addEventListener('click', (e)=>{ e.preventDefault(); $("#dlgExport").close(); doExport(); });
+  $("#btnPrint").addEventListener('click', openPrintDialog);
+  $("#btnDoPrint").addEventListener('click', (e)=>{ e.preventDefault(); $("#dlgPrint").close(); doPrint(); });
+  $("#btnStats").addEventListener('click', openStats);
+  $("#btnCloseStats").addEventListener('click', ()=>$("#dlgStats").close());
+  $("#btnHelp").addEventListener('click', ()=>$("#dlgHelp").showModal());
+  $("#btnCloseHelp").addEventListener('click', ()=>$("#dlgHelp").close());
+  $("#btnReset").addEventListener('click', ()=>{
+    if(confirm("Sollen wirklich alle Personen gelöscht werden?")){
+      people = []; save(); renderAll();
+    }
+  });
+  $("#search").addEventListener('input', renderTable);
+}
+function renderAll(){
+  renderTable();
+  renderTree();
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  bind();
+  renderAll();
+});
+
+})();
