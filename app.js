@@ -1,3 +1,4 @@
+const APP_VERSION = "v83a";
 /* app.js – Logik */
 const STORAGE_KEY = "familyRing_upd56b";
 let people = [];
@@ -110,66 +111,168 @@ function renderTable(){
 }
 
 /* Render Tree (SVG), generations with background colors */
-function genColor(gen){
-  const c=[null,"#d8f5d0","#fff4c2","#ffd1d1","#ead3ff","#cfe9ff","#ffe0b3","#e0f7fa"];
-  gen = parseInt(gen||1,10);
-  return c[gen] || "#f0f0f0";
+
+function genColor(gen) {
+  const palette = [
+    '#c8f7c1', // Gen1 green
+    '#cfe8ff', // Gen2 blue
+    '#ffc9c9', // Gen3 red
+    '#fff3b0', // Gen4 yellow
+    '#e5d0ff', // Gen5 violet
+    '#b2f5ea', // Gen6 turquoise
+    '#ffd1a8', // Gen7 orange
+    '#e2e8f0', // Gen8 gray
+    '#ffd6e7'  // Gen9 pink
+  ];
+  const i = Math.max(0, (Number(gen||1)-1) % palette.length);
+  return palette[i];
 }
 
-function renderTree(){
-  computeRingCodes();
-  const el=$("#tree"); el.innerHTML="";
-  const svgNS="http://www.w3.org/2000/svg";
-  const svg=document.createElementNS(svgNS,"svg");
-  svg.setAttribute("width","1600"); svg.setAttribute("height","800");
-  el.appendChild(svg);
 
+
+function renderTree() {
+  const container = document.getElementById('treeCanvas');
+  if (!container) return;
+  container.innerHTML = '';
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width','100%');
+  svg.setAttribute('height','600');
+  container.appendChild(svg);
+
+  const NODE_W = 180;
+  const NODE_H = 40;
+  const GAP_X = 40;
+  const GAP_Y = 100;
+
+  // group people by generation
   const gens = {};
-  for(const p of people){
-    (gens[p.Gen] ||= []).push(p);
-  }
-  Object.values(gens).forEach(arr => arr.sort((a,b)=> (a.ParentCode||"").localeCompare(b.ParentCode||"") || (a.Birth||"").localeCompare(b.Birth||"") || String(a.Code).localeCompare(String(b.Code))));
-
-  const nodeW=180, nodeH=48, vGap=100, hGap=26, margin=20;
-  const positions=new Map();
-
-  const genKeys=Object.keys(gens).map(Number).sort((a,b)=>a-b);
-  genKeys.forEach((g,gi)=>{
-    const arr=gens[g]||[];
-    arr.forEach((p,idx)=>{
-      const x = margin + idx*(nodeW+hGap);
-      const y = margin + gi*(nodeH+vGap);
-      positions.set(p.Code, {x,y,p});
-      const gEl=document.createElementNS(svgNS,"g"); gEl.setAttribute("class","node");
-      gEl.setAttribute("transform",`translate(${x},${y})`);
-      const rect=document.createElementNS(svgNS,"rect");
-      rect.setAttribute("width",nodeW); rect.setAttribute("height",nodeH); rect.setAttribute("rx",8); rect.setAttribute("ry",8);
-      rect.setAttribute("fill", genColor(p.Gen));
-      rect.setAttribute("stroke","#cbd5e1");
-      const t1=document.createElementNS(svgNS,"text");
-      t1.setAttribute("x",8); t1.setAttribute("y",18); t1.textContent=`${p.Code} / ${p.Name||""}`;
-      const t2=document.createElementNS(svgNS,"text");
-      t2.setAttribute("x",8); t2.setAttribute("y",36); t2.textContent=`Generation: ${p.Gen||""} / ${p.Birth||""}`;
-      [t1,t2].forEach(t=>{t.setAttribute("font-size","11"); t.setAttribute("fill","#111827");});
-      svg.appendChild(gEl); gEl.appendChild(rect); gEl.appendChild(t1); gEl.appendChild(t2);
-    });
+  (people || []).forEach(p=>{
+    const g = Number(p.Gen || p.Generation || 0);
+    if (!gens[g]) gens[g]=[];
+    gens[g].push(p);
   });
 
-  // lines: partners (horizontal same level) + parent-child (vertical)
-  for(const p of people){
-    if(p.PartnerCode && positions.has(p.Code) && positions.has(p.PartnerCode)){
-      const a=positions.get(p.Code), b=positions.get(p.PartnerCode);
-      const y = a.y + nodeH/2;
-      const x1 = Math.min(a.x,b.x)+nodeW; const x2 = Math.max(a.x,b.x);
-      const line=document.createElementNS(svgNS,"line");
-      line.setAttribute("x1", x1-nodeW); line.setAttribute("y1", y);
-      line.setAttribute("x2", x2); line.setAttribute("y2", y);
-      line.setAttribute("stroke","#9ca3af"); line.setAttribute("stroke-width","2");
-      svg.appendChild(line);
+  const positions = new Map(); // personCode -> {x,y}
+  let y = 20;
+  const orderedGenerations = Object.keys(gens).map(n=>Number(n)).sort((a,b)=>a-b);
+  orderedGenerations.forEach(g=>{
+    const row = gens[g];
+    let x = 20;
+    row.forEach(p=>{
+      // generation band
+      const band = document.createElementNS(svg.namespaceURI,'rect');
+      band.setAttribute('x', x-10);
+      band.setAttribute('y', y-10);
+      band.setAttribute('width', NODE_W+20);
+      band.setAttribute('height', NODE_H+20);
+      band.setAttribute('rx','8'); band.setAttribute('ry','8');
+      band.setAttribute('fill', genColor(g));
+      band.setAttribute('opacity','0.6');
+      svg.appendChild(band);
+
+      // node rect
+      const rect = document.createElementNS(svg.namespaceURI,'rect');
+      rect.setAttribute('x', x);
+      rect.setAttribute('y', y);
+      rect.setAttribute('width', NODE_W);
+      rect.setAttribute('height', NODE_H);
+      rect.setAttribute('rx','8'); rect.setAttribute('ry','8');
+      rect.setAttribute('fill','#fff');
+      rect.setAttribute('stroke','#d0d7de');
+      svg.appendChild(rect);
+
+      // label lines
+      const t1 = document.createElementNS(svg.namespaceURI,'text');
+      t1.setAttribute('x', x+8);
+      t1.setAttribute('y', y+16);
+      t1.setAttribute('font-size','12');
+      t1.textContent = (p.Code || '') + ' / ' + (p.Name || '');
+      svg.appendChild(t1);
+
+      const t2 = document.createElementNS(svg.namespaceURI,'text');
+      t2.setAttribute('x', x+8);
+      t2.setAttribute('y', y+32);
+      t2.setAttribute('font-size','11');
+      const birth = (p.Birth || p.BirthDate || p.Geburtsdatum || '')+'';
+      t2.textContent = 'Generation: ' + (p.Gen || p.Generation || '') + ' / ' + birth;
+      svg.appendChild(t2);
+
+      positions.set(p.Code, {x,y});
+      x += NODE_W + GAP_X;
+    });
+    y += NODE_H + GAP_Y;
+  });
+
+  function cx(code){ const pos = positions.get(code); return pos ? pos.x + NODE_W/2 : 0; }
+  function leftX(code){ const pos = positions.get(code); return pos ? pos.x : 0; }
+  function rightX(code){ const pos = positions.get(code); return pos ? pos.x + NODE_W : 0; }
+  function midY(code){ const pos = positions.get(code); return pos ? pos.y + NODE_H/2 : 0; }
+  function topY(code){ const pos = positions.get(code); return pos ? pos.y : 0; }
+  function bottomY(code){ const pos = positions.get(code); return pos ? pos.y + NODE_H : 0; }
+
+  // draw partner bus lines (solid if common children, dashed if none)
+  const couplesDrawn = new Set();
+  (people || []).forEach(p=>{
+    const partner = p.PartnerCode || p.Partner || p['Partner-Code'];
+    if (!partner) return;
+    const key = [p.Code, partner].sort().join('-');
+    if (couplesDrawn.has(key)) return;
+    couplesDrawn.add(key);
+    if (!positions.has(p.Code) || !positions.has(partner)) return;
+    const ymid = (midY(p.Code) + midY(partner)) / 2;
+    const x1 = rightX(p.Code) < leftX(partner) ? rightX(p.Code) : rightX(partner) < leftX(p.Code) ? rightX(partner) : Math.min(cx(p.Code), cx(partner));
+    const x2 = rightX(p.Code) < leftX(partner) ? leftX(partner) : rightX(partner) < leftX(p.Code) ? leftX(p.Code) : Math.max(cx(p.Code), cx(partner));
+
+    const line = document.createElementNS(svg.namespaceURI,'line');
+    line.setAttribute('x1', x1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y1', ymid);
+    line.setAttribute('y2', ymid);
+
+    // detect common children
+    const hasJointChild = (people || []).some(k => {
+      const pc = (k.ParentCode || k['Eltern-Code'] || '') + '';
+      return pc.includes(p.Code) && pc.includes(partner);
+    });
+    if (!hasJointChild) {
+      line.setAttribute('stroke-dasharray','6,4');
     }
-    // child vertical handled in bus pass
-  }
+    line.setAttribute('stroke','#222');
+    line.setAttribute('stroke-width','1.2');
+    svg.appendChild(line);
+  });
+
+  // draw vertical child lines
+  (people || []).forEach(kid => {
+    const parentCode = (kid.ParentCode || kid['Eltern-Code'] || '') + '';
+    if (!parentCode) return;
+    // Try to find two parents first
+    const parents = (parentCode.match(/[0-9A-Za-zx>]+/g) || []).filter(code => positions.has(code));
+    if (parents.length === 0) return;
+    let xSource, ySource;
+    if (parents.length >= 2) {
+      // from bus (mid between parents)
+      xSource = (cx(parents[0]) + cx(parents[1]))/2;
+      ySource = (midY(parents[0]) + midY(parents[1]))/2;
+    } else {
+      // single parent
+      xSource = cx(parents[0]);
+      ySource = bottomY(parents[0]);
+    }
+    const xTarget = cx(kid.Code);
+    const yTarget = topY(kid.Code);
+    if (!xTarget || !yTarget) return;
+
+    const vline = document.createElementNS(svg.namespaceURI,'path');
+    const d = `M ${xSource} ${ySource} V ${yTarget}`;
+    vline.setAttribute('d', d);
+    vline.setAttribute('fill','none');
+    vline.setAttribute('stroke','#222');
+    vline.setAttribute('stroke-width','1.2');
+    svg.appendChild(vline);
+  });
 }
+
 
 /* Printing only selection */
 function printHTML(inner){
@@ -509,3 +612,12 @@ function printSection(what){
   // close after print (best-effort; some browsers ignore)
   win.addEventListener('afterprint', ()=> setTimeout(()=>win.close(), 200));
 }
+
+
+window.addEventListener("DOMContentLoaded", () => {
+  const v = APP_VERSION;
+  const r = document.getElementById("version-ribbon");
+  if (r) r.textContent = v;
+  const t = document.getElementById("version-table");
+  if (t) t.textContent = v;
+});

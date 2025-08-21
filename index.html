@@ -38,9 +38,7 @@
           Personen- und Ring-Code werden vom Programm vergeben. Denke daran, die Datenbank durch Export als JSON-Datei in deinem Backup-Verzeichnis zu sichern.
         </div>
       </div>
-    
-    <span id="versionRibbon" class="version-ribbon" aria-label="Softwareversion">Softwareversion v82</span>
-  </header>
+    </header>
 
     <!-- TABLE -->
     <section class="table-wrap">
@@ -62,9 +60,8 @@
         </thead>
         <tbody></tbody>
       </table>
+    <div id="version-table" style="text-align:center; font-size:0.8em; color:black; margin-top:6px;"></div>
     </section>
-  <div id="versionUnderTable" class="version-under" role="note">Softwareversion v82</div>
-
 
     <!-- TREE -->
     <section class="tree-panel">
@@ -196,17 +193,5 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
   <script src="app.js"></script>
-
-  <script>
-    // central version string - change once
-    const APP_VERSION = 'v82';
-    (function(){
-      const r = document.getElementById('versionRibbon');
-      const u = document.getElementById('versionUnderTable');
-      if(r) r.textContent = 'Softwareversion ' + APP_VERSION;
-      if(u) u.textContent = 'Softwareversion ' + APP_VERSION;
-    })();
-  </script>
-
 </body>
 </html>
