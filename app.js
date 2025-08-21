@@ -192,7 +192,12 @@ function printTable(){
   elementToPdfBlob(el, 'Tabelle').then(blob => shareOrDownloadPDF(blob, 'tabelle.pdf'));
 
 }
+function printTree(){
+  const dlg = $("#dlgPrint"); if(dlg.open) dlg.close();
+  const el = resolvePrintableEl('#tree');
+  elementToPdfBlob(el, 'Stammbaum').then(blob => shareOrDownloadPDF(blob, 'stammbaum.pdf'));
 
+}
 
 /* Export with iOS Share Sheet when available */
 async function shareOrDownload(filename, blob){

@@ -15,7 +15,8 @@
         <img class="coa" src="wappen.jpeg" alt="Wappen">
         <h1 class="title">Wappenringe der Familie GEPPERT</h1>
         <img class="coa" src="wappen.jpeg" alt="Wappen">
-      </div>
+      <div id="ribbon-version">v80</div>
+</div>
       <div class="toolbar">
         <div class="left">
           <button class="btn" id="btnNew" title="Neue Person anlegen">➕ Neue Person</button>
@@ -27,17 +28,22 @@
           <button class="btn" id="btnUndo" title="Rückgängig">↶ Rückgängig</button>
           <button class="btn" id="btnRedo" title="Wiederholen">↷ Wiederholen</button>
           <button class="btn danger" id="btnReset" title="Alle Daten löschen">⛔ Daten-Reset</button>
-        </div>
+        <div id="ribbon-version">v80</div>
+</div>
         <div class="right">
           <input id="search" type="text" placeholder="Personen suchen (Name/Code)"/>
           <button class="btn help" id="btnHelp" title="Hilfe / Anleitung">❓ Hilfe</button>
-        </div>
-      </div>
+        <div id="ribbon-version">v80</div>
+</div>
+      <div id="ribbon-version">v80</div>
+</div>
       <div class="hint-row">
         <div id="autoHint" title="Sicherungshinweis">
           Personen- und Ring-Code werden vom Programm vergeben. Denke daran, die Datenbank durch Export als JSON-Datei in deinem Backup-Verzeichnis zu sichern.
-        </div>
-      </div>
+        <div id="ribbon-version">v80</div>
+</div>
+      <div id="ribbon-version">v80</div>
+</div>
     </header>
 
     <!-- TABLE -->
@@ -64,9 +70,11 @@
 
     <!-- TREE -->
     <section class="tree-panel">
-      <div id="tree"></div>
+      <div id="tree"><div id="ribbon-version">v80</div>
+</div>
     </section>
-  </div>
+  <div id="ribbon-version">v80</div>
+</div>
 
   <!-- DIALOGS -->
   <dialog id="dlgNew">
@@ -74,7 +82,8 @@
       <div class="dlg-head">
         <strong>Neue Person</strong>
         <button class="close-x" value="cancel" type="submit" formnovalidate aria-label="Schließen">×</button>
-      </div>
+      <div id="ribbon-version">v80</div>
+</div>
       <div class="dlg-body">
         <div class="form-grid">
           <label> Name
@@ -106,12 +115,15 @@
           <label> Kommentar
             <input id="pNote">
           </label>
-        </div>
-      </div>
+        <div id="ribbon-version">v80</div>
+</div>
+      <div id="ribbon-version">v80</div>
+</div>
       <div class="dlg-actions">
         <button value="cancel" type="submit" formnovalidate>Abbrechen</button>
         <button id="saveNew" value="default" type="submit">Speichern</button>
-      </div>
+      <div id="ribbon-version">v80</div>
+</div>
     </form>
   </dialog>
 
@@ -120,7 +132,8 @@
       <div class="dlg-head">
         <strong>Person ändern</strong>
         <button class="close-x" value="cancel" type="submit" formnovalidate aria-label="Schließen">×</button>
-      </div>
+      <div id="ribbon-version">v80</div>
+</div>
       <div class="dlg-body">
         <div class="form-grid">
           <label> Name <input id="eName"></label>
@@ -138,53 +151,70 @@
           <label> Partner-Code <input id="ePartner"></label>
           <label> Geerbt von Code <input id="eInherited"></label>
           <label> Kommentar <input id="eNote"></label>
-        </div>
-      </div>
+        <div id="ribbon-version">v80</div>
+</div>
+      <div id="ribbon-version">v80</div>
+</div>
       <div class="dlg-actions">
         <button value="cancel" type="submit" formnovalidate>Abbrechen</button>
         <button id="saveEdit" value="default" type="submit">Speichern</button>
-      </div>
+      <div id="ribbon-version">v80</div>
+</div>
     </form>
   </dialog>
 
   <dialog id="dlgPrint">
-    <div class="dlg-head"><strong>Drucken</strong><button class="close-x" onclick="this.closest('dialog').close()">×</button></div>
+    <div class="dlg-head"><strong>Drucken</strong><button class="close-x" onclick="this.closest('dialog').close()">×</button><div id="ribbon-version">v80</div>
+</div>
     <div class="dlg-body">
       <p>Bitte auswählen, was gedruckt werden soll:</p>
       <div class="btn-row">
         <button class="btn" id="btnPrintTable">🖨️ Tabelle drucken</button>
         <button class="btn" id="btnPrintTree">🖨️ Baum drucken</button>
-      </div>
-    </div>
+      <div id="ribbon-version">v80</div>
+</div>
+    <div id="ribbon-version">v80</div>
+</div>
     <div class="dlg-actions">
       <button onclick="this.closest('dialog').close()">Schließen</button>
-    </div>
+    <div id="ribbon-version">v80</div>
+</div>
   </dialog>
 
   <dialog id="dlgExport">
-    <div class="dlg-head"><strong>Export</strong><button class="close-x" onclick="this.closest('dialog').close()">×</button></div>
+    <div class="dlg-head"><strong>Export</strong><button class="close-x" onclick="this.closest('dialog').close()">×</button><div id="ribbon-version">v80</div>
+</div>
     <div class="dlg-body">
       <p>Format wählen. Tipp: Diese Exporte dienen auch als <b>Backup</b>.</p>
       <div class="btn-row">
         <button class="btn" id="btnExportJSON">📄 JSON exportieren</button>
         <button class="btn" id="btnExportCSV">📄 CSV exportieren</button>
-      </div>
-    </div>
+      <div id="ribbon-version">v80</div>
+</div>
+    <div id="ribbon-version">v80</div>
+</div>
     <div class="dlg-actions">
       <button onclick="this.closest('dialog').close()">Schließen</button>
-    </div>
+    <div id="ribbon-version">v80</div>
+</div>
   </dialog>
 
   <dialog id="dlgStats">
-    <div class="dlg-head"><strong>Statistiken</strong><button class="close-x" onclick="this.closest('dialog').close()">×</button></div>
-    <div class="dlg-body" id="statsContent"></div>
-    <div class="dlg-actions"><button onclick="this.closest('dialog').close()">Schließen</button></div>
+    <div class="dlg-head"><strong>Statistiken</strong><button class="close-x" onclick="this.closest('dialog').close()">×</button><div id="ribbon-version">v80</div>
+</div>
+    <div class="dlg-body" id="statsContent"><div id="ribbon-version">v80</div>
+</div>
+    <div class="dlg-actions"><button onclick="this.closest('dialog').close()">Schließen</button><div id="ribbon-version">v80</div>
+</div>
   </dialog>
 
   <dialog id="dlgHelp">
-    <div class="dlg-head"><strong>❓ Hilfe &amp; Anleitung</strong><button class="close-x" onclick="this.closest('dialog').close()">×</button></div>
-    <div class="dlg-body help-body" id="helpContent">Lade Hilfe…</div>
-    <div class="dlg-actions"><button onclick="this.closest('dialog').close()">Schließen</button></div>
+    <div class="dlg-head"><strong>❓ Hilfe &amp; Anleitung</strong><button class="close-x" onclick="this.closest('dialog').close()">×</button><div id="ribbon-version">v80</div>
+</div>
+    <div class="dlg-body help-body" id="helpContent">Lade Hilfe…<div id="ribbon-version">v80</div>
+</div>
+    <div class="dlg-actions"><button onclick="this.closest('dialog').close()">Schließen</button><div id="ribbon-version">v80</div>
+</div>
   </dialog>
 
   
@@ -192,6 +222,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
   <script src="app.js"></script>
-<div style="text-align:right;font-size:10px;color:black;margin-top:5px;">Version v79</div>
+<div id="version-footer">Version v80<div id="ribbon-version">v80</div>
+</div>
 </body>
 </html>
