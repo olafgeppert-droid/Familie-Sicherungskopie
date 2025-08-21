@@ -1,4 +1,4 @@
-const APP_VERSION = "v82";
+const APP_VERSION = "v85";
 /* app.js – Logik */
 const STORAGE_KEY = "familyRing_upd56b";
 let people = [];
