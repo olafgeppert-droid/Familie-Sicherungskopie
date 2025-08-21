@@ -75,3 +75,8 @@ dialog::backdrop{background:transparent} /* keine Abdunklung */
   .title{font-size:22px}
   th{top:152px}
 }
+
+
+/* Version labels */
+.version-ribbon{position:absolute; right:12px; bottom:6px; font-size:12px; color:#fff; opacity:.9; pointer-events:none;}
+.version-under{text-align:center; font-size:12px; margin:6px 0 0; color:#111;}

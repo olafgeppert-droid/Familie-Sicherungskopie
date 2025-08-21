@@ -1,4 +1,3 @@
-const APP_VERSION = "v85";
 /* app.js – Logik */
 const STORAGE_KEY = "familyRing_upd56b";
 let people = [];
@@ -510,12 +509,3 @@ function printSection(what){
   // close after print (best-effort; some browsers ignore)
   win.addEventListener('afterprint', ()=> setTimeout(()=>win.close(), 200));
 }
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  const v = APP_VERSION;
-  const r = document.getElementById("version-ribbon");
-  if (r) r.textContent = v;
-  const t = document.getElementById("version-table");
-  if (t) t.textContent = v;
-});
