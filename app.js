@@ -505,3 +505,125 @@ function finalizePDF(doc) {
         doc.save("Family-Ring.pdf");
     }
 }
+
+// ---- v68b: robuste Druck-Events + iOS-freundliches Drucken per IFRAME ----
+
+// 1) Delegiertes Click-Handling für die zwei Auswahlknöpfe im Druck-Dialog
+document.addEventListener('click', (ev) => {
+  const t = ev.target;
+
+  // a) neue Variante über data-print
+  if (t && t.dataset && t.dataset.print) {
+    ev.preventDefault();
+    const what = t.dataset.print === 'table' ? 'table' : 'tree';
+    closePrintDialogIfOpen();
+    printSectionIFRAME(what);
+    return;
+  }
+
+  // b) alte Variante über fixe IDs (falls dein Dialog so gebaut ist)
+  if (t && (t.id === 'printTableBtn' || t.id === 'printTreeBtn')) {
+    ev.preventDefault();
+    const what = t.id === 'printTableBtn' ? 'table' : 'tree';
+    closePrintDialogIfOpen();
+    printSectionIFRAME(what);
+  }
+});
+
+// 2) Hilfsfunktion: vorhandenen Print-Dialog schließen (kl. Schutzmaßnahme)
+function closePrintDialogIfOpen() {
+  const dlg = document.getElementById('printDialog') || document.querySelector('.print-dialog');
+  if (dlg && dlg.parentElement) {
+    // Falls du einen Overlay/Modal-Manager nutzt, rufe hier dessen close() auf.
+    try { dlg.remove(); } catch(_) {}
+  }
+}
+
+// 3) iOS-freundliches Drucken: Inhalt in unsichtbares IFRAME klonen und drucken
+function printSectionIFRAME(what) {
+  const title = 'Wappenringe der Familie GEPPERT';
+  const dateStr = new Date().toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+  // Quelle bestimmen
+  const srcNode = (what === 'table')
+    ? document.querySelector('#peopleTableWrapper') || document.querySelector('#peopleTable') || document.querySelector('.people-table')
+    : document.querySelector('#treeContainer') || document.querySelector('#treeArea') || document.querySelector('.tree-area');
+
+  if (!srcNode) {
+    alert('Zu druckender Bereich wurde nicht gefunden.');
+    return;
+  }
+
+  // IFRAME erstellen
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+  // Minimales Druck-HTML (Wappen links/rechts, Überschrift, Inhalt, Fußzeile)
+  doc.open();
+  doc.write(`
+    <!doctype html>
+    <html lang="de">
+    <head>
+      <meta charset="utf-8"/>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+      <title>${title}</title>
+      <style>
+        *{box-sizing:border-box;}
+        body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,sans-serif;margin:24px;}
+        .print-header{
+          display:flex; align-items:center; justify-content:center; gap:12px;
+          font-size:22px; font-weight:700; margin-bottom:16px;
+        }
+        .print-header img{ height:28px; width:auto; }
+        .print-content{ page-break-inside:avoid; }
+        .print-footer{
+          margin-top:16px; text-align:center; font-size:12px; color:#555;
+        }
+        /* Falls deine Tabelle/Tree eigene Klassen braucht, etwas Grund-Layout mitgeben */
+        table{ width:100%; border-collapse:collapse; }
+        th, td{ border:1px solid #e5e7eb; padding:8px; }
+      </style>
+    </head>
+    <body>
+      <div class="print-header">
+        <img src="wappen.jpeg" alt="">
+        <span>${title}</span>
+        <img src="wappen.jpeg" alt="">
+      </div>
+      <div class="print-content" id="printContent"></div>
+      <div class="print-footer">Gedruckt am ${dateStr}</div>
+      <script>
+        // Schrift-Ladehilfe für iOS: erst drucken, wenn Fonts bereit
+        (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function(){
+          setTimeout(function(){ window.focus(); window.print(); }, 100);
+        });
+        window.onafterprint = function(){ setTimeout(function(){ window.close && window.close(); }, 50); };
+      </script>
+    </body>
+    </html>
+  `);
+  doc.close();
+
+  // Inhalt klonen
+  const contentHolder = doc.getElementById('printContent');
+  try {
+    contentHolder.appendChild(srcNode.cloneNode(true));
+  } catch(_){ /* falls Shadow/Canvas: alternativ innerHTML kopieren */ 
+    contentHolder.innerHTML = srcNode.innerHTML;
+  }
+
+  // Sicherheitsfallback: falls onload/Fonts nicht feuern, nachkurz drucken
+  setTimeout(() => {
+    try { iframe.contentWindow && iframe.contentWindow.focus(); iframe.contentWindow && iframe.contentWindow.print(); } catch(_) {}
+    // IFRAME später wegräumen
+    setTimeout(() => { try { iframe.remove(); } catch(_) {} }, 2000);
+  }, 800);
+}
