@@ -424,3 +424,178 @@ async function shareOrDownloadPDF(blob, filename){
   setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
 }
 
+
+// ---- v70 palette & tree helpers ----
+const V70_VERSION = "Family-Ring v70";
+
+function getGenColorClass(gen) {
+  const n = Number(gen)||0;
+  const idx = n <= 0 ? 1 : (n>10 ? ((n-1)%10)+1 : n);
+  return `gen-band-${idx}`;
+}
+function normalizeRowColors() {
+  try {
+    const table = document.querySelector('table');
+    if (!table) return;
+    const genIdx = Array.from(table.querySelectorAll('thead th')).findIndex(th => /\bgen\b/i.test(th.textContent));
+    if (genIdx === -1) return;
+    table.querySelectorAll('tbody tr').forEach(tr => {
+      const cells = tr.querySelectorAll('td');
+      if (cells[genIdx]) {
+        const g = (cells[genIdx].textContent||'').trim();
+        tr.setAttribute('data-gen', g);
+      }
+    });
+  } catch(e){ console.warn('normalizeRowColors error', e); }
+}
+
+function v70WrapRenderTree() {
+  if (window._v70Wrapped) return;
+  const orig = window.renderFamilyTree || window.renderTree || null;
+  window._v70Wrapped = true;
+  window.renderFamilyTree = function(...args){
+    if (orig) orig.apply(this, args);
+    try { v70EnhanceTree(); } catch(e){ console.warn('v70EnhanceTree failed', e); }
+  };
+  if (!orig) {
+    // minimal fallback draws nothing; rely on existing implementation if any
+    console.warn('No base tree renderer found, v70 only enhances.');
+  }
+}
+
+function v70EnhanceTree(){
+  const svg = document.querySelector('#treeSvg, svg#stammbaum, svg.family-tree');
+  if (!svg) return;
+
+  // add generation bands if not present: expect data-generation on node groups or y grid of 160px
+  const height = svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal.height : (svg.getAttribute('height')? parseFloat(svg.getAttribute('height')):600);
+  const width  = svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal.width  : (svg.getAttribute('width')?  parseFloat(svg.getAttribute('width')):1000);
+  const levelH = 160; // heuristic
+  const levels = Math.ceil(height/levelH);
+  // clear old bands
+  svg.querySelectorAll('rect[class^="gen-band-"]').forEach(el=>el.remove());
+  for(let i=0;i<levels;i++){
+    const cls = getGenColorClass(i+1);
+    const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x','0'); r.setAttribute('y', String(i*levelH));
+    r.setAttribute('width', String(width)); r.setAttribute('height', String(levelH));
+    r.setAttribute('class', cls);
+    r.setAttribute('data-v70','band');
+    svg.insertBefore(r, svg.firstChild);
+  }
+
+  // Attempt to fix lines: remove old v70 lines then redraw minimal set based on data attributes
+  svg.querySelectorAll('[data-v70="line"]').forEach(el=>el.remove());
+
+  // Expect node groups with data like <g class="node" data-id="CODE" data-gen="N" transform="translate(x,y)">
+  const nodes = Array.from(svg.querySelectorAll('g.node'));
+  const byId = new Map(nodes.map(n=>[n.getAttribute('data-id'), n]));
+  function getPos(g){
+    const tr = g.getAttribute('transform')||"";
+    const m = tr.match(/translate\(([-0-9\.]+),\s*([-0-9\.]+)\)/);
+    return m ? {x:parseFloat(m[1]), y:parseFloat(m[2])} : {x:0,y:0};
+  }
+  function nodeBoxAnchor(g){
+    // anchor at bottom center for parent bus connection
+    const rect = g.querySelector('rect');
+    const pos = getPos(g);
+    const w = rect ? parseFloat(rect.getAttribute('width')||'120') : 120;
+    const h = rect ? parseFloat(rect.getAttribute('height')||'50') : 50;
+    return {top:{x:pos.x+w/2,y:pos.y}, mid:{x:pos.x+w/2,y:pos.y+h/2}, bottom:{x:pos.x+w/2,y:pos.y+h}};
+  }
+
+  // relations expected in a hidden JSON element or window.peopleData
+  const rel = window.peopleData || window.persons || null;
+  if (!rel || !Array.isArray(rel)) return;
+
+  // Build quick index by code
+  const idx = new Map(rel.map(p=>[p.code||p.personCode||p.id, p]));
+
+  // Helper draw line
+  function line(x1,y1,x2,y2, dashed=false){
+    const L = document.createElementNS('http://www.w3.org/2000/svg','line');
+    L.setAttribute('x1',x1); L.setAttribute('y1',y1);
+    L.setAttribute('x2',x2); L.setAttribute('y2',y2);
+    L.setAttribute('class','kinline'); L.setAttribute('data-v70','line');
+    if (dashed) { L.setAttribute('class','busline dashed'); }
+    svg.appendChild(L);
+  }
+  function hline(x1,y,x2,dashed=false){
+    const L = document.createElementNS('http://www.w3.org/2000/svg','line');
+    L.setAttribute('x1',x1); L.setAttribute('y1',y);
+    L.setAttribute('x2',x2); L.setAttribute('y2',y);
+    L.setAttribute('class', dashed ? 'busline dashed' : 'busline');
+    L.setAttribute('data-v70','line');
+    svg.appendChild(L);
+    return L;
+  }
+  function vline(x,y1,y2){
+    const L = document.createElementNS('http://www.w3.org/2000/svg','line');
+    L.setAttribute('x1',x); L.setAttribute('y1',y1);
+    L.setAttribute('x2',x); L.setAttribute('y2',y2);
+    L.setAttribute('class','kinline');
+    L.setAttribute('data-v70','line');
+    svg.appendChild(L);
+    return L;
+  }
+
+  // Draw partner buslines and child connectors
+  rel.forEach(p=>{
+    const code = p.code || p.personCode || p.id;
+    if (!code) return;
+    const g = byId.get(code);
+    if (!g) return;
+    // partner handling
+    const partners = (p.partners || p.partner ? (Array.isArray(p.partners)? p.partners : [p.partner]) : [])
+      .map(c=>typeof c==='string'? c : (c && (c.code||c.personCode||c.id)));
+    partners.forEach(pc=>{
+      if (!pc) return;
+      const gp = byId.get(pc);
+      if (!gp) return;
+      const a = nodeBoxAnchor(g), b = nodeBoxAnchor(gp);
+      const y = Math.min(a.mid.y, b.mid.y) + Math.abs(a.mid.y - b.mid.y)/2;
+      const x1 = Math.min(a.mid.x, b.mid.x);
+      const x2 = Math.max(a.mid.x, b.mid.x);
+      // Determine dashed if no common children
+      const kidsA = (p.children||[]).map(c=>typeof c==='string'?c:c.code);
+      const partnerObj = idx.get(pc) || {};
+      const kidsB = (partnerObj.children||[]).map(c=>typeof c==='string'?c:c.code);
+      const common = kidsA.filter(k=>kidsB.includes(k));
+      const dashed = common.length===0;
+      hline(x1, y, x2, dashed);
+      // if there are common children, draw vertical spine down to mid between parents then to each child
+      if (common.length>0){
+        const spineX = (a.mid.x + b.mid.x)/2;
+        const spineTop = y;
+        common.forEach(kc=>{
+          const kidg = byId.get(kc);
+          if (!kidg) return;
+          const kb = nodeBoxAnchor(kidg);
+          vline(spineX, spineTop, kb.top.y); // to top of child box
+          // short horizontal from spine to child top center? not needed, since line ends at box top center
+        });
+      }
+    });
+    // single parent to children (if no partners listed)
+    if ((!partners || partners.length===0) && Array.isArray(p.children)){
+      const a = nodeBoxAnchor(g);
+      p.children.forEach(kc=>{
+        const key = typeof kc==='string'? kc : (kc && (kc.code||kc.personCode||kc.id));
+        const kidg = byId.get(key);
+        if (!kidg) return;
+        const kb = nodeBoxAnchor(kidg);
+        vline(a.mid.x, a.bottom.y, kb.top.y);
+      });
+    }
+  });
+}
+
+function v70Init(){
+  try { normalizeRowColors(); } catch(e){}
+  try { v70WrapRenderTree(); } catch(e){}
+  const sl = document.getElementById('statusline');
+  if (sl) sl.textContent = V70_VERSION;
+}
+
+document.addEventListener('DOMContentLoaded', v70Init);
+

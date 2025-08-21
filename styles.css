@@ -75,3 +75,48 @@ dialog::backdrop{background:transparent} /* keine Abdunklung */
   .title{font-size:22px}
   th{top:152px}
 }
+
+
+/* --- v70 generation palette --- */
+:root {
+  --gen1: #a8e6a1;   /* grün hell */
+  --gen2: #a7c7ff;   /* blau hell */
+  --gen3: #ffb3b3;   /* rot hell */
+  --gen4: #fff3a6;   /* gelb hell */
+  --gen5: #e0b3ff;   /* violett hell */
+  --gen6: #b3fff0;   /* türkis hell */
+  --gen7: #ffd1a6;   /* orange hell */
+  --gen8: #e0e0e0;   /* grau hell */
+  --gen9: #ffc0cb;   /* rosa hell */
+  --gen10:#7fbf7f;   /* dunkelgrün hell */
+}
+/* Tabellenzeilen einfärben nach Generation (data-gen Attribut) */
+table tbody tr[data-gen="1"] { background: var(--gen1); }
+table tbody tr[data-gen="2"] { background: var(--gen2); }
+table tbody tr[data-gen="3"] { background: var(--gen3); }
+table tbody tr[data-gen="4"] { background: var(--gen4); }
+table tbody tr[data-gen="5"] { background: var(--gen5); }
+table tbody tr[data-gen="6"] { background: var(--gen6); }
+table tbody tr[data-gen="7"] { background: var(--gen7); }
+table tbody tr[data-gen="8"] { background: var(--gen8); }
+table tbody tr[data-gen="9"] { background: var(--gen9); }
+table tbody tr[data-gen="10"]{ background: var(--gen10); }
+
+/* Stammbaum: optionale farbbänder pro generationsebene */
+svg .gen-band-1 { fill: var(--gen1); opacity: .35; }
+svg .gen-band-2 { fill: var(--gen2); opacity: .35; }
+svg .gen-band-3 { fill: var(--gen3); opacity: .35; }
+svg .gen-band-4 { fill: var(--gen4); opacity: .35; }
+svg .gen-band-5 { fill: var(--gen5); opacity: .35; }
+svg .gen-band-6 { fill: var(--gen6); opacity: .35; }
+svg .gen-band-7 { fill: var(--gen7); opacity: .35; }
+svg .gen-band-8 { fill: var(--gen8); opacity: .35; }
+svg .gen-band-9 { fill: var(--gen9); opacity: .35; }
+svg .gen-band-10{ fill: var(--gen10); opacity: .35; }
+
+/* Partner-Buslinien */
+svg .busline { stroke: #444; stroke-width: 2; }
+svg .busline.dashed { stroke-dasharray: 5 5; }
+svg .kinline { stroke: #333; stroke-width: 2; }
+svg .nodebox { stroke: #222; stroke-width: 1; fill: white; }
+
