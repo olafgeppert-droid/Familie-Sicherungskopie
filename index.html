@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wappenringe der Familie GEPPERT</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header id="app-header">
+    <img src="wappen.jpeg" alt="Wappen links" class="wappen left" />
+    <h1>Wappenringe der Familie GEPPERT</h1>
+    <img src="wappen.jpeg" alt="Wappen rechts" class="wappen right" />
+  </header>
+
+  <!-- Ribbon -->
+  <section id="ribbon">
+    <div class="row row1">
+      <div class="group">
+        <button id="btnNew" title="Neue Person anlegen">➕ Neue Person</button>
+        <button id="btnDelete" title="Person löschen (per Code/Name)">🗑️ Person löschen</button>
+        <button id="btnImport" title="Daten importieren">⬇️ Import</button>
+        <button id="btnExport" title="Daten exportieren">⬆️ Export</button>
+        <button id="btnPrint"  title="Drucken">🖨️ Drucken</button>
+        <button id="btnStats"  title="Statistik">📊 Statistik</button>
+        <button id="btnUndo"   title="Rückgängig">↩️ Rückgängig</button>
+        <button id="btnRedo"   title="Wiederholen">↪️ Wiederholen</button>
+        <button id="btnReset"  class="danger" title="Alle Daten löschen">❗ Alle Daten löschen</button>
+        <button id="btnHelp"   title="Hilfe/Anleitung">❓ Hilfe</button>
+      </div>
+    </div>
+    <div class="row row2">
+      <div class="group">
+        <label for="search">Personensuche:</label>
+        <input id="search" type="text" placeholder="Name, Code, Ring, ..."/>
+      </div>
+    </div>
+  </section>
+
+  <p id="hint"><strong>Personen- und Ring-Code werden vom Programm vergeben. Sichere die Datenbank durch Export als JSON-Datei in deinem Backup-Verzeichnis.</strong></p>
+
+  <main>
+    <section class="pane">
+      <h2>Personen</h2>
+      <div class="table-wrap">
+        <table id="peopleTable">
+          <thead>
+            <tr>
+              <th>Gen</th>
+              <th>Code</th>
+              <th>Ringcode</th>
+              <th>Name</th>
+              <th>Geburtsdatum</th>
+              <th>Geschlecht</th>
+              <th>Geerbt von</th>
+              <th>Vater</th>
+              <th>Mutter</th>
+              <th>Partner</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="pane">
+      <h2>Stammbaum</h2>
+      <div id="treeContainer">
+        <svg id="treeSVG" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </section>
+  </main>
+
+  <!-- Dialoge / Popups -->
+  <dialog id="dlgNew">
+    <form method="dialog" id="formNew">
+      <h3>Neue Person</h3>
+      <div class="grid">
+        <label>Nachname, Vorname* <input name="name" required placeholder="Geppert, Max" /></label>
+        <label>Geburtsdatum <input name="birth" placeholder="TT.MM.JJJJ" /></label>
+        <label>Geschlecht
+          <select name="gender">
+            <option value="m">männlich</option>
+            <option value="w">weiblich</option>
+            <option value="d">divers</option>
+          </select>
+        </label>
+        <label>Vater (Code) <input name="father" placeholder="z.B. 1A" /></label>
+        <label>Mutter (Code) <input name="mother" placeholder="z.B. 1Ax" /></label>
+        <label>Partner (Codes, Komma) <input name="partners" placeholder="z.B. 1Ax" /></label>
+        <label>Geerbt von (Code) <input name="inheritedFrom" placeholder="Code Erblasser(in)" /></label>
+      </div>
+      <menu>
+        <button value="cancel" id="btnCancelNew">Abbrechen</button>
+        <button id="btnSaveNew" value="default">Speichern</button>
+      </menu>
+      <p class="hint-fields">* Pflichtfeld. Abbrechen funktioniert auch ohne Eingaben.</p>
+    </form>
+  </dialog>
+
+  <dialog id="dlgDelete">
+    <form method="dialog" id="formDelete">
+      <h3>Person löschen</h3>
+      <p>Gib den <strong>Personen-Code</strong> oder <strong>Namen</strong> ein, der gelöscht werden soll.</p>
+      <input name="query" placeholder="z.B. 1A oder Geppert, Max" />
+      <menu>
+        <button value="cancel">Abbrechen</button>
+        <button id="btnConfirmDelete" value="default" class="danger">Löschen</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog id="dlgExport">
+    <form method="dialog" id="formExport">
+      <h3>Export</h3>
+      <p>Wähle das Format:</p>
+      <label><input type="radio" name="fmt" value="json" checked /> JSON</label>
+      <label><input type="radio" name="fmt" value="csv" /> CSV</label>
+      <menu>
+        <button value="cancel">Abbrechen</button>
+        <button id="btnDoExport" value="default">Exportieren</button>
+      </menu>
+      <p class="hint-fields">Tipp: Lege ein Backup-Verzeichnis für Exporte an.</p>
+    </form>
+  </dialog>
+
+  <dialog id="dlgPrint">
+    <form method="dialog" id="formPrint">
+      <h3>Drucken</h3>
+      <p>Was möchtest du drucken?</p>
+      <label><input type="radio" name="what" value="table" checked /> Nur Tabelle</label>
+      <label><input type="radio" name="what" value="tree" /> Nur Stammbaum</label>
+      <menu>
+        <button value="cancel">Abbrechen</button>
+        <button id="btnDoPrint" value="default">Drucken</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog id="dlgStats">
+    <div id="statsContent"></div>
+    <menu>
+      <button id="btnCloseStats">Schließen</button>
+    </menu>
+  </dialog>
+
+  <dialog id="dlgHelp" class="help">
+    <div class="help-body">
+      <button class="close" id="btnCloseHelp" title="Schließen">✖</button>
+      <iframe src="help.html" title="Hilfe"></iframe>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
