@@ -44,7 +44,7 @@
         <img class="coa" src="wappen.jpeg" alt="Wappen" onerror="this.style.display='none'">
       </div>
       <div class="toolbar">
-        <div class="left centered-buttons">
+        <div class="button-row">
           <button class="btn" id="btnNew" title="Neue Person anlegen">➕ Neue Person</button>
           <button class="btn" id="btnDelete" title="Person löschen">🗑️ Person löschen</button>
           <button class="btn" id="btnImport" title="Import">📥 Import</button>
@@ -56,7 +56,7 @@
           <button class="btn danger" id="btnReset" title="Alle Daten löschen">⛔ Daten-Reset</button>
           <button class="btn help" id="btnHelp" title="Hilfe / Anleitung">❓ Hilfe</button>
         </div>
-        <div class="right centered-search">
+        <div class="search-row">
           <input id="search" type="text" placeholder="Personen suchen (Name/Code)"/>
         </div>
       </div>
@@ -185,11 +185,10 @@
   <dialog id="dlgPrint">
     <div class="dlg-head"><strong>Drucken</strong><button class="close-x" onclick="this.closest('dialog').close()">×</button></div>
     <div class="dlg-body">
-      <p>Bitte auswählen, wie gedruckt werden soll:</p>
+      <p>Bitte auswählen, was gedruckt werden soll:</p>
       <div class="btn-row">
         <button class="btn" id="btnPrintTable">🖨️ Tabelle drucken</button>
         <button class="btn" id="btnPrintTree">🖨️ Baum drucken</button>
-        <button class="btn" id="btnPrintBoth">🖨️ Beides drucken</button>
       </div>
     </div>
     <div class="dlg-actions">
