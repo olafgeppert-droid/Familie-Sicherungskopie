@@ -23,6 +23,7 @@ body{margin:0;background:#fafafa;color:var(--text);font-family:system-ui,-apple-
   color:var(--ribbon-fg);
   box-shadow:0 6px 14px rgba(0,0,0,.08);
   position: relative; /* Für absolute Positionierung der Version */
+  padding-bottom: 24px; /* Mehr Platz für die Version */
 }
 .title-wrap{display:flex;align-items:center;justify-content:center;gap:14px;padding:12px 16px}
 .title{margin:0;font-size:28px;letter-spacing:.3px;text-align:center}
@@ -71,16 +72,18 @@ dialog::backdrop{background:transparent} /* keine Abdunklung */
 .form-grid input, .form-grid select{padding:8px;border:1px solid #d1d5db;border-radius:8px}
 .btn-row{display:flex;gap:10px;flex-wrap:wrap}
 
-/* Version labels - JETZT RECHTSBÜNDIG und für iPad sichtbar */
+/* Version labels - Vereinfachte Lösung für iPad */
 .version-ribbon{
   position: absolute;
   right: 12px;
-  bottom: 6px;
+  bottom: 8px;
   font-size: 12px;
   color: #fff;
   opacity: .9;
   pointer-events: none;
   text-align: right;
+  z-index: 10;
+  display: block !important;
 }
 
 .version-under{
@@ -91,37 +94,12 @@ dialog::backdrop{background:transparent} /* keine Abdunklung */
   padding-right: 8px;
 }
 
-/* Nur für sehr kleine Mobilgeräte anpassen, nicht für iPad */
-@media (max-width: 600px) {
+/* Nur für sehr kleine Mobilgeräte anpassen */
+@media (max-width: 480px) {
   .form-grid{grid-template-columns:1fr}
   .title{font-size:22px}
   th{top:152px}
   
-  /* Nur bei sehr kleinen Bildschirmen die Version umpositionieren */
-  .version-ribbon {
-    position: static;
-    text-align: right;
-    padding: 4px 12px;
-    color: #fff;
-    background: rgba(0,0,0,0.2);
-    margin-top: 4px;
-    display: block !important;
-  }
-}
-
-/* iPad-spezifische Anpassungen */
-@media (min-width: 601px) and (max-width: 1024px) {
-  .version-ribbon {
-    position: absolute;
-    right: 12px;
-    bottom: 6px;
-    display: block !important;
-    z-index: 10;
-  }
-}
-
-@media (max-width:480px){
-  /* Extra kleine Geräte (Smartphones) */
   .toolbar{
     flex-direction: column;
     gap: 8px;
@@ -143,5 +121,31 @@ dialog::backdrop{background:transparent} /* keine Abdunklung */
   
   .coa{
     height: 28px;
+  }
+  
+  /* Version auf sehr kleinen Geräten */
+  .version-ribbon {
+    position: static;
+    text-align: center;
+    padding: 4px 12px;
+    color: #fff;
+    background: rgba(0,0,0,0.2);
+    margin-top: 4px;
+  }
+}
+
+/* iPad-spezifische Anpassungen */
+@media (min-width: 481px) and (max-width: 1024px) {
+  .version-ribbon {
+    position: absolute;
+    right: 12px;
+    bottom: 8px;
+    display: block !important;
+    z-index: 10;
+    font-size: 14px;
+  }
+  
+  .ribbon {
+    min-height: 140px;
   }
 }
