@@ -207,7 +207,7 @@ function renderTree(){
       t1.setAttribute("x",8); t1.setAttribute("y",18); t1.textContent=`${p.Code} / ${p.Name||""}`;
       const t2=document.createElementNS(svgNS,"text");
       t2.setAttribute("x",8); t2.setAttribute("y",36); t2.textContent=`Generation: ${p.Gen||""} / ${p.Birth||""}`;
-      [t1,t2].forEach(t=>{t.setAttribute("font-size","11"); t.setAttribute("fill","#111827");});
+  [t1,t2].forEach(t=>{t.setAttribute("font-size","11"); t.setAttribute("fill","#111827");});
       svg.appendChild(gEl); gEl.appendChild(rect); gEl.appendChild(t1); gEl.appendChild(t2);
     });
   });
@@ -357,7 +357,7 @@ function saveEditFn(){
   p.Gender=$("#eGender").value;
   p.ParentCode=normalizePersonCode($("#eParent").value.trim());
   p.PartnerCode=normalizePersonCode($("#ePartner").value.trim());
-  p.InheritedFrom=normalizePersonCode($("#eInherited").value.trim());
+  p.InheritedFrom=normalizePersonCode($("#eInherited).value.trim());
   p.Note=$("#eNote").value.trim();
   // Recompute gen if parent changed or code pattern changed
   p.Gen = computeGenFromCode(p.Code);
@@ -678,7 +678,8 @@ function printSection(what){
   // close after print
   win.addEventListener('afterprint', ()=> setTimeout(()=>win.close(), 200));
 }
-// Sicherstellen, dass die Version auf allen Geräten sichtbar ist
+
+// Sicherstellen, dass die Version auf iPad sichtbar ist
 function ensureVersionVisibility() {
   const versionRibbon = document.getElementById('versionRibbon');
   if (versionRibbon) {
