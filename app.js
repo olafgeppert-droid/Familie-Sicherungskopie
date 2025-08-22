@@ -481,7 +481,7 @@ function updateStats(){
     byGen[p.Gen] = (byGen[p.Gen]||0)+1;
   }
   let html = `<p>Gesamtanzahl Personen: <b>${total}</b></p>`;
-  html += `<p>davon männlich: <b>${m}</b> — weiblich: <b>${w}</b> — divers: <b>${d</b></p>`;
+  html += `<p>davon männlich: <b>${m}</b> — weiblich: <b>${w}</b> — divers: <b>${d}</b></p>`;
   html += `<ul>`; Object.keys(byGen).sort((a,b)=>a-b).forEach(k=> html += `<li>Generation ${k}: ${byGen[k]}</li>`); html += `</ul>`;
   $("#statsContent").innerHTML = html;
 }
