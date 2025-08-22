@@ -44,22 +44,26 @@
         <img class="coa" src="wappen.jpeg" alt="Wappen" onerror="this.style.display='none'">
       </div>
       <div class="toolbar">
-        <!-- Erste Zeile: Hauptbuttons -->
-        <div class="button-row">
+        <!-- Erste Zeile: Wichtigste Funktionen -->
+        <div class="button-row main-functions">
           <button class="btn" id="btnNew" title="Neue Person anlegen">➕ Neue Person</button>
-          <button class="btn" id="btnDelete" title="Person löschen">🗑️ Person löschen</button>
+          <button class="btn" id="btnDelete" title="Person löschen">🗑️ Löschen</button>
           <button class="btn" id="btnImport" title="Import">📥 Import</button>
           <button class="btn" id="btnExport" title="Export">📤 Export</button>
           <button class="btn" id="btnPrint" title="Drucken">🖨️ Drucken</button>
           <button class="btn" id="btnStats" title="Statistiken">📊 Statistiken</button>
-          <button class="btn" id="btnUndo" title="Rückgängig">↶ Rückgängig</button>
-          <button class="btn" id="btnRedo" title="Wiederholen">↷ Wiederholen</button>
         </div>
         
-        <!-- Zweite Zeile: Reset, Suche, Hilfe -->
-        <div class="second-row">
-          <button class="btn danger" id="btnReset" title="Alle Daten löschen">⛔ Daten-Reset</button>
-          <input id="search" type="text" placeholder="Personen suchen (Name/Code)"/>
+        <!-- Zweite Zeile: Zusätzliche Funktionen & Suche -->
+        <div class="button-row additional-functions">
+          <button class="btn" id="btnUndo" title="Rückgängig">↶ Rückgängig</button>
+          <button class="btn" id="btnRedo" title="Wiederholen">↷ Wiederholen</button>
+          <button class="btn danger" id="btnReset" title="Alle Daten löschen">⛔ Reset</button>
+          
+          <div class="search-container">
+            <input id="search" type="text" placeholder="Personen suchen (Name/Code)"/>
+          </div>
+          
           <button class="btn help" id="btnHelp" title="Hilfe / Anleitung">❓ Hilfe</button>
         </div>
       </div>
@@ -106,7 +110,7 @@
     </section>
   </div>
 
-  <!-- DIALOGS (unchanged) -->
+  <!-- DIALOGS -->
   <dialog id="dlgNew">
     <form method="dialog" id="formNew">
       <div class="dlg-head">
