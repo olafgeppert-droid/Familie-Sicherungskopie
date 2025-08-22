@@ -22,22 +22,45 @@ body{margin:0;background:#fafafa;color:var(--text);font-family:system-ui,-apple-
   background: linear-gradient(90deg, var(--brand), var(--brand2));
   color:var(--ribbon-fg);
   box-shadow:0 6px 14px rgba(0,0,0,.08);
-  position: relative; /* Für absolute Positionierung der Version */
-  padding-bottom: 24px; /* Mehr Platz für die Version */
+  position: relative;
+  padding-bottom: 24px;
 }
 .title-wrap{display:flex;align-items:center;justify-content:center;gap:14px;padding:12px 16px}
 .title{margin:0;font-size:28px;letter-spacing:.3px;text-align:center}
 .coa{height:34px;width:auto}
 
-/* Toolbar */
-.toolbar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#fff;border-top:1px solid rgba(255,255,255,.2);border-bottom:1px solid var(--border);padding:10px 12px}
-.toolbar .left, .toolbar .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* Toolbar - Angepasst für Zentrierung */
+.toolbar{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background:#fff;
+  border-top:1px solid rgba(255,255,255,.2);
+  border-bottom:1px solid var(--border);
+  padding:10px 12px;
+}
+
+/* Zentrierte Buttons in der ersten Zeile */
+.toolbar .centered-buttons{
+  display:flex;
+  justify-content: center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+/* Zentrierte Suche in der zweiten Zeile */
+.toolbar .centered-search{
+  display:flex;
+  justify-content: center;
+  width: 100%;
+}
+
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid #d0d7de;background:#f4f6f8;color:#111827;border-radius:8px;cursor:pointer;font-weight:600}
 .btn:hover{background:#eef2f7}
 .btn[disabled]{opacity:.5;pointer-events:none}
 .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
 .btn.help{background:#f4f6f8 !important; border-color:#d0d7de !important; color:#d32f2f !important}
-input[type="text"]{padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;width:280px}
+input[type="text"]{padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;width:280px;max-width:100%}
 
 /* Hinweiszeile */
 .hint-row{background:#fff;border-bottom:1px solid var(--border);padding:8px 12px}
@@ -100,13 +123,7 @@ dialog::backdrop{background:transparent} /* keine Abdunklung */
   .title{font-size:22px}
   th{top:152px}
   
-  .toolbar{
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .toolbar .left, .toolbar .right{
-    width: 100%;
+  .toolbar .centered-buttons{
     justify-content: center;
   }
   
