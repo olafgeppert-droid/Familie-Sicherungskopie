@@ -1,0 +1,36 @@
+
+*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+.ribbon{background:#1f5fbf;color:#fff;padding:10px 10px 6px;border-bottom:4px solid #134b99;position:sticky;top:0;z-index:5}
+.title-wrap{display:flex;align-items:center;justify-content:center;gap:10px}
+.title-wrap h1{font-size:22px;margin:0;font-weight:700}
+.wappen{height:22px;filter:drop-shadow(0 0 1px rgba(0,0,0,.3))}
+.toolbar-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.toolbar-row input{padding:8px 10px;min-width:280px;border:1px solid #d0d3da;border-radius:8px}
+button{padding:8px 10px;border:1px solid #c7ccd6;background:#fff;border-radius:8px;cursor:pointer}
+button.danger{background:#ffe8e8;border-color:#f5a5a5;color:#a30000}
+.hint{margin:10px auto;max-width:1200px;background:#f7f9fb;border:1px solid #e4e7ee;border-radius:8px;padding:10px 12px;color:#333}
+.table-wrap{max-width:1200px;margin:0 auto;overflow:auto}
+table{width:100%;border-collapse:separate;border-spacing:0 8px}
+thead th{position:sticky;top:0;background:#fff;border-bottom:2px solid #e5e8ef}
+tbody tr{background:#fff;border:1px solid #e5e8ef;border-radius:8px}
+tbody td, thead th{padding:10px 12px;text-align:left;white-space:nowrap}
+.version-under{text-align:center;margin:8px 0 2px;color:#333;font-size:12px}
+.tree-card{max-width:1200px;margin:8px auto 18px;background:#eef5f7;border:1px solid #e0e6ea;border-radius:8px;padding:8px}
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}
+.modal.hidden{display:none}
+.modal-content{background:#fff;border-radius:10px;min-width:320px;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.modal-header{padding:10px 14px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+.modal-body{padding:14px}
+.modal-footer{padding:10px 14px;border-top:1px solid #eee;display:flex;gap:10px;justify-content:flex-end}
+.modal .close{border:none;background:transparent;font-size:20px;line-height:1;cursor:pointer}
+.btn-row{display:flex;gap:10px;margin-top:10px}
+/* Node styles by generation */
+.node rect{rx:8;ry:8;stroke:#d0d7de;fill:#fff}
+.node.g1 rect{fill:#cfeec7}
+.node.g2 rect{fill:#ffe9a7}
+.node.g3 rect{fill:#ffc8c8}
+.node.g4 rect{fill:#fff3b3}
+.node.g5 rect{fill:#ead7ff}
+.link{stroke:#6b7280;stroke-width:2;fill:none}
+.link.dashed{stroke-dasharray:5,5}

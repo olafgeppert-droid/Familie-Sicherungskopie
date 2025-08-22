@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wappenringe der Familie</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="ribbon">
+    <div class="title-wrap">
+      <img src="wappen.jpeg" alt="Wappen" class="wappen left" onerror="this.style.visibility='hidden'">
+      <h1>Wappenringe der Familie GEPPERT</h1>
+      <img src="wappen.jpeg" alt="Wappen" class="wappen right" onerror="this.style.visibility='hidden'">
+    </div>
+    <div class="toolbar-row">
+      <button id="btnNew">+ Neue Person</button>
+      <button id="btnDelete">🗑️ Person löschen</button>
+      <button id="btnImport">📥 Import</button>
+      <button id="btnExport">📤 Export</button>
+      <button id="btnPrint">🖨️ Drucken</button>
+      <button id="btnStats">📊 Statistik</button>
+      <button id="btnUndo">↶ Rückgängig</button>
+      <button id="btnRedo">↷ Wiederholen</button>
+      <button id="btnReset" class="danger">🧹 Daten-Reset</button>
+      <button id="btnHelp">❓ Hilfe</button>
+    </div>
+    <div class="toolbar-row">
+      <input id="search" placeholder="Personen suchen (Name/Code)">
+    </div>
+  </header>
+
+  <main>
+    <div class="hint">
+      Personen- und Ring-Code werden vom Programm vergeben. Denke daran, die Datenbank durch Export als JSON-Datei in deinem Backup-Verzeichnis zu sichern.
+    </div>
+
+    <div class="table-wrap">
+      <table id="peopleTable">
+        <thead>
+          <tr>
+            <th>Gen</th><th>Code</th><th>Ring-Code</th><th>Name</th>
+            <th>Geburtsdatum</th><th>Geburtsort</th><th>Geschlecht</th>
+            <th>Eltern-Code</th><th>Partner-Code</th><th>Geerbt von</th><th>Kommentar</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div id="versionLabel" class="version-under">Softwareversion: v83a</div>
+
+    <section class="tree-card">
+      <svg id="treeSvg" width="100%" height="520" viewBox="0 0 1400 520" xmlns="http://www.w3.org/2000/svg"></svg>
+    </section>
+  </main>
+
+  <!-- Druck-Dialog -->
+  <div id="printDialog" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Drucken</span>
+        <button class="close" id="printClose">×</button>
+      </div>
+      <div class="modal-body">
+        Bitte auswählen, was gedruckt werden soll:
+        <div class="btn-row">
+          <button id="printTable">📄 Tabelle drucken</button>
+          <button id="printTree">🌳 Baum drucken</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="printCancel">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset-Dialog -->
+  <div id="resetDialog" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>ACHTUNG</span>
+        <button class="close" id="resetClose">×</button>
+      </div>
+      <div class="modal-body">
+        Alle Daten werden gelöscht. Fortfahren?
+      </div>
+      <div class="modal-footer">
+        <button id="resetOk" class="danger">Ja, löschen</button>
+        <button id="resetCancel">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Neue Person -->
+  <div id="newDialog" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <div class="modal-header"><span>Neue Person</span><button class="close" id="newClose">×</button></div>
+      <div class="modal-body">
+        <label>Name <input id="newName"></label>
+        <label>Geburtsdatum <input id="newDob" placeholder="TT.MM.JJJJ"></label>
+        <label>Geburtsort <input id="newBirthplace"></label>
+        <label>Geschlecht
+          <select id="newSex"><option value="m">m</option><option value="w">w</option></select>
+        </label>
+        <label>Eltern-Code <input id="newParents"></label>
+        <label>Partner (Code) <input id="newPartner"></label>
+        <label>Kommentar <input id="newComment"></label>
+      </div>
+      <div class="modal-footer">
+        <button id="newSave">Speichern</button>
+        <button id="newCancel">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.APP_VERSION = "v83a";
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>
