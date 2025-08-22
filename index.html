@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wappenringe der Familie</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="ribbon">
+    <div class="ribbon-inner">
+      <img class="crest" src="wappen.jpeg" alt="Wappen links">
+      <h1>Wappenringe der Familie GEPPERT</h1>
+      <img class="crest" src="wappen.jpeg" alt="Wappen rechts">
+    </div>
+
+    <div class="toolbar-row">
+      <button id="btnAdd" class="btn"><span>＋</span> Neue Person</button>
+      <button id="btnDelete" class="btn"><span>🗑️</span> Person löschen</button>
+      <button id="btnImport" class="btn"><span>📥</span> Import</button>
+      <button id="btnExport" class="btn"><span>📤</span> Export</button>
+      <button id="btnPrint" class="btn"><span>🖨️</span> Drucken</button>
+      <button id="btnStats" class="btn"><span>📊</span> Statistiken</button>
+      <button id="btnUndo" class="btn"><span>↶</span> Rückgängig</button>
+      <button id="btnRedo" class="btn"><span>↷</span> Wiederholen</button>
+      <button id="btnReset" class="btn danger"><span>⛔</span> Daten-Reset</button>
+    </div>
+
+    <div class="toolbar-row">
+      <input id="search" class="search" placeholder="Personen suchen (Name/Code)">
+      <button id="btnHelp" class="btn light">❓ Hilfe</button>
+    </div>
+
+    <div class="hint">
+      Personen- und Ring-Code werden vom Programm vergeben. Denke daran, die Datenbank durch Export als JSON-Datei in deinem Backup-Verzeichnis zu sichern.
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <table id="peopleTable" class="table">
+        <thead>
+          <tr>
+            <th>Gen</th><th>Code</th><th>Ring-Code</th><th>Name</th><th>Geburtsdatum</th>
+            <th>Geburtsort</th><th>Geschlecht</th><th>Eltern-Code</th><th>Partner-Code</th><th>Geerbt von</th><th>Kommentar</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="versionBelow" class="version-below">Softwareversion: v85</div>
+    </section>
+    <section>
+      <div id="treeCanvas" class="tree"></div>
+    </section>
+  </main>
+
+  <!-- Dialoge -->
+  <dialog id="dlgPrint" class="dialog">
+    <h3>Drucken</h3>
+    <p>Bitte auswählen, was gedruckt werden soll:</p>
+    <div class="dialog-actions">
+      <button id="btnPrintTable" class="btn">Tabelle drucken</button>
+      <button id="btnPrintTree" class="btn">Baum drucken</button>
+    </div>
+    <div class="dialog-actions">
+      <button id="btnPrintClose" class="btn light">Schließen</button>
+    </div>
+  </dialog>
+
+  <dialog id="dlgStats" class="dialog">
+    <h3>Statistiken</h3>
+    <div id="statsBody"></div>
+    <div class="dialog-actions"><button id="btnStatsClose" class="btn">Schließen</button></div>
+  </dialog>
+
+  <dialog id="dlgAdd" class="dialog">
+    <h3>Neue Person</h3>
+    <form id="formAdd" method="dialog">
+      <label>Code (automatisch): <input disabled value="(auto)"></label>
+      <label>Name: <input id="addName" required></label>
+      <label>Geschlecht: 
+        <select id="addSex"><option value="m">m</option><option value="w">w</option></select>
+      </label>
+      <label>Eltern-Code: <input id="addParents" placeholder="z. B. 1A"></label>
+      <label>Partner (Code): <input id="addPartner" placeholder="z. B. 1x"></label>
+      <div class="dialog-actions">
+        <button id="btnAddCancel" type="button" class="btn light">Abbrechen</button>
+        <button id="btnAddSave" type="submit" class="btn">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <input type="file" id="fileImport" accept="application/json" style="display:none">
+
+  <script>
+    window.APP_VERSION = "v85";
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+body{margin:0;background:#f7f9fb;color:#222}
+.ribbon{background:#1e63d2;color:#fff;padding:8px 10px 12px;border-bottom:3px solid rgba(0,0,0,.15);position:sticky;top:0;z-index:5}
+.ribbon-inner{display:flex;align-items:center;gap:10px;justify-content:center}
+.ribbon-inner h1{font-size:22px;margin:4px 0}
+.crest{height:22px;filter:drop-shadow(0 0 1px rgba(0,0,0,.2))}
+.toolbar-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;justify-content:flex-start}
+.btn{border:1px solid #c9d6f0;background:#fff;color:#123b7a;border-radius:8px;padding:6px 10px;cursor:pointer}
+.btn:hover{background:#eef5ff}
+.btn.light{background:#f3f6fb;color:#123b7a}
+.btn.danger{background:#ffd7d7;border-color:#ffb9b9;color:#8b0c0c}
+.search{flex:1;min-width:250px;border:1px solid #cbd5e1;border-radius:8px;padding:8px}
+.hint{margin-top:10px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px;color:#2d3748}
+
+main{padding:14px}
+.table{width:100%;border-collapse:separate;border-spacing:0 6px}
+.table th,.table td{background:#fff;padding:10px 12px;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb}
+.table th:first-child,.table td:first-child{border-left:1px solid #e5e7eb;border-top-left-radius:10px;border-bottom-left-radius:10px}
+.table th:last-child,.table td:last-child{border-right:1px solid #e5e7eb;border-top-right-radius:10px;border-bottom-right-radius:10px}
+
+.version-below{text-align:center;color:#333;margin:8px 0 6px 0;font-size:12px}
+
+.tree{background:#edf6ff;border:1px solid #dbeafe;border-radius:12px;min-height:360px;overflow:auto;padding:10px}
+.box{fill:#fff;stroke:#cbd5e1;stroke-width:1}
+.boxText{font-size:11px;fill:#111}
+.band{opacity:.7}
+.link{stroke:#1f2937;stroke-width:1.5;fill:none}
+.link.dashed{stroke-dasharray:4 4}
+.bus{stroke:#1f2937;stroke-width:1.5}
+
+.dialog::backdrop{background:rgba(0,0,0,.4)}
+.dialog{border:none;border-radius:12px;padding:16px;min-width:260px}
+.dialog-actions{display:flex;gap:10px;justify-content:center;margin-top:10px}
