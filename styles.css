@@ -32,12 +32,11 @@ body{margin:0;background:#fafafa;color:var(--text);font-family:system-ui,-apple-
 .title{margin:0;font-size:28px;letter-spacing:.3px;text-align:center}
 .coa{height:34px;width:auto}
 
-/* Toolbar - Komplett überarbeitet */
+/* Toolbar - Überarbeitet für zwei Zeilen */
 .toolbar{
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 16px;
+  gap: 12px;
   background:#fff;
   border-top:1px solid rgba(255,255,255,.2);
   border-bottom:1px solid var(--border);
@@ -45,21 +44,24 @@ body{margin:0;background:#fafafa;color:var(--text);font-family:system-ui,-apple-
   width: 100%;
 }
 
-/* Button-Zeile - vergrößerte Buttons */
+/* Erste Zeile: Hauptbuttons */
 .button-row{
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
 }
 
-/* Such-Zeile - vergrößerte Suchleiste */
-.search-row{
+/* Zweite Zeile: Reset, Suche, Hilfe */
+.second-row{
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 12px;
   width: 100%;
   max-width: 800px;
+  margin: 0 auto;
 }
 
 /* Vergrößerte Buttons */
@@ -70,7 +72,7 @@ body{margin:0;background:#fafafa;color:var(--text);font-family:system-ui,-apple-
   gap:8px;
   padding:12px 16px;
   height: var(--button-height);
-  min-width: 120px;
+  min-width: 140px;
   border:1px solid #d0d7de;
   background:#f4f6f8;
   color:#111827;
@@ -80,8 +82,6 @@ body{margin:0;background:#fafafa;color:var(--text);font-family:system-ui,-apple-
   font-size: var(--button-font-size);
   white-space: nowrap;
   transition: all 0.2s ease;
-  flex: 1;
-  max-width: 180px;
 }
 .btn:hover{
   background:#eef2f7;
@@ -106,8 +106,8 @@ input[type="text"]{
   height: var(--input-height);
   border:2px solid #d1d5db;
   border-radius:10px;
-  width: 100%;
-  max-width: 600px;
+  flex: 1;
+  max-width: 400px;
   font-size: var(--button-font-size);
   transition: all 0.2s ease;
 }
@@ -199,7 +199,7 @@ dialog::backdrop{background:transparent} /* keine Abdunklung */
   .btn {
     padding: 10px 14px;
     font-size: 15px;
-    max-width: 160px;
+    min-width: 120px;
   }
 }
 
@@ -219,13 +219,18 @@ dialog::backdrop{background:transparent} /* keine Abdunklung */
   .btn {
     padding: 8px 12px;
     font-size: 14px;
-    max-width: 140px;
-    min-width: 100px;
+    min-width: 110px;
   }
   
   input[type="text"] {
     padding: 10px 14px;
     font-size: 15px;
+    max-width: 300px;
+  }
+  
+  .second-row {
+    flex-wrap: wrap;
+    justify-content: space-between;
   }
 }
 
@@ -247,11 +252,25 @@ dialog::backdrop{background:transparent} /* keine Abdunklung */
     margin: 2px;
   }
   
+  .second-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
   input[type="text"] {
     width: 100%;
     max-width: 280px;
     padding: 8px 12px;
     font-size: 14px;
+    order: 1;
+  }
+  
+  #btnReset {
+    order: 2;
+  }
+  
+  #btnHelp {
+    order: 3;
   }
   
   /* Version auf sehr kleinen Geräten */
