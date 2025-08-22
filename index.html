@@ -7,41 +7,32 @@
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="styles.css"/>
   <style>
-    /* Zusätzliches CSS für iPad-Kompatibilität */
-    @media (min-width: 601px) and (max-width: 1024px) {
-      .ribbon {
-        min-height: 140px; /* Mehr Platz für die Version */
+    /* Sicherstellen, dass die Version auf iPad immer sichtbar ist */
+    #versionRibbon {
+      position: absolute !important;
+      right: 12px !important;
+      bottom: 8px !important;
+      font-size: 12px !important;
+      color: #fff !important;
+      opacity: .9 !important;
+      pointer-events: none !important;
+      text-align: right !important;
+      z-index: 10 !important;
+      display: block !important;
+    }
+    
+    /* Für sehr kleine Bildschirme überschreiben */
+    @media (max-width: 480px) {
+      #versionRibbon {
+        position: static !important;
+        text-align: center !important;
+        padding: 4px 12px !important;
+        color: #fff !important;
+        background: rgba(0,0,0,0.2) !important;
+        margin-top: 4px !important;
       }
     }
   </style>
-<style>
-  /* Sicherstellen, dass die Version auf iPad immer sichtbar ist */
-  #versionRibbon {
-    position: absolute !important;
-    right: 12px !important;
-    bottom: 8px !important;
-    font-size: 12px !important;
-    color: #fff !important;
-    opacity: .9 !important;
-    pointer-events: none !important;
-    text-align: right !important;
-    z-index: 10 !important;
-    display: block !important;
-  }
-  
-  /* Für sehr kleine Bildschirme überschreiben */
-  @media (max-width: 480px) {
-    #versionRibbon {
-      position: static !important;
-      text-align: center !important;
-      padding: 4px 12px !important;
-      color: #fff !important;
-      background: rgba(0,0,0,0.2) !important;
-      margin-top: 4px !important;
-    }
-  }
-</style>
-
 </head>
 <body>
   <div class="app">
@@ -53,7 +44,7 @@
         <img class="coa" src="wappen.jpeg" alt="Wappen" onerror="this.style.display='none'">
       </div>
       <div class="toolbar">
-        <div class="left">
+        <div class="left centered-buttons">
           <button class="btn" id="btnNew" title="Neue Person anlegen">➕ Neue Person</button>
           <button class="btn" id="btnDelete" title="Person löschen">🗑️ Person löschen</button>
           <button class="btn" id="btnImport" title="Import">📥 Import</button>
@@ -63,10 +54,10 @@
           <button class="btn" id="btnUndo" title="Rückgängig">↶ Rückgängig</button>
           <button class="btn" id="btnRedo" title="Wiederholen">↷ Wiederholen</button>
           <button class="btn danger" id="btnReset" title="Alle Daten löschen">⛔ Daten-Reset</button>
-        </div>
-        <div class="right">
-          <input id="search" type="text" placeholder="Personen suchen (Name/Code)"/>
           <button class="btn help" id="btnHelp" title="Hilfe / Anleitung">❓ Hilfe</button>
+        </div>
+        <div class="right centered-search">
+          <input id="search" type="text" placeholder="Personen suchen (Name/Code)"/>
         </div>
       </div>
       <div class="hint-row">
@@ -194,10 +185,11 @@
   <dialog id="dlgPrint">
     <div class="dlg-head"><strong>Drucken</strong><button class="close-x" onclick="this.closest('dialog').close()">×</button></div>
     <div class="dlg-body">
-      <p>Bitte auswählen, was gedruckt werden soll:</p>
+      <p>Bitte auswählen, wie gedruckt werden soll:</p>
       <div class="btn-row">
         <button class="btn" id="btnPrintTable">🖨️ Tabelle drucken</button>
         <button class="btn" id="btnPrintTree">🖨️ Baum drucken</button>
+        <button class="btn" id="btnPrintBoth">🖨️ Beides drucken</button>
       </div>
     </div>
     <div class="dlg-actions">
@@ -231,7 +223,6 @@
     <div class="dlg-actions"><button onclick="this.closest('dialog').close()">Schließen</button></div>
   </dialog>
 
-  
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
@@ -247,6 +238,5 @@
       if(u) u.textContent = 'Softwareversion ' + APP_VERSION;
     })();
   </script>
-
 </body>
 </html>
