@@ -2,13 +2,18 @@
 const STORAGE_KEY = "familyRing_upd56b";
 let people = [];
 const undoStack = []; const redoStack = [];
+const MAX_UNDO_STEPS = 50; // Begrenzung für Undo-Stack
 
 const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 
 /* === Utility === */
 function saveState(pushUndo=true){
-  if(pushUndo) undoStack.push(JSON.stringify(people));
+  if(pushUndo) {
+    undoStack.push(JSON.stringify(people));
+    // Stack auf maximale Größe begrenzen
+    if(undoStack.length > MAX_UNDO_STEPS) undoStack.shift();
+  }
   redoStack.length = 0;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(people));
 }
@@ -44,19 +49,30 @@ function computeGenFromCode(code){
   if(/^1[A-Z]$/.test(base)) return 2;
   // grandchildren: 1A1, 1B2, etc. => Gen 3
   if(/^1[A-Z]\d+$/.test(base)) return 3;
-  // great-grandchildren: 1[A-Z]\d+[A-Z] ... etc (fallback by transitions count)
-  // heuristic: count of digits blocks + letters beyond first
-  let g = 1;
-  // Walk through: after base '1', every letter step adds a generation (children),
-  // every trailing digit block adds another generation (grandchildren levels)
-  const rest = base.slice(1);
-  if(!rest) return 1;
-  // If first char is letter => gen >=2
-  if(/[A-Z]/.test(rest[0])) g=2;
-  // Count digits groups -> each adds one
-  const m = rest.match(/\d+/g);
-  if(m) g += m.length;
-  return Math.max(1,g);
+  // great-grandchildren: 1A1A, 1A1B, etc. => Gen 4
+  if(/^1[A-Z]\d+[A-Z]$/.test(base)) return 4;
+  // further generations: count segments
+  let generation = 1;
+  let current = base;
+  
+  while (current.length > 0) {
+    if (current === "1") break;
+    
+    // Remove last character and check what type it was
+    const lastChar = current.charAt(current.length - 1);
+    if (/[A-Z]/.test(lastChar)) {
+      generation++;
+      current = current.slice(0, -1);
+    } else if (/\d/.test(lastChar)) {
+      generation++;
+      // Remove all trailing digits
+      current = current.replace(/\d+$/, '');
+    } else {
+      break;
+    }
+  }
+  
+  return Math.max(1, generation);
 }
 
 function postLoadFixups(){
@@ -70,15 +86,45 @@ function postLoadFixups(){
 /* Ring codes (partners keep own code, inheritance forms chain) */
 function computeRingCodes(){
   const byCode = Object.fromEntries(people.map(p=>[p.Code,p]));
+  
+  // Reset all RingCodes first
   for(const p of people){
-    if(p.InheritedFrom){
-      const donor = byCode[p.InheritedFrom];
-      const donorChain = donor && donor.RingCode ? donor.RingCode : p.InheritedFrom;
-      p.RingCode = donorChain + "→" + p.Code;
-    }else{
-      p.RingCode = p.Code; // includes partner x as-is
-    }
+    p.RingCode = p.Code;
   }
+  
+  // Process inheritance chains (max depth to prevent circular references)
+  const MAX_DEPTH = 20;
+  let changed;
+  let iterations = 0;
+  
+  do {
+    changed = false;
+    iterations++;
+    
+    for(const p of people){
+      if(p.InheritedFrom && p.InheritedFrom !== ""){
+        const donor = byCode[p.InheritedFrom];
+        if(donor && donor.RingCode && !donor.RingCode.includes(p.Code)) {
+          // Check for circular reference
+          if(donor.RingCode.includes("→" + p.Code) || p.Code === donor.InheritedFrom) {
+            console.warn("Circular inheritance detected:", p.Code, "->", donor.Code);
+            continue;
+          }
+          
+          const newRingCode = donor.RingCode + "→" + p.Code;
+          if(p.RingCode !== newRingCode) {
+            p.RingCode = newRingCode;
+            changed = true;
+          }
+        }
+      }
+    }
+    
+    if(iterations >= MAX_DEPTH) {
+      console.warn("Max inheritance depth reached, possible circular reference");
+      break;
+    }
+  } while (changed);
 }
 
 /* Render Table (with filter & highlight) */
@@ -87,11 +133,19 @@ function renderTable(){
   const q = ($("#search").value||"").trim().toLowerCase();
   const tb = $("#peopleTable tbody"); tb.innerHTML="";
   const mark = (txt)=>{
-    if(!q) return txt;
+    if(!q) return escapeHtml(String(txt||""));
     const s = String(txt||""); const i = s.toLowerCase().indexOf(q);
-    if(i<0) return s;
-    return s.slice(0,i) + "<mark>" + s.slice(i,i+q.length) + "</mark>" + s.slice(i+q.length);
+    if(i<0) return escapeHtml(s);
+    return escapeHtml(s.slice(0,i)) + "<mark>" + escapeHtml(s.slice(i,i+q.length)) + "</mark>" + escapeHtml(s.slice(i+q.length));
   };
+  
+  // Escape HTML function to prevent XSS
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  
   // sort: Gen then Code
   people.sort((a,b)=> (a.Gen||0)-(b.Gen||0) || String(a.Code).localeCompare(String(b.Code)));
   for(const p of people){
@@ -121,7 +175,10 @@ function renderTree(){
   const el=$("#tree"); el.innerHTML="";
   const svgNS="http://www.w3.org/2000/svg";
   const svg=document.createElementNS(svgNS,"svg");
-  svg.setAttribute("width","1600"); svg.setAttribute("height","800");
+  svg.setAttribute("width","100%");
+  svg.setAttribute("height","100%");
+  svg.setAttribute("viewBox","0 0 1600 800");
+  svg.setAttribute("preserveAspectRatio","xMidYMid meet");
   el.appendChild(svg);
 
   const gens = {};
@@ -235,14 +292,21 @@ function parseDate(d){
 function normalizePersonCode(code){
   if(!code) return "";
   let s = String(code).trim();
-  s = s.replace(/[a-z]/g, ch => ch.toUpperCase());
-  s = s.replace(/X$/, 'x');
+  // Convert all letters to uppercase except trailing 'x'
+  if(s.endsWith('x') || s.endsWith('X')) {
+    s = s.slice(0, -1).toUpperCase() + 'x';
+  } else {
+    s = s.toUpperCase();
+  }
   return s;
 }
 
 function nextChildCode(parent){
   const kids = people.filter(p=>p.ParentCode===parent && p.Code.startsWith(parent));
-  const nums = kids.map(k=> parseInt(k.Code.replace(parent,""),10)).filter(n=>!isNaN(n));
+  const nums = kids.map(k=> {
+    const numPart = k.Code.replace(parent, "").replace(/x$/, "");
+    return parseInt(numPart, 10);
+  }).filter(n=>!isNaN(n));
   let next=1; while(nums.includes(next)) next++;
   return parent + String(next);
 }
@@ -269,7 +333,7 @@ function addNew(){
     gen = parentP ? (parentP.Gen||1)+1 : 2;
     code = nextChildCode(parent);
   }else{
-    if(partner==="1"){ code="1x"; /* ensure x lowercase */ gen=1; } else { code="1"; gen=1; }
+    if(partner==="1"){ code="1x"; gen=1; } else { code="1"; gen=1; }
   }
   const p={Gen:gen, Code:code, Name:name, Birth:birth, BirthPlace:place, Gender:gender, ParentCode:parent, PartnerCode:partner, InheritedFrom:inherited, Note:note};
   people.push(p);
@@ -291,12 +355,12 @@ function saveEditFn(){
   p.Birth=$("#eBirth").value.trim();
   p.BirthPlace=$("#ePlace").value.trim();
   p.Gender=$("#eGender").value;
-  p.ParentCode=$("#eParent").value.trim();
-  p.PartnerCode=$("#ePartner").value.trim();
-  p.InheritedFrom=$("#eInherited").value.trim();
+  p.ParentCode=normalizePersonCode($("#eParent").value.trim());
+  p.PartnerCode=normalizePersonCode($("#ePartner").value.trim());
+  p.InheritedFrom=normalizePersonCode($("#eInherited").value.trim());
   p.Note=$("#eNote").value.trim();
-  // Recompute gen if parent changed or code pattern changed (we keep code as is; gen from code if missing)
-  if(!p.Gen) p.Gen = computeGenFromCode(p.Code);
+  // Recompute gen if parent changed or code pattern changed
+  p.Gen = computeGenFromCode(p.Code);
   saveState(); renderTable(); renderTree();
 }
 
@@ -320,36 +384,92 @@ function doImport(file){
   const r=new FileReader();
   r.onload=()=>{
     try{
-      const data = JSON.parse(r.result);
+      let data;
+      if(file.name.toLowerCase().endsWith('.csv')) {
+        data = parseCSV(r.result);
+      } else {
+        data = JSON.parse(r.result);
+      }
+      
       if(!Array.isArray(data)) throw new Error("Format");
-      people = data;
+      
+      // Validierung der importierten Daten
+      const validData = data.filter(item => 
+        item && typeof item === 'object' && item.Code && typeof item.Code === 'string'
+      );
+      
+      people = validData;
       postLoadFixups();
       saveState(false);
-      renderTable(); renderTree();
-    }catch(e){ alert("Ungültige JSON-Datei"); }
+      renderTable(); renderTable(); // Doppelaufruf für sofortiges Update
+    }catch(e){ 
+      console.error("Import error:", e);
+      alert("Ungültige Datei: " + e.message); 
+    }
   };
   r.readAsText(file);
 }
 
-/* Events */
-$("#btnNew").addEventListener("click", openNew);
-$("#saveNew").addEventListener("click", (e)=>{ e.preventDefault(); addNew(); $("#dlgNew").close(); });
-$("#saveEdit").addEventListener("click", (e)=>{ e.preventDefault(); saveEditFn(); $("#dlgEdit").close(); });
-$("#btnDelete").addEventListener("click", deletePerson);
-$("#btnImport").addEventListener("click", ()=>{ const inp=document.createElement("input"); inp.type="file"; inp.accept=".json,application/json"; inp.onchange=()=>{ if(inp.files[0]) doImport(inp.files[0]); }; inp.click(); });
-$("#btnExport").addEventListener("click", ()=> $("#dlgExport").showModal());
-$("#btnExportJSON").addEventListener("click", exportJSON);
-$("#btnExportCSV").addEventListener("click", exportCSV);
-$("#btnPrint").addEventListener("click", ()=> $("#dlgPrint").showModal());
-$("#btnPrintTable").addEventListener("click", ()=>{ printTable(); $("#dlgPrint").close(); });
-$("#btnPrintTree").addEventListener("click", ()=>{ printTree(); $("#dlgPrint").close(); });
-$("#btnStats").addEventListener("click", ()=>{ updateStats(); $("#dlgStats").showModal(); });
-$("#btnHelp").addEventListener("click", ()=>{ fetch("help.html").then(r=>r.text()).then(html=>{ $("#helpContent").innerHTML=html; $("#dlgHelp").showModal(); }); });
-$("#btnReset").addEventListener("click", ()=>{ if(confirm("Sollen wirklich alle Personen gelöscht werden?")){ people=[]; saveState(); renderTable(); renderTree(); }});
-$("#btnUndo").addEventListener("click", ()=>{ if(!undoStack.length) return; redoStack.push(JSON.stringify(people)); people=JSON.parse(undoStack.pop()); localStorage.setItem(STORAGE_KEY, JSON.stringify(people)); renderTable(); renderTree(); });
-$("#btnRedo").addEventListener("click", ()=>{ if(!redoStack.length) return; undoStack.push(JSON.stringify(people)); people=JSON.parse(redoStack.pop()); localStorage.setItem(STORAGE_KEY, JSON.stringify(people)); renderTable(); renderTree(); });
+function parseCSV(csvText) {
+  const lines = csvText.split('\n').filter(line => line.trim());
+  if (lines.length < 2) return [];
+  
+  const headers = lines[0].split(';').map(h => h.trim());
+  const result = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(';').map(v => v.trim());
+    const obj = {};
+    
+    for (let j = 0; j < headers.length; j++) {
+      if (j < values.length) {
+        obj[headers[j]] = values[j] || '';
+      }
+    }
+    
+    if (obj.Code) {
+      result.push(obj);
+    }
+  }
+  
+  return result;
+}
 
-$("#search").addEventListener("input", renderTable);
+/* Events */
+function setupEventListeners() {
+  $("#btnNew").addEventListener("click", openNew);
+  $("#saveNew").addEventListener("click", (e)=>{ e.preventDefault(); addNew(); $("#dlgNew").close(); });
+  $("#saveEdit").addEventListener("click", (e)=>{ e.preventDefault(); saveEditFn(); $("#dlgEdit").close(); });
+  $("#btnDelete").addEventListener("click", deletePerson);
+  $("#btnImport").addEventListener("click", ()=>{ 
+    const inp=document.createElement("input"); 
+    inp.type="file"; 
+    inp.accept=".json,.csv,application/json,text/csv"; 
+    inp.onchange=()=>{ if(inp.files[0]) doImport(inp.files[0]); }; 
+    inp.click(); 
+  });
+  $("#btnExport").addEventListener("click", ()=> $("#dlgExport").showModal());
+  $("#btnExportJSON").addEventListener("click", exportJSON);
+  $("#btnExportCSV").addEventListener("click", exportCSV);
+  $("#btnPrint").addEventListener("click", ()=> $("#dlgPrint").showModal());
+  $("#btnPrintTable").addEventListener("click", ()=>{ printTable(); $("#dlgPrint").close(); });
+  $("#btnPrintTree").addEventListener("click", ()=>{ printTree(); $("#dlgPrint").close(); });
+  $("#btnStats").addEventListener("click", ()=>{ updateStats(); $("#dlgStats").showModal(); });
+  $("#btnHelp").addEventListener("click", ()=>{ 
+    fetch("help.html").then(r=>r.text()).then(html=>{ 
+      $("#helpContent").innerHTML=html; 
+      $("#dlgHelp").showModal(); 
+    }).catch(() => {
+      $("#helpContent").innerHTML = "<p>Hilfedatei konnte nicht geladen werden.</p>";
+      $("#dlgHelp").showModal();
+    });
+  });
+  $("#btnReset").addEventListener("click", ()=>{ if(confirm("Sollen wirklich alle Personen gelöscht werden?")){ people=[]; saveState(); renderTable(); renderTree(); }});
+  $("#btnUndo").addEventListener("click", ()=>{ if(!undoStack.length) return; redoStack.push(JSON.stringify(people)); people=JSON.parse(undoStack.pop()); localStorage.setItem(STORAGE_KEY, JSON.stringify(people)); renderTable(); renderTree(); });
+  $("#btnRedo").addEventListener("click", ()=>{ if(!redoStack.length) return; undoStack.push(JSON.stringify(people)); people=JSON.parse(redoStack.pop()); localStorage.setItem(STORAGE_KEY, JSON.stringify(people)); renderTable(); renderTree(); });
+
+  $("#search").addEventListener("input", renderTable);
+}
 
 /* Stats */
 function updateStats(){
@@ -367,8 +487,10 @@ function updateStats(){
 }
 
 /* Init */
-loadState(); renderTable(); renderTree();
-
+loadState(); 
+setupEventListeners();
+renderTable(); 
+renderTree();
 
 /* === PDF Export (Table or Tree) === */
 
@@ -378,46 +500,79 @@ function resolvePrintableEl(sel, fallbackSel){
   if(!el && fallbackSel) el = document.querySelector(fallbackSel);
   if(!el) { 
     // try to find by common ids/classes
-    el = document.getElementById('peopleTable') || document.querySelector('table');
+    if(sel.includes('table')) {
+      el = document.getElementById('peopleTable') || document.querySelector('table');
+    } else if(sel.includes('tree')) {
+      el = document.getElementById('tree') || document.querySelector('svg');
+    }
   }
   return el;
 }
 
 async function elementToPdfBlob(el, title){
+  if(!el) {
+    console.error("Element for PDF not found:", title);
+    alert("Element zum Drucken nicht gefunden.");
+    return null;
+  }
+  
   // Clone to avoid layout shifts
   const clone = el.cloneNode(true);
   const wrapper = document.createElement('div');
-  // Header with wappen & title
-  const header = document.querySelector('.ribbon .title-wrap').cloneNode(true);
-  header.style.marginBottom = '12px';
-  wrapper.appendChild(header);
+  
+  // Header with wappen & title - safely
+  const titleWrap = document.querySelector('.ribbon .title-wrap');
+  if(titleWrap) {
+    const header = titleWrap.cloneNode(true);
+    header.style.marginBottom = '12px';
+    wrapper.appendChild(header);
+  } else {
+    // Fallback header
+    const fallbackHeader = document.createElement('div');
+    fallbackHeader.style.textAlign = 'center';
+    fallbackHeader.style.marginBottom = '12px';
+    fallbackHeader.innerHTML = '<h2>Wappenringe der Familie GEPPERT</h2>';
+    wrapper.appendChild(fallbackHeader);
+  }
+  
   wrapper.appendChild(clone);
   wrapper.style.padding = '16px';
   wrapper.style.background = '#ffffff';
   document.body.appendChild(wrapper);
-  // Render to canvas
-  const canvas = await html2canvas(wrapper, {scale: 2, backgroundColor: '#ffffff', useCORS: true});
-  wrapper.remove();
-  const img = canvas.toDataURL('image/jpeg', 0.92);
+  
+  try {
+    // Render to canvas
+    const canvas = await html2canvas(wrapper, {scale: 2, backgroundColor: '#ffffff', useCORS: true});
+    const img = canvas.toDataURL('image/jpeg', 0.92);
 
-  // Auto orientation
-  const { jsPDF } = window.jspdf;
-  const orientation = canvas.width > canvas.height ? 'l' : 'p';
-  const doc = new jsPDF({orientation, unit:'pt', format:'a4'});
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  const margin = 24;
-  // Fit image into page while preserving aspect
-  let w = pageW - margin*2;
-  let h = canvas.height * (w / canvas.width);
-  if(h > pageH - margin*2){ h = pageH - margin*2; w = canvas.width * (h / canvas.height); }
-  const x = (pageW - w)/2, y = margin;
-  doc.addImage(img, 'JPEG', x, y, w, h);
-  const blob = doc.output('blob');
-  return blob;
+    // Auto orientation
+    const { jsPDF } = window.jspdf;
+    const orientation = canvas.width > canvas.height ? 'l' : 'p';
+    const doc = new jsPDF({orientation, unit:'pt', format:'a4'});
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 24;
+    
+    // Fit image into page while preserving aspect
+    let w = pageW - margin*2;
+    let h = canvas.height * (w / canvas.width);
+    if(h > pageH - margin*2){ h = pageH - margin*2; w = canvas.width * (h / canvas.height); }
+    const x = (pageW - w)/2, y = margin;
+    
+    doc.addImage(img, 'JPEG', x, y, w, h);
+    const blob = doc.output('blob');
+    return blob;
+  } catch (error) {
+    console.error("PDF generation error:", error);
+    return null;
+  } finally {
+    wrapper.remove();
+  }
 }
 
 async function shareOrDownloadPDF(blob, filename){
+  if(!blob) return;
+  
   try{
     const file = new File([blob], filename, {type:'application/pdf'});
     if(navigator.canShare && navigator.canShare({ files:[file] })){
@@ -427,13 +582,14 @@ async function shareOrDownloadPDF(blob, filename){
   }catch(e){
     // fall through to download/print fallback
   }
+  
   if(isIOS()){
-    // iOS fallback: open a print window with the already-rendered element instead
-    // Find what we intended to print based on filename
+    // iOS fallback: open a print window
     if(filename.includes('tabelle')) { printSection('table'); }
     else { printSection('tree'); }
     return;
   }
+  
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = filename;
@@ -442,63 +598,75 @@ async function shareOrDownloadPDF(blob, filename){
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
 
-
-
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-
 function printSection(what){
-  // Create a print-only document with header + selected content + footer date
   const title = 'Wappenringe der Familie GEPPERT';
   const when = new Date().toLocaleString('de-DE');
 
   const content = document.createElement('div');
   content.style.padding = '16px';
+  
   const h = document.createElement('div');
   h.style.display='flex'; h.style.justifyContent='center'; h.style.alignItems='center'; h.style.gap='12px';
-  h.innerHTML = `<img src="wappen.jpeg" style="height:40px"/><h2 style="margin:0">${title}</h2><img src="wappen.jpeg" style="height:40px"/>`;
+  
+  // Try to get wappen images safely
+  const wappenImg = document.querySelector('.coa');
+  if(wappenImg && wappenImg.src) {
+    h.innerHTML = `<img src="${wappenImg.src}" style="height:40px"/><h2 style="margin:0">${title}</h2><img src="${wappenImg.src}" style="height:40px"/>`;
+  } else {
+    h.innerHTML = `<h2 style="margin:0">${title}</h2>`;
+  }
   content.appendChild(h);
 
   const section = document.createElement('div');
   if(what==='table'){
-    section.innerHTML = document.querySelector('.table-wrap').innerHTML;
+    const tableWrap = document.querySelector('.table-wrap');
+    if(tableWrap) {
+      section.innerHTML = tableWrap.innerHTML;
+    }
   }else{
-    // clone current tree SVG
-    section.appendChild(document.getElementById('treeContainer').cloneNode(true));
+    const treeEl = document.getElementById('tree');
+    if(treeEl) {
+      section.appendChild(treeEl.cloneNode(true));
+    }
   }
   content.appendChild(section);
 
   const f = document.createElement('div');
-  f.style.marginTop='12px'; f.style.fontSize='12px'; f.style.textAlign='right'; f.textContent = `Stand: ${when}`;
+  f.style.marginTop='12px'; f.style.fontSize='12px'; f.style.textAlign='right'; 
+  f.textContent = `Stand: ${when}`;
   content.appendChild(f);
 
   const win = window.open('', '_blank');
   if(!win){ alert('Popup-Blocker verhindert den Druck. Bitte erlauben.'); return; }
+  
   win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
     <style>
-      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-      table{width:100%;border-collapse:collapse}
-      th,td{border:1px solid #ddd;padding:6px}
-      thead th{background:#f1f5f9}
-      #tree{height:auto;overflow:visible;border:none}
-      svg{width:100%}
-      @media print{body{margin:0}}
+      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;padding:20px}
+      table{width:100%;border-collapse:collapse;margin:10px 0}
+      th,td{border:1px solid #ddd;padding:8px;font-size:14px}
+      thead th{background:#f1f5f9;font-weight:bold}
+      svg{width:100%;height:auto;max-height:600px}
+      @media print{
+        body{margin:0;padding:10px}
+        table{font-size:12px}
+      }
     </style>
   </head><body></body></html>`);
+  
   win.document.body.appendChild(content);
+  
   // wait for images to load
   const imgs = win.document.images;
   let pending = imgs.length;
+  
   const go = () => {
-    if(isIOS()){
-      // iOS native print dialog (user can share as PDF)
-      win.focus(); win.print();
-    }else{
-      // default print dialog
-      win.focus(); win.print();
-    }
+    win.focus(); 
+    win.print();
   };
-  if(pending===0){
+  
+  if(pending === 0){
     setTimeout(go, 100);
   }else{
     for(const im of imgs){
@@ -506,6 +674,7 @@ function printSection(what){
       im.addEventListener('error', ()=>{ if(--pending===0) setTimeout(go,100); });
     }
   }
-  // close after print (best-effort; some browsers ignore)
+  
+  // close after print
   win.addEventListener('afterprint', ()=> setTimeout(()=>win.close(), 200));
 }
