@@ -91,10 +91,13 @@ dialog::backdrop{background:transparent} /* keine Abdunklung */
   padding-right: 8px;
 }
 
-@media (max-width:860px){
+@media (max-width:768px){
+  /* Nur für sehr kleine Mobilgeräte anpassen, nicht für iPad */
   .form-grid{grid-template-columns:1fr}
   .title{font-size:22px}
   th{top:152px}
+  
+  /* Nur bei sehr kleinen Bildschirmen die Version umpositionieren */
   .version-ribbon {
     position: static;
     text-align: right;
@@ -102,5 +105,32 @@ dialog::backdrop{background:transparent} /* keine Abdunklung */
     color: #fff;
     background: rgba(0,0,0,0.2);
     margin-top: 4px;
+    display: block !important; /* Sicherstellen, dass es angezeigt wird */
+  }
+}
+
+@media (max-width:480px){
+  /* Extra kleine Geräte (Smartphones) */
+  .toolbar{
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .toolbar .left, .toolbar .right{
+    width: 100%;
+    justify-content: center;
+  }
+  
+  input[type="text"]{
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  .title{
+    font-size: 20px;
+  }
+  
+  .coa{
+    height: 28px;
   }
 }
