@@ -678,3 +678,34 @@ function printSection(what){
   // close after print
   win.addEventListener('afterprint', ()=> setTimeout(()=>win.close(), 200));
 }
+// Sicherstellen, dass die Version auf allen Geräten sichtbar ist
+function ensureVersionVisibility() {
+  const versionRibbon = document.getElementById('versionRibbon');
+  if (versionRibbon) {
+    // Styling direkt anwenden
+    versionRibbon.style.position = 'absolute';
+    versionRibbon.style.right = '12px';
+    versionRibbon.style.bottom = '8px';
+    versionRibbon.style.fontSize = '12px';
+    versionRibbon.style.color = '#fff';
+    versionRibbon.style.opacity = '0.9';
+    versionRibbon.style.pointerEvents = 'none';
+    versionRibbon.style.textAlign = 'right';
+    versionRibbon.style.zIndex = '10';
+    versionRibbon.style.display = 'block';
+    
+    // Für sehr kleine Bildschirme anpassen
+    if (window.innerWidth <= 480) {
+      versionRibbon.style.position = 'static';
+      versionRibbon.style.textAlign = 'center';
+      versionRibbon.style.padding = '4px 12px';
+      versionRibbon.style.color = '#fff';
+      versionRibbon.style.backgroundColor = 'rgba(0,0,0,0.2)';
+      versionRibbon.style.marginTop = '4px';
+    }
+  }
+}
+
+// Beim Laden und bei Größenänderungen ausführen
+window.addEventListener('load', ensureVersionVisibility);
+window.addEventListener('resize', ensureVersionVisibility);
