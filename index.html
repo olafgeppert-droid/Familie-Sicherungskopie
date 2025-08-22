@@ -14,6 +14,34 @@
       }
     }
   </style>
+<style>
+  /* Sicherstellen, dass die Version auf iPad immer sichtbar ist */
+  #versionRibbon {
+    position: absolute !important;
+    right: 12px !important;
+    bottom: 8px !important;
+    font-size: 12px !important;
+    color: #fff !important;
+    opacity: .9 !important;
+    pointer-events: none !important;
+    text-align: right !important;
+    z-index: 10 !important;
+    display: block !important;
+  }
+  
+  /* Für sehr kleine Bildschirme überschreiben */
+  @media (max-width: 480px) {
+    #versionRibbon {
+      position: static !important;
+      text-align: center !important;
+      padding: 4px 12px !important;
+      color: #fff !important;
+      background: rgba(0,0,0,0.2) !important;
+      margin-top: 4px !important;
+    }
+  }
+</style>
+
 </head>
 <body>
   <div class="app">
