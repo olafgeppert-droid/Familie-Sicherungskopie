@@ -200,13 +200,13 @@ function renderTree(){
       const gEl=document.createElementNS(svgNS,"g"); gEl.setAttribute("class","node");
       gEl.setAttribute("transform",`translate(${x},${y})`);
       const rect=document.createElementNS(svgNS,"rect");
-      rect.setAttribute("width",nodeW); rect.setAttribute("height",nodeH); rect.setAttribute("rx",8); rect.setAttribute("ry",8);
-      rect.setAttribute("fill", genColor(p.Gen));
-      rect.setAttribute("stroke","#cbd5e1");
-      const t1=document.createElementNS(svgNS,"text");
-      t1.setAttribute("x",8); t1.setAttribute("y",18); t1.textContent=`${p.Code} / ${p.Name||""}`;
-      const t2=document.createElementNS(svgNS,"text");
-      t2.setAttribute("x",8); t2.setAttribute("y",36); t2.textContent=`Generation: ${p.Gen||""} / ${p.Birth||""}`;
+  rect.setAttribute("width",nodeW); rect.setAttribute("height",nodeH); rect.setAttribute("rx",8); rect.setAttribute("ry",8);
+  rect.setAttribute("fill", genColor(p.Gen));
+  rect.setAttribute("stroke","#cbd5e1");
+  const t1=document.createElementNS(svgNS,"text");
+  t1.setAttribute("x",8); t1.setAttribute("y",18); t1.textContent=`${p.Code} / ${p.Name||""}`;
+  const t2=document.createElementNS(svgNS,"text");
+  t2.setAttribute("x",8); t2.setAttribute("y",36); t2.textContent=`Generation: ${p.Gen||""} / ${p.Birth||""}`;
   [t1,t2].forEach(t=>{t.setAttribute("font-size","11"); t.setAttribute("fill","#111827");});
       svg.appendChild(gEl); gEl.appendChild(rect); gEl.appendChild(t1); gEl.appendChild(t2);
     });
@@ -357,7 +357,7 @@ function saveEditFn(){
   p.Gender=$("#eGender").value;
   p.ParentCode=normalizePersonCode($("#eParent").value.trim());
   p.PartnerCode=normalizePersonCode($("#ePartner").value.trim());
-  p.InheritedFrom=normalizePersonCode($("#eInherited).value.trim());
+  p.InheritedFrom=normalizePersonCode($("#eInherited").value.trim());
   p.Note=$("#eNote").value.trim();
   // Recompute gen if parent changed or code pattern changed
   p.Gen = computeGenFromCode(p.Code);
@@ -481,7 +481,7 @@ function updateStats(){
     byGen[p.Gen] = (byGen[p.Gen]||0)+1;
   }
   let html = `<p>Gesamtanzahl Personen: <b>${total}</b></p>`;
-  html += `<p>davon männlich: <b>${m}</b> — weiblich: <b>${w}</b> — divers: <b>${d}</b></p>`;
+  html += `<p>davon männlich: <b>${m}</b> — weiblich: <b>${w}</b> — divers: <b>${d</b></p>`;
   html += `<ul>`; Object.keys(byGen).sort((a,b)=>a-b).forEach(k=> html += `<li>Generation ${k}: ${byGen[k]}</li>`); html += `</ul>`;
   $("#statsContent").innerHTML = html;
 }
