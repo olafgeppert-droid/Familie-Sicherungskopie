@@ -6,7 +6,7 @@ interface LoginDialogProps {
   onClose: () => void;
 }
 
-const CORRECT_PASSWORD = "Familie2025"; // 🔐 hier Passwort ändern
+const CORRECT_PASSWORD = import.meta.env.VITE_APP_PASSWORD as string;
 
 export const LoginDialog: React.FC<LoginDialogProps> = ({ onSuccess, onClose }) => {
   const [password, setPassword] = useState("");
