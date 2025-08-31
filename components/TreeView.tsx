@@ -1,4 +1,4 @@
-
+// src/components/TreeView.tsx
 import React, { useRef, useLayoutEffect, useState, useMemo } from 'react';
 import type { Person } from '../types';
 import { hierarchy, tree, HierarchyPointNode } from 'd3-hierarchy';
