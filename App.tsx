@@ -34,7 +34,7 @@ const defaultColors: AppColors = {
 const App: React.FC = () => {
     const { state, dispatch, undo, redo, canUndo, canRedo } = useFamilyData();
     const { people } = state;
-    const version = '1.23';
+    const version = '2.00';
     
     const [appState, setAppState] = useState<'welcome' | 'info' | 'database'>('welcome');
     const [currentView, setCurrentView] = useState<View>('table');
