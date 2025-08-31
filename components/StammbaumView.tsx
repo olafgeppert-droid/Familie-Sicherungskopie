@@ -1,57 +1,33 @@
-import React from 'react';
-import { useFamilyData } from '../hooks/useFamilyData';
-import type { Person } from '../types';
-import './StammbaumView.css';
+import React, { useMemo } from 'react';
+import { Person } from '../types';
+import { TreeView } from './TreeView';
 
-export const StammbaumView: React.FC = () => {
-    const { state, warnings } = useFamilyData();
+interface Props {
+  people: Person[];
+  onEdit: (p: Person) => void;
+}
 
-    const buildTree = (parentId: string | null): Person[] => {
-        return state.people.filter(p => p.parentId === parentId);
-    };
+export const StammbaumView: React.FC<Props> = ({ people, onEdit }) => {
+  const inconsistencies = useMemo(() => {
+    return people.filter(p => {
+      if (p.partnerId) {
+        const partner = people.find(x => x.id === p.partnerId);
+        return !partner || partner.partnerId !== p.id;
+      }
+      return false;
+    });
+  }, [people]);
 
-    const renderPerson = (person: Person) => {
-        const partner = state.people.find(p => p.id === person.partnerId);
-
-        return (
-            <li key={person.id}>
-                <div className="person-node">
-                    <div className="person-box">
-                        <div className="person-name">{person.name}</div>
-                        <div className="person-code">{person.code}</div>
-                        {partner && (
-                            <div className="partner-info">
-                                ⟷ {partner.name} ({partner.code})
-                            </div>
-                        )}
-                    </div>
-                </div>
-                <ul>
-                    {buildTree(person.id).map(child => renderPerson(child))}
-                </ul>
-            </li>
-        );
-    };
-
-    const roots = buildTree(null);
-
-    return (
-        <div className="stammbaum-container">
-            {/* 🚨 Warnungsbox oben */}
-            {warnings.length > 0 && (
-                <div className="warning-box">
-                    <h4>⚠️ Daten-Inkonsistenzen:</h4>
-                    <ul>
-                        {warnings.map((w, idx) => (
-                            <li key={idx}>{w}</li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-
-            <ul className="stammbaum-root">
-                {roots.map(root => renderPerson(root))}
-            </ul>
+  return (
+    <div className="flex flex-col gap-3 w-full">
+      {inconsistencies.length > 0 && (
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 rounded">
+          <strong>Achtung:</strong> Inkonsistenzen im Partner-Link gefunden ({inconsistencies.length}).
+          Manche Personen zeigen auf Partner, die nicht zurückverlinken.
         </div>
-    );
+      )}
+
+      <TreeView people={people} onEdit={onEdit} />
+    </div>
+  );
 };
