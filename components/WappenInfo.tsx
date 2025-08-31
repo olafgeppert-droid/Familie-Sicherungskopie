@@ -19,7 +19,7 @@ export const WappenInfo: React.FC<WappenInfoProps> = ({ onShowDatabase }) => {
                 className="absolute inset-0 opacity-10"
                 style={{
                     backgroundImage: `url(${import.meta.env.BASE_URL + "wappen.png"})`,
-                    backgroundSize: "200px 200px",
+                    backgroundSize: "200px 220px",
                     backgroundRepeat: "repeat",
                     backgroundPosition: "top left"
                 }}
