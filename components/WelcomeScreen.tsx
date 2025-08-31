@@ -13,7 +13,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onShowDatabase, on
         <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-purple-400 via-indigo-500 to-blue-600 p-4">
             <div className="bg-white rounded-2xl shadow-2xl p-8 sm:p-12 max-w-4xl w-full text-center animate-fade-in border-4 border-yellow-300 relative">
                 <img
-                    src="/wappen.png"
+                    src={import.meta.env.BASE_URL + "wappen.png"}
                     alt="Familienwappen"
                     className="mx-auto h-40 w-40 rounded-full border-4 border-white shadow-lg -mt-28 mb-4 drop-shadow-lg"
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}

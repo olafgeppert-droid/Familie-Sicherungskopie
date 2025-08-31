@@ -11,7 +11,7 @@ export const Header: React.FC<HeaderProps> = ({ version, color }) => {
             <div className="flex justify-center items-center w-full gap-4 sm:gap-8">
                 {/* Left Crest */}
                 <img 
-                    src="/wappen.png" 
+                    src={import.meta.env.BASE_URL + "wappen.png"} 
                     alt="Familienwappen" 
                     className="h-12 sm:h-16 w-auto" 
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
@@ -25,7 +25,7 @@ export const Header: React.FC<HeaderProps> = ({ version, color }) => {
 
                 {/* Right Crest */}
                  <img 
-                    src="/wappen.png" 
+                    src={import.meta.env.BASE_URL + "wappen.png"} 
                     alt="Familienwappen" 
                     className="h-12 sm:h-16 w-auto"
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
