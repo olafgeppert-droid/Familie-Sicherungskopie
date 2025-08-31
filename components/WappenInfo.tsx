@@ -16,7 +16,7 @@ export const WappenInfo: React.FC<WappenInfoProps> = ({ onShowDatabase }) => {
         <div className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 overflow-hidden">
             {/* 🔹 Hintergrund mit transparenten Wappen */}
             <div
-                className="absolute inset-0 opacity-50"
+                className="absolute inset-0 opacity-80"
                 style={{
                     backgroundImage: `url(${import.meta.env.BASE_URL + "wappen.png"})`,
                     backgroundSize: "auto 200px",
