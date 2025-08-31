@@ -13,16 +13,20 @@ const DropCap: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 export const WappenInfo: React.FC<WappenInfoProps> = ({ onShowDatabase }) => {
     return (
-        <div 
-            className="min-h-screen w-full flex flex-col items-center justify-center p-4"
-            style={{
-                backgroundImage: `url(${import.meta.env.BASE_URL + "wappen.png"})`,
-                backgroundSize: "200px 200px", // Größe der Kacheln
-                backgroundRepeat: "repeat",    // Muster wiederholen
-                backgroundPosition: "top left" // Startpunkt oben links
-            }}
-        >
-            <div className="w-full max-w-4xl animate-fade-in">
+        <div className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 overflow-hidden">
+            {/* 🔹 Hintergrund mit transparenten Wappen */}
+            <div
+                className="absolute inset-0 opacity-10"
+                style={{
+                    backgroundImage: `url(${import.meta.env.BASE_URL + "wappen.png"})`,
+                    backgroundSize: "200px 200px",
+                    backgroundRepeat: "repeat",
+                    backgroundPosition: "top left"
+                }}
+            />
+            
+            {/* Inhalt */}
+            <div className="relative w-full max-w-4xl animate-fade-in">
                 <div className="w-full max-w-sm mx-auto text-center mb-6">
                     <button 
                         onClick={onShowDatabase} 
