@@ -1,90 +1,94 @@
-import type { Person } from '../types';
+// src/services/sampleData.ts
+
+import { Person } from '../types';
 
 export const samplePeople: Person[] = [
-  // Gen 1
-  { id: 'g1-adam', code: '1', name: 'Adam Geppert', gender: 'm', birthDate: '1850-01-15', deathDate: '1920-05-20', birthPlace: 'Berlin', parentId: null, partnerId: 'g1-eva', ringCode: '1', inheritedFrom: null, hasRing: true, ringHistory: [], comment: 'Stammvater der Familie.', photoUrl: null },
-  { id: 'g1-eva', code: '1x', name: 'Eva Geppert (geb. Meier)', gender: 'f', birthDate: '1852-03-10', deathDate: '1925-11-30', birthPlace: 'Potsdam', parentId: null, partnerId: 'g1-adam', ringCode: '1x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: 'Stammmutter der Familie.', photoUrl: null },
+  // Generation 1 – Stammeltern
+  { id: '1', code: '1', name: 'Karl Geppert', birthDate: '1925-05-12', parentId: null, partnerId: '2' },
+  { id: '2', code: '1x', name: 'Anna Müller-Geppert', birthDate: '1928-09-03', parentId: null, partnerId: '1' },
 
-  // Gen 2 - Children of Adam & Eva
-  { id: 'g2-bernd', code: '1A', name: 'Bernd Geppert', gender: 'm', birthDate: '1875-04-01', deathDate: '1945-08-15', birthPlace: 'Berlin', parentId: 'g1-adam', partnerId: 'g2-anna', ringCode: '1 → 1A', inheritedFrom: '1', hasRing: true, ringHistory: [], comment: 'Hat den ersten Ring geerbt.', photoUrl: null },
-  { id: 'g2-anna', code: '1Ax', name: 'Anna Geppert (geb. Schmidt)', gender: 'f', birthDate: '1878-06-22', deathDate: '1950-12-01', birthPlace: 'Hamburg', parentId: null, partnerId: 'g2-bernd', ringCode: '1Ax', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g2-clara', code: '1B', name: 'Clara Geppert', gender: 'f', birthDate: '1878-09-11', deathDate: '1960-02-18', birthPlace: 'Berlin', parentId: 'g1-adam', partnerId: 'g2-friedrich', ringCode: '1B', inheritedFrom: null, hasRing: true, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g2-friedrich', code: '1Bx', name: 'Friedrich Geppert-Weber', gender: 'm', birthDate: '1876-01-30', deathDate: '1955-07-25', birthPlace: 'München', parentId: null, partnerId: 'g2-clara', ringCode: '1Bx', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g2-david', code: '1C', name: 'David Geppert', gender: 'm', birthDate: '1882-02-20', deathDate: '1933-03-14', birthPlace: 'Berlin', parentId: 'g1-adam', partnerId: 'g2-sabine', ringCode: '1C', inheritedFrom: null, hasRing: true, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g2-sabine', code: '1Cx', name: 'Sabine Geppert (geb. Lang)', gender: 'f', birthDate: '1885-01-01', deathDate: '1940-01-01', birthPlace: 'Köln', parentId: null, partnerId: 'g2-david', ringCode: '1Cx', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g2-doris', code: '1D', name: 'Doris Geppert', gender: 'f', birthDate: '1885-06-18', deathDate: '1965-04-23', birthPlace: 'Berlin', parentId: 'g1-adam', partnerId: 'g2-erich', ringCode: '1D', inheritedFrom: null, hasRing: true, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g2-erich', code: '1Dx', name: 'Erich Geppert-Schulz', gender: 'm', birthDate: '1883-02-12', deathDate: '1962-10-09', birthPlace: 'Frankfurt', parentId: null, partnerId: 'g2-doris', ringCode: '1Dx', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  // Generation 2 – Kinder
+  { id: '3', code: '1.1', name: 'Hans Geppert', birthDate: '1950-03-14', parentId: '1', partnerId: '4' },
+  { id: '4', code: '1.1x', name: 'Maria Schneider-Geppert', birthDate: '1952-11-21', parentId: null, partnerId: '3' },
 
-  // Gen 3 - Children of Bernd & Anna
-  { id: 'g3-emil', code: '1A1', name: 'Emil Geppert', gender: 'm', birthDate: '1900-05-15', deathDate: '1980-01-10', birthPlace: 'Hamburg', parentId: 'g2-bernd', partnerId: 'g3-dora', ringCode: '1A → 1A1', inheritedFrom: '1A', hasRing: true, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g3-dora', code: '1A1x', name: 'Dora Geppert (geb. Becker)', gender: 'f', birthDate: '1902-11-05', deathDate: '1985-06-20', birthPlace: 'Leipzig', parentId: null, partnerId: 'g3-emil', ringCode: '1A1x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g3-frida', code: '1A2', name: 'Frida Geppert', gender: 'f', birthDate: '1903-08-25', deathDate: '1990-09-05', birthPlace: 'Hamburg', parentId: 'g2-bernd', partnerId: null, ringCode: '1A2', inheritedFrom: null, hasRing: false, ringHistory: [], comment: 'Künstlerin.', photoUrl: null },
+  { id: '5', code: '1.2', name: 'Elisabeth Geppert', birthDate: '1948-06-01', parentId: '1', partnerId: '6' },
+  { id: '6', code: '1.2x', name: 'Johann Geppert', birthDate: '1947-12-12', parentId: null, partnerId: '5' },
 
-  // Gen 3 - Children of Clara & Friedrich
-  { id: 'g3-gustav', code: '1B1', name: 'Gustav Geppert-Weber', gender: 'm', birthDate: '1905-12-01', deathDate: '1975-03-12', birthPlace: 'München', parentId: 'g2-clara', partnerId: 'g3-greta', ringCode: '1B1', inheritedFrom: null, hasRing: true, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g3-greta', code: '1B1x', name: 'Greta Geppert-Weber (geb. Fischer)', gender: 'f', birthDate: '1908-02-14', deathDate: '1988-04-22', birthPlace: 'Stuttgart', parentId: null, partnerId: 'g3-gustav', ringCode: '1B1x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  { id: '7', code: '1.3', name: 'Peter Geppert', birthDate: '1953-08-09', parentId: '1', partnerId: '8' },
+  { id: '8', code: '1.3x', name: 'Clara Meyer-Geppert', birthDate: '1955-01-30', parentId: null, partnerId: '7' },
 
-  // Gen 3 - Children of David & Sabine
-  { id: 'g3-otto', code: '1C1', name: 'Otto Geppert', gender: 'm', birthDate: '1905-10-10', deathDate: '1970-11-11', birthPlace: 'Köln', parentId: 'g2-david', partnerId: 'g3-paula', ringCode: '1C → 1C1', inheritedFrom: '1C', hasRing: true, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g3-paula', code: '1C1x', name: 'Paula Geppert (geb. Herrmann)', gender: 'f', birthDate: '1908-12-12', deathDate: '1975-01-01', birthPlace: 'Düsseldorf', parentId: null, partnerId: 'g3-otto', ringCode: '1C1x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  { id: '9', code: '1.4', name: 'Monika Geppert', birthDate: '1951-04-17', parentId: '1', partnerId: '10' },
+  { id: '10', code: '1.4x', name: 'Franz Geppert', birthDate: '1949-07-23', parentId: null, partnerId: '9' },
 
-  // Gen 3 - Children of Doris & Erich
-  { id: 'g3-felix', code: '1D1', name: 'Felix Geppert-Schulz', gender: 'm', birthDate: '1910-01-10', deathDate: '1995-12-12', birthPlace: 'Frankfurt', parentId: 'g2-doris', partnerId: 'g3-gerda', ringCode: '1D1', inheritedFrom: null, hasRing: true, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g3-gerda', code: '1D1x', name: 'Gerda Geppert-Schulz (geb. Hoffmann)', gender: 'f', birthDate: '1912-03-15', deathDate: '1998-05-18', birthPlace: 'Dortmund', parentId: null, partnerId: 'g3-felix', ringCode: '1D1x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  // Generation 3 – Enkel (Kinder von Hans & Maria)
+  { id: '11', code: '1.1.1', name: 'Thomas Geppert', birthDate: '1975-03-05', parentId: '3', partnerId: '12' },
+  { id: '12', code: '1.1.1x', name: 'Sabine Schulz-Geppert', birthDate: '1976-09-15', parentId: null, partnerId: '11' },
 
-  // Gen 4 - Children of Emil & Dora
-  { id: 'g4-hans', code: '1A11', name: 'Hans Geppert', gender: 'm', birthDate: '1925-07-30', deathDate: '2005-10-15', birthPlace: 'Leipzig', parentId: 'g3-emil', partnerId: 'g4-hilde', ringCode: '1A1 → 1A11', inheritedFrom: '1A1', hasRing: true, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g4-hilde', code: '1A11x', name: 'Hilde Geppert (geb. Wagner)', gender: 'f', birthDate: '1928-09-02', deathDate: '2010-11-25', birthPlace: 'Dresden', parentId: null, partnerId: 'g4-hans', ringCode: '1A11x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g4-ida', code: '1A12', name: 'Ida Geppert', gender: 'f', birthDate: '1928-10-10', deathDate: null, birthPlace: 'Leipzig', parentId: 'g3-emil', partnerId: null, ringCode: '1A12', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  { id: '13', code: '1.1.2', name: 'Julia Geppert', birthDate: '1978-11-22', parentId: '3', partnerId: '14' },
+  { id: '14', code: '1.1.2x', name: 'Michael Geppert', birthDate: '1974-02-02', parentId: null, partnerId: '13' },
 
-  // Gen 4 - Children of Gustav & Greta
-  { id: 'g4-ingrid', code: '1B11', name: 'Ingrid Geppert-Weber', gender: 'f', birthDate: '1930-03-03', deathDate: '2015-01-01', birthPlace: 'Stuttgart', parentId: 'g3-gustav', partnerId: 'g4-jurgen', ringCode: '1B11', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g4-jurgen', code: '1B11x', name: 'Jürgen Geppert-Klein', gender: 'm', birthDate: '1929-05-05', deathDate: '2014-02-02', birthPlace: 'Nürnberg', parentId: null, partnerId: 'g4-ingrid', ringCode: '1B11x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  // Enkel (Kinder von Elisabeth & Johann)
+  { id: '15', code: '1.2.1', name: 'Andreas Geppert', birthDate: '1970-07-08', parentId: '5', partnerId: '16' },
+  { id: '16', code: '1.2.1x', name: 'Katrin Hoffmann-Geppert', birthDate: '1972-03-19', parentId: null, partnerId: '15' },
 
-  // Gen 4 - Children of Otto & Paula
-  { id: 'g4-rita', code: '1C11', name: 'Rita Geppert', gender: 'f', birthDate: '1930-01-01', deathDate: '2010-02-02', birthPlace: 'Düsseldorf', parentId: 'g3-otto', partnerId: 'g4-richard', ringCode: '1C11', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g4-richard', code: '1C11x', name: 'Richard Geppert-Lehmann', gender: 'm', birthDate: '1928-03-03', deathDate: '2008-04-04', birthPlace: 'Essen', parentId: null, partnerId: 'g4-rita', ringCode: '1C11x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  { id: '17', code: '1.2.2', name: 'Martina Geppert', birthDate: '1973-05-14', parentId: '5', partnerId: '18' },
+  { id: '18', code: '1.2.2x', name: 'Stefan Geppert', birthDate: '1971-09-25', parentId: null, partnerId: '17' },
 
-  // Gen 4 - Children of Felix & Gerda
-  { id: 'g4-heidi', code: '1D11', name: 'Heidi Geppert-Schulz', gender: 'f', birthDate: '1935-08-20', deathDate: null, birthPlace: 'Dortmund', parentId: 'g3-felix', partnerId: null, ringCode: '1D11', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g4-ingo', code: '1D12', name: 'Ingo Geppert-Schulz', gender: 'm', birthDate: '1938-11-25', deathDate: '2018-02-28', birthPlace: 'Dortmund', parentId: 'g3-felix', partnerId: 'g4-johanna', ringCode: '1D1 → 1D12', inheritedFrom: '1D1', hasRing: true, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g4-johanna', code: '1D12x', name: 'Johanna Geppert-Schulz (geb. Richter)', gender: 'f', birthDate: '1940-01-05', deathDate: null, birthPlace: 'Bremen', parentId: null, partnerId: 'g4-ingo', ringCode: '1D12x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  // Enkel (Kinder von Peter & Clara)
+  { id: '19', code: '1.3.1', name: 'Markus Geppert', birthDate: '1979-01-11', parentId: '7', partnerId: '20' },
+  { id: '20', code: '1.3.1x', name: 'Daniela Weber-Geppert', birthDate: '1980-10-10', parentId: null, partnerId: '19' },
 
-  // Gen 5 - Children of Hans & Hilde
-  { id: 'g5-karl', code: '1A111', name: 'Karl Geppert', gender: 'm', birthDate: '1950-01-20', deathDate: null, birthPlace: 'Dresden', parentId: 'g4-hans', partnerId: 'g5-karin', ringCode: '1A11 → 1A111', inheritedFrom: '1A11', hasRing: true, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g5-karin', code: '1A111x', name: 'Karin Geppert (geb. Wolf)', gender: 'f', birthDate: '1952-04-18', deathDate: null, birthPlace: 'Hannover', parentId: null, partnerId: 'g5-karl', ringCode: '1A111x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g5-laura', code: '1A112', name: 'Laura Geppert', gender: 'f', birthDate: '1955-06-12', deathDate: null, birthPlace: 'Dresden', parentId: 'g4-hans', partnerId: null, ringCode: '1A112', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  { id: '21', code: '1.3.2', name: 'Susanne Geppert', birthDate: '1977-06-06', parentId: '7', partnerId: '22' },
+  { id: '22', code: '1.3.2x', name: 'Andreas Müller-Geppert', birthDate: '1976-12-24', parentId: null, partnerId: '21' },
 
-  // Gen 5 - Children of Ingrid & Jürgen
-  { id: 'g5-klaus', code: '1B111', name: 'Klaus Geppert-Klein', gender: 'm', birthDate: '1953-08-19', deathDate: null, birthPlace: 'Nürnberg', parentId: 'g4-ingrid', partnerId: null, ringCode: '1B111', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  // Enkel (Kinder von Monika & Franz)
+  { id: '23', code: '1.4.1', name: 'Christian Geppert', birthDate: '1972-08-02', parentId: '9', partnerId: '24' },
+  { id: '24', code: '1.4.1x', name: 'Birgit Schneider-Geppert', birthDate: '1974-01-18', parentId: null, partnerId: '23' },
 
-  // Gen 5 - Children of Rita & Richard
-  { id: 'g5-stefan', code: '1C111', name: 'Stefan Geppert-Lehmann', gender: 'm', birthDate: '1955-05-05', deathDate: null, birthPlace: 'Essen', parentId: 'g4-rita', partnerId: 'g5-susanne', ringCode: '1C111', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g5-susanne', code: '1C111x', name: 'Susanne Geppert-Lehmann (geb. Schubert)', gender: 'f', birthDate: '1956-06-06', deathDate: null, birthPlace: 'Duisburg', parentId: null, partnerId: 'g5-stefan', ringCode: '1C111x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  { id: '25', code: '1.4.2', name: 'Heike Geppert', birthDate: '1976-09-30', parentId: '9', partnerId: '26' },
+  { id: '26', code: '1.4.2x', name: 'Matthias Geppert', birthDate: '1975-04-04', parentId: null, partnerId: '25' },
 
-  // Gen 5 - Children of Ingo & Johanna
-  { id: 'g5-kurt', code: '1D121', name: 'Kurt Geppert-Schulz', gender: 'm', birthDate: '1965-04-10', deathDate: null, birthPlace: 'Bremen', parentId: 'g4-ingo', partnerId: null, ringCode: '1D12 → 1D121', inheritedFrom: '1D12', hasRing: true, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g5-lina', code: '1D122', name: 'Lina Geppert-Schulz', gender: 'f', birthDate: '1968-07-22', deathDate: null, birthPlace: 'Bremen', parentId: 'g4-ingo', partnerId: 'g5-markus', ringCode: '1D122', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g5-markus', code: '1D122x', name: 'Markus Geppert-König', gender: 'm', birthDate: '1966-09-15', deathDate: null, birthPlace: 'Bochum', parentId: null, partnerId: 'g5-lina', ringCode: '1D122x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  // Generation 4 – Urenkel (Kinder von Thomas & Sabine)
+  { id: '27', code: '1.1.1.1', name: 'Lukas Geppert', birthDate: '2000-02-14', parentId: '11' },
+  { id: '28', code: '1.1.1.2', name: 'Lea Geppert', birthDate: '2002-11-05', parentId: '11' },
 
-  // Gen 6 - Children of Karl & Karin
-  { id: 'g6-martin', code: '1A1111', name: 'Martin Geppert', gender: 'm', birthDate: '1975-11-22', deathDate: null, birthPlace: 'Hannover', parentId: 'g5-karl', partnerId: 'g6-maria', ringCode: '1A111 → 1A1111', inheritedFrom: '1A111', hasRing: true, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g6-maria', code: '1A1111x', name: 'Maria Geppert (geb. Neumann)', gender: 'f', birthDate: '1976-12-25', deathDate: null, birthPlace: 'Wuppertal', parentId: null, partnerId: 'g6-martin', ringCode: '1A1111x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g6-nina', code: '1A1112', name: 'Nina Geppert', gender: 'f', birthDate: '1980-03-15', deathDate: null, birthPlace: 'Hannover', parentId: 'g5-karl', partnerId: null, ringCode: '1A1112', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  // Kinder von Julia & Michael
+  { id: '29', code: '1.1.2.1', name: 'David Geppert', birthDate: '1999-03-20', parentId: '13' },
+  { id: '30', code: '1.1.2.2', name: 'Clara Geppert', birthDate: '2001-07-12', parentId: '13' },
 
-  // Gen 6 - Children of Stefan & Susanne
-  { id: 'g6-thomas', code: '1C1111', name: 'Thomas Geppert-Lehmann', gender: 'm', birthDate: '1980-08-08', deathDate: null, birthPlace: 'Duisburg', parentId: 'g5-stefan', partnerId: null, ringCode: '1C1111', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g6-tanja', code: '1C1112', name: 'Tanja Geppert-Lehmann', gender: 'f', birthDate: '1982-09-09', deathDate: null, birthPlace: 'Duisburg', parentId: 'g5-stefan', partnerId: 'g6-torsten', ringCode: '1C1112', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g6-torsten', code: '1C1112x', name: 'Torsten Geppert-Keller', gender: 'm', birthDate: '1980-01-01', deathDate: null, birthPlace: 'Bielefeld', parentId: null, partnerId: 'g6-tanja', ringCode: '1C1112x', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  
-  // Gen 6 - Children of Lina & Markus
-  { id: 'g6-nora', code: '1D1221', name: 'Nora Geppert-König', gender: 'f', birthDate: '1990-05-30', deathDate: null, birthPlace: 'Bochum', parentId: 'g5-lina', partnerId: null, ringCode: '1D1221', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  // Kinder von Andreas & Katrin
+  { id: '31', code: '1.2.1.1', name: 'Johannes Geppert', birthDate: '1998-09-09', parentId: '15' },
+  { id: '32', code: '1.2.1.2', name: 'Sarah Geppert', birthDate: '2003-05-25', parentId: '15' },
 
-  // Gen 7 - Children of Martin & Maria
-  { id: 'g7-oskar', code: '1A11111', name: 'Oskar Geppert', gender: 'm', birthDate: '2005-09-01', deathDate: null, birthPlace: 'Wuppertal', parentId: 'g6-martin', partnerId: null, ringCode: '1A1111 → 1A11111', inheritedFrom: '1A1111', hasRing: true, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g7-paul', code: '1A11112', name: 'Paul Geppert', gender: 'm', birthDate: '2008-07-14', deathDate: null, birthPlace: 'Wuppertal', parentId: 'g6-martin', partnerId: null, ringCode: '1A11112', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  // Kinder von Martina & Stefan
+  { id: '33', code: '1.2.2.1', name: 'Paul Geppert', birthDate: '1996-04-01', parentId: '17' },
+  { id: '34', code: '1.2.2.2', name: 'Anna Geppert', birthDate: '1997-08-18', parentId: '17' },
 
-  // Gen 7 - Children of Tanja & Torsten
-  { id: 'g7-uwe', code: '1C11121', name: 'Uwe Geppert-Keller', gender: 'm', birthDate: '2005-05-05', deathDate: null, birthPlace: 'Bielefeld', parentId: 'g6-tanja', partnerId: null, ringCode: '1C11121', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
-  { id: 'g7-ulrike', code: '1C11122', name: 'Ulrike Geppert-Keller', gender: 'f', birthDate: '2008-08-08', deathDate: null, birthPlace: 'Bielefeld', parentId: 'g6-tanja', partnerId: null, ringCode: '1C11122', inheritedFrom: null, hasRing: false, ringHistory: [], comment: null, photoUrl: null },
+  // Kinder von Markus & Daniela
+  { id: '35', code: '1.3.1.1', name: 'Finn Geppert', birthDate: '2004-12-03', parentId: '19' },
+  { id: '36', code: '1.3.1.2', name: 'Mia Geppert', birthDate: '2006-07-22', parentId: '19' },
+
+  // Kinder von Susanne & Andreas
+  { id: '37', code: '1.3.2.1', name: 'Leon Geppert', birthDate: '1995-01-15', parentId: '21' },
+  { id: '38', code: '1.3.2.2', name: 'Nina Geppert', birthDate: '1999-10-29', parentId: '21' },
+
+  // Kinder von Christian & Birgit
+  { id: '39', code: '1.4.1.1', name: 'Jonas Geppert', birthDate: '1997-06-16', parentId: '23' },
+  { id: '40', code: '1.4.1.2', name: 'Sophie Geppert', birthDate: '2001-12-20', parentId: '23' },
+
+  // Kinder von Heike & Matthias
+  { id: '41', code: '1.4.2.1', name: 'Emil Geppert', birthDate: '1998-02-08', parentId: '25' },
+  { id: '42', code: '1.4.2.2', name: 'Marie Geppert', birthDate: '2000-09-17', parentId: '25' },
+
+  // Generation 5 – Ururenkel (z. B. Lukas' Kinder)
+  { id: '43', code: '1.1.1.1.1', name: 'Ben Geppert', birthDate: '2020-04-11', parentId: '27' },
+  { id: '44', code: '1.1.1.1.2', name: 'Lia Geppert', birthDate: '2022-06-30', parentId: '27' },
+
+  // Weitere Ururenkel
+  { id: '45', code: '1.1.2.1.1', name: 'Milan Geppert', birthDate: '2018-03-05', parentId: '29' },
+  { id: '46', code: '1.2.1.1.1', name: 'Ella Geppert', birthDate: '2019-07-14', parentId: '31' },
+  { id: '47', code: '1.2.2.1.1', name: 'Noah Geppert', birthDate: '2017-12-01', parentId: '33' },
+  { id: '48', code: '1.3.1.1.1', name: 'Clara-Marie Geppert', birthDate: '2016-05-25', parentId: '35' },
+  { id: '49', code: '1.3.2.1.1', name: 'Luis Geppert', birthDate: '2015-09-10', parentId: '37' },
+  { id: '50', code: '1.4.2.1.1', name: 'Marta Geppert', birthDate: '2021-11-19', parentId: '41' },
 ];
