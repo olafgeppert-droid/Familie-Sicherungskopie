@@ -15,7 +15,7 @@ export const HelpDialog: React.FC<HelpDialogProps> = ({ isOpen, onClose }) => {
             title: "Willkommen & Grundkonzept",
             content: [
                 "Diese Anwendung hilft dir, die Wappenringe der Familie GEPPERT zu verwalten und ihre Geschichte nachzuverfolgen, sowie die korrekte Innengravur des Ringes zu bestimmen.",
-                "<strong>Das Ziel:</strong> Die Historie der Ringe für kommende Generationen nachvollziehbar zu machen.",
+                "<strong>Das Ziel:</strong> Die Historie der Ringe für kommende Generationen nachvollziehbar zu machen und den korrekten Ring-Code zu berechnen.",
                 "Alle Daten werden <strong>lokal in deinem Browser</strong> gespeichert. Mache regelmäßige Backups mit der Export-Funktion! 🛡️",
             ]
         },
