@@ -1,0 +1,63 @@
+.tree-container {
+  padding: 20px;
+  font-family: sans-serif;
+}
+
+.tree-root,
+.tree-root ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+.tree-root ul {
+  margin-left: 20px;
+}
+
+.person-node {
+  margin: 5px 0;
+}
+
+.person-box {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: #f9f9f9;
+  display: inline-block;
+  min-width: 120px;
+  text-align: center;
+}
+
+.person-name {
+  font-weight: bold;
+}
+
+.person-code {
+  font-size: 0.9em;
+  color: #555;
+}
+
+.partner-info {
+  font-size: 0.85em;
+  color: #333;
+  margin-top: 4px;
+}
+
+.warning-box {
+  border: 2px solid #f5c518;
+  background: #fff8e1;
+  color: #5d4200;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+}
+
+.warning-box h4 {
+  margin: 0 0 5px 0;
+}
+
+.warning-box ul {
+  margin: 0;
+  padding-left: 20px;
+}
