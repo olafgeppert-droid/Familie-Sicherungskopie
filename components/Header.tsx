@@ -7,7 +7,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ version, color }) => {
     return (
-        <header style={{ backgroundColor: color }} className="text-white shadow-md relative z-20 print:hidden p-2 sm:p-3">
+        <header style={{ backgroundColor: color }} className="text-white shadow-md relative z-20 print:hidden p-1 sm:p-2">
             <div className="flex justify-center items-center w-full gap-4 sm:gap-8">
                 {/* Left Crest */}
                 <img 
