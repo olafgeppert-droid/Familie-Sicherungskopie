@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 // 🔐 Passwort festlegen
-const CORRECT_PASSWORD = "Familie2025";
+const CORRECT_PASSWORD = "MementoRadicumTuarum";
 
 interface WelcomeScreenProps {
     onShowDatabase: () => void;
