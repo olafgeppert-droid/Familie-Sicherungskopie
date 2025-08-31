@@ -1,7 +1,7 @@
-import { useReducer, useCallback, useMemo } from 'react';
+import { useReducer, useCallback } from 'react';
 import type { AppState, Action, History } from '../types';
 import { samplePeople } from '../services/sampleData';
-import { validateFamilyData } from '../hooks/validateFamilyData';
+import { validateFamilyData } from '../services/validateFamilyData';
 
 const defaultState: AppState = { people: [] };
 
@@ -21,37 +21,32 @@ const loadStateFromLocalStorage = (): AppState => {
 
         if (serializedState === null) {
             if (hasBeenInitialized) {
-                // DB was intentionally cleared or is empty
                 return defaultState;
             }
-            // First ever load, populate with sample data
-            localStorage.setItem('databaseHasBeenInitialized', 'true');
-            const initialStateWithSample = { ...defaultState, people: samplePeople };
-            saveStateToLocalStorage(initialStateWithSample);
-            return initialStateWithSample;
-        }
-        
-        const parsedState = JSON.parse(serializedState);
-        if (parsedState.people === undefined) {
-             // Handle malformed state
-             if (hasBeenInitialized) {
-                return defaultState;
-             }
             localStorage.setItem('databaseHasBeenInitialized', 'true');
             const initialStateWithSample = { ...defaultState, people: samplePeople };
             saveStateToLocalStorage(initialStateWithSample);
             return initialStateWithSample;
         }
 
-        // Mark as initialized if not already
+        const parsedState = JSON.parse(serializedState);
+        if (parsedState.people === undefined) {
+            if (hasBeenInitialized) {
+                return defaultState;
+            }
+            localStorage.setItem('databaseHasBeenInitialized', 'true');
+            const initialStateWithSample = { ...defaultState, people: samplePeople };
+            saveStateToLocalStorage(initialStateWithSample);
+            return initialStateWithSample;
+        }
+
         if (!hasBeenInitialized) {
             localStorage.setItem('databaseHasBeenInitialized', 'true');
         }
-        
+
         return { ...defaultState, ...parsedState };
     } catch (e) {
         console.warn("Could not load state from local storage", e);
-        // Fallback to sample data on error if it's the first time
         if (!localStorage.getItem('databaseHasBeenInitialized')) {
             localStorage.setItem('databaseHasBeenInitialized', 'true');
             const initialStateWithSample = { ...defaultState, people: samplePeople };
@@ -69,27 +64,24 @@ const reducer = (state: AppState, action: Action): AppState => {
         case 'ADD_PERSON': {
             const newPerson = action.payload;
             if (newPerson.partnerId) {
-                const updatedPeople = state.people.map(p => {
-                    if (p.id === newPerson.partnerId) {
-                        return { ...p, partnerId: newPerson.id };
-                    }
-                    return p;
-                });
+                const updatedPeople = state.people.map(p =>
+                    p.id === newPerson.partnerId ? { ...p, partnerId: newPerson.id } : p
+                );
                 return { ...state, people: [...updatedPeople, newPerson] };
             }
             return { ...state, people: [...state.people, newPerson] };
         }
-        
+
         case 'ADD_PERSON_WITH_RECALCULATION': {
             const { newPerson, updates } = action.payload;
             const updatedPeople = state.people.map(p => {
                 const update = updates.find(u => u.id === p.id);
                 if (update) {
                     const shouldUpdateRingCode = p.ringCode === p.code;
-                    return { 
-                        ...p, 
-                        code: update.code, 
-                        ringCode: shouldUpdateRingCode ? update.code : p.ringCode 
+                    return {
+                        ...p,
+                        code: update.code,
+                        ringCode: shouldUpdateRingCode ? update.code : p.ringCode
                     };
                 }
                 return p;
@@ -108,20 +100,16 @@ const reducer = (state: AppState, action: Action): AppState => {
             if (oldPartnerId === newPartnerId) {
                 return {
                     ...state,
-                    people: state.people.map(p => (p.id === updatedPerson.id ? updatedPerson : p)),
+                    people: state.people.map(p =>
+                        p.id === updatedPerson.id ? updatedPerson : p
+                    ),
                 };
             }
 
             const newPeople = state.people.map(p => {
-                if (p.id === updatedPerson.id) {
-                    return updatedPerson;
-                }
-                if (p.id === oldPartnerId) {
-                    return { ...p, partnerId: null };
-                }
-                if (p.id === newPartnerId) {
-                    return { ...p, partnerId: updatedPerson.id };
-                }
+                if (p.id === updatedPerson.id) return updatedPerson;
+                if (p.id === oldPartnerId) return { ...p, partnerId: null };
+                if (p.id === newPartnerId) return { ...p, partnerId: updatedPerson.id };
                 return p;
             });
 
@@ -137,17 +125,12 @@ const reducer = (state: AppState, action: Action): AppState => {
                 .filter(p => p.id !== personIdToDelete)
                 .map(p => {
                     let newP = { ...p };
-                    if (newP.parentId === personIdToDelete) {
-                        newP.parentId = null;
-                    }
-                    if (newP.id === partnerIdToUnlink) {
-                        newP.partnerId = null;
-                    }
-                    if (newP.partnerId === personIdToDelete) {
-                        newP.partnerId = null;
-                    }
+                    if (newP.parentId === personIdToDelete) newP.parentId = null;
+                    if (newP.id === partnerIdToUnlink) newP.partnerId = null;
+                    if (newP.partnerId === personIdToDelete) newP.partnerId = null;
                     return newP;
                 });
+
             return { ...state, people: newPeople };
         }
 
@@ -156,7 +139,7 @@ const reducer = (state: AppState, action: Action): AppState => {
 
         case 'RESET':
             return { ...state, people: [] };
-        
+
         case 'LOAD_SAMPLE_DATA':
             return { ...state, people: samplePeople };
 
@@ -172,41 +155,24 @@ const historyReducer = (state: History, action: Action | { type: 'UNDO' } | { ty
         if (past.length === 0) return state;
         const previous = past[past.length - 1];
         const newPast = past.slice(0, past.length - 1);
-        const newState = {
-            past: newPast,
-            present: previous,
-            future: [present, ...future],
-        };
         saveStateToLocalStorage(previous);
-        return newState;
+        return { past: newPast, present: previous, future: [present, ...future] };
     }
 
     if (action.type === 'REDO') {
         if (future.length === 0) return state;
         const next = future[0];
         const newFuture = future.slice(1);
-        const newState = {
-            past: [...past, present],
-            present: next,
-            future: newFuture,
-        };
         saveStateToLocalStorage(next);
-        return newState;
+        return { past: [...past, present], present: next, future: newFuture };
     }
 
     const newPresent = reducer(present, action);
-
-    if (present === newPresent) {
-        return state;
-    }
+    if (present === newPresent) return state;
 
     saveStateToLocalStorage(newPresent);
 
-    return {
-        past: [...past, present],
-        present: newPresent,
-        future: [],
-    };
+    return { past: [...past, present], present: newPresent, future: [] };
 };
 
 export const useFamilyData = () => {
@@ -223,27 +189,22 @@ export const useFamilyData = () => {
     }, []);
 
     const undo = useCallback(() => {
-        if (past.length > 0) {
-            dispatch({ type: 'UNDO' });
-        }
+        if (past.length > 0) dispatch({ type: 'UNDO' });
     }, [past]);
 
     const redo = useCallback(() => {
-        if (future.length > 0) {
-            dispatch({ type: 'REDO' });
-        }
+        if (future.length > 0) dispatch({ type: 'REDO' });
     }, [future]);
 
-    // 🚨 Validierungs-Warnungen werden immer aktuell berechnet
-    const warnings = useMemo(() => validateFamilyData(present.people), [present.people]);
+    const warnings = validateFamilyData(present.people);
 
     return {
         state: present,
+        warnings,
         dispatch: dispatchWithHistory,
         undo,
         redo,
         canUndo: past.length > 0,
         canRedo: future.length > 0,
-        warnings, // <-- hier verfügbar für UI
     };
 };
