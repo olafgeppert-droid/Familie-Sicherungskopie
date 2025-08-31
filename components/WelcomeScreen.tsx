@@ -54,7 +54,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onShowDatabase, on
                 <p className="text-gray-500 mb-6">Copyright by Olaf Geppert</p>
                 
                 <div className="text-sm text-gray-800 text-justify bg-gray-200 p-4 rounded-lg border border-gray-300 mb-8">
-                    Dieses Programm dient der Dokumentation der ausgegeben Wappenringe der Familie. Es ermittelt automatisch die korrekte Innengravur eines Ringes in Abhängigkeit der Abstammungslinie, unabhängig davon, ob er neu angeschafft oder vererbt wurde. Ziel ist es, die Historie der Ringe für folgende Generationen nachvollziehbar zu machen. Dieses Programm ersetzt keine Familienchronik oder genealogische Stammbaum Dokumentation.
+                    Dieses Programm dient der Dokumentation der ausgegeben Wappenringe der Familie. Es ermittelt automatisch die korrekte Innengravur eines Ringes in Abhängigkeit der Abstammungslinie, unabhängig davon, ob er neu angeschafft oder vererbt wurde. Ziel ist es, die Historie der Ringe für folgende Generationen nachvollziehbar zu machen. Dieses Programm ersetzt keine Familienchronik oder genealogische Stammbaum Dokumentation. Die Code-Systematik und dieses Programm wurden vom Wappenspender, Olaf Geppert (*1965) entwickelt.
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
