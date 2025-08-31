@@ -64,7 +64,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose,
                         <h3 className="text-lg font-semibold text-brand-primary mb-3">Speicherpfad</h3>
                         <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
                             <p className="text-sm text-blue-800">
-                                <strong>Hinweis:</strong> Aus Sicherheitsgründen können Web-Anwendungen nicht auf Ihr lokales Dateisystem zugreifen, um einen Standard-Speicherpfad festzulegen. Der Speicherort für Exporte wird von Ihrem Browser verwaltet.
+                                <strong>Hinweis:</strong> Aus Sicherheitsgründen können Web-Anwendungen nicht auf Dein lokales Dateisystem zugreifen, um einen Standard-Speicherpfad festzulegen. Der Speicherort für Exporte wird von Deinem Browser verwaltet.
                             </p>
                         </div>
                     </div>
