@@ -13,7 +13,7 @@ export const Header: React.FC<HeaderProps> = ({ version, color }) => {
                 <img 
                     src={import.meta.env.BASE_URL + "wappen.png"} 
                     alt="Familienwappen" 
-                    className="h-12 sm:h-16 w-auto" 
+                    className="h-20 sm:h-24 w-auto" 
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
 
@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({ version, color }) => {
                  <img 
                     src={import.meta.env.BASE_URL + "wappen.png"} 
                     alt="Familienwappen" 
-                    className="h-12 sm:h-16 w-auto"
+                    className="h-20 sm:h-24 w-auto"
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
             </div>
