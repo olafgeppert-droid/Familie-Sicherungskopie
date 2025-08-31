@@ -44,7 +44,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onShowDatabase, on
                 <img
                     src={import.meta.env.BASE_URL + "wappen.png"}
                     alt="Familienwappen"
-                    className="mx-auto h-40 w-40 rounded-full border-4 border-white shadow-lg -mt-28 mb-4 drop-shadow-lg"
+                    className="mx-auto h-40 w-auto rounded-full border-4 border-white shadow-lg -mt-28 mb-4 drop-shadow-lg"
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
                 <h1 className="text-3xl sm:text-4xl font-bold text-brand-dark mb-4">
