@@ -17,7 +17,7 @@ export const WappenInfo: React.FC<WappenInfoProps> = ({ onShowDatabase }) => {
             className="min-h-screen w-full flex flex-col items-center justify-center p-4"
             style={{
                 backgroundImage: `url(${import.meta.env.BASE_URL + "wappen.png"})`,
-                backgroundSize: "120px 120px", // Größe der Kacheln
+                backgroundSize: "200px 200px", // Größe der Kacheln
                 backgroundRepeat: "repeat",    // Muster wiederholen
                 backgroundPosition: "top left" // Startpunkt oben links
             }}
