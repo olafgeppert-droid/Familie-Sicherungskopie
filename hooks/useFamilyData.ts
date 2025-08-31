@@ -1,7 +1,6 @@
 import { useReducer, useCallback } from 'react';
 import type { AppState, Action, History } from '../types';
 import { samplePeople } from '../services/sampleData';
-import { validateFamilyData } from '../services/validateFamilyData';
 
 const defaultState: AppState = { people: [] };
 
@@ -28,7 +27,7 @@ const loadStateFromLocalStorage = (): AppState => {
             saveStateToLocalStorage(initialStateWithSample);
             return initialStateWithSample;
         }
-
+        
         const parsedState = JSON.parse(serializedState);
         if (parsedState.people === undefined) {
             if (hasBeenInitialized) {
@@ -43,7 +42,7 @@ const loadStateFromLocalStorage = (): AppState => {
         if (!hasBeenInitialized) {
             localStorage.setItem('databaseHasBeenInitialized', 'true');
         }
-
+        
         return { ...defaultState, ...parsedState };
     } catch (e) {
         console.warn("Could not load state from local storage", e);
@@ -71,17 +70,17 @@ const reducer = (state: AppState, action: Action): AppState => {
             }
             return { ...state, people: [...state.people, newPerson] };
         }
-
+        
         case 'ADD_PERSON_WITH_RECALCULATION': {
             const { newPerson, updates } = action.payload;
             const updatedPeople = state.people.map(p => {
                 const update = updates.find(u => u.id === p.id);
                 if (update) {
                     const shouldUpdateRingCode = p.ringCode === p.code;
-                    return {
-                        ...p,
-                        code: update.code,
-                        ringCode: shouldUpdateRingCode ? update.code : p.ringCode
+                    return { 
+                        ...p, 
+                        code: update.code, 
+                        ringCode: shouldUpdateRingCode ? update.code : p.ringCode 
                     };
                 }
                 return p;
@@ -100,9 +99,7 @@ const reducer = (state: AppState, action: Action): AppState => {
             if (oldPartnerId === newPartnerId) {
                 return {
                     ...state,
-                    people: state.people.map(p =>
-                        p.id === updatedPerson.id ? updatedPerson : p
-                    ),
+                    people: state.people.map(p => (p.id === updatedPerson.id ? updatedPerson : p)),
                 };
             }
 
@@ -130,7 +127,6 @@ const reducer = (state: AppState, action: Action): AppState => {
                     if (newP.partnerId === personIdToDelete) newP.partnerId = null;
                     return newP;
                 });
-
             return { ...state, people: newPeople };
         }
 
@@ -139,7 +135,7 @@ const reducer = (state: AppState, action: Action): AppState => {
 
         case 'RESET':
             return { ...state, people: [] };
-
+        
         case 'LOAD_SAMPLE_DATA':
             return { ...state, people: samplePeople };
 
@@ -154,7 +150,7 @@ const historyReducer = (state: History, action: Action | { type: 'UNDO' } | { ty
     if (action.type === 'UNDO') {
         if (past.length === 0) return state;
         const previous = past[past.length - 1];
-        const newPast = past.slice(0, past.length - 1);
+        const newPast = past.slice(0, -1);
         saveStateToLocalStorage(previous);
         return { past: newPast, present: previous, future: [present, ...future] };
     }
@@ -196,11 +192,8 @@ export const useFamilyData = () => {
         if (future.length > 0) dispatch({ type: 'REDO' });
     }, [future]);
 
-    const warnings = validateFamilyData(present.people);
-
     return {
         state: present,
-        warnings,
         dispatch: dispatchWithHistory,
         undo,
         redo,
