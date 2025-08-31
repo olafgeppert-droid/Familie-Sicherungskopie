@@ -78,15 +78,6 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
         }
     }, [person, isOpen, people]);
     
-    useEffect(() => {
-        // Auto-select first available partner when relationship is switched to 'partner'
-        // and no partner is yet selected. This prevents the validation error.
-        if (formData.relationship === 'partner' && !formData.partnerId && potentialPartners.length > 0) {
-            setFormData(prev => ({ ...prev, partnerId: potentialPartners[0].id }));
-        }
-    }, [formData.relationship, formData.partnerId, potentialPartners]);
-
-
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
         if (!formData.name.trim()) newErrors.name = "Name ist erforderlich.";
@@ -190,6 +181,7 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                                 <div className="md:col-span-2">
                                     <label htmlFor="partnerId" className="block text-base font-medium text-gray-700">Partner(in) von</label>
                                     <SelectField id="partnerId" name="partnerId" value={formData.partnerId || ''} onChange={handleChange} className={`${errors.partnerId ? 'border-red-500' : ''}`}>
+                                        <option value="">-- Bitte auswählen --</option>
                                         {potentialPartners.map(p => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}
                                     </SelectField>
                                     {errors.partnerId && <p className="text-xs text-red-600 mt-1">{errors.partnerId}</p>}
