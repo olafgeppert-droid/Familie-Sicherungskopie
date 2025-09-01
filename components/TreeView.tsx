@@ -1,3 +1,4 @@
+// src/components/TreeView.tsx
 import React, { useRef, useLayoutEffect, useState, useMemo } from 'react';
 import type { Person } from '../types';
 import { hierarchy, tree, HierarchyPointNode } from 'd3-hierarchy';
@@ -9,18 +10,19 @@ import { getGeneration, getGenerationName, generationBackgroundColors } from '..
 
 type Unit = {
   id: string;
-  persons: Person[];
+  persons: Person[];      // 1 (Single) oder 2 (Partner)
   children: Unit[];
 };
 type TreeNode = Unit;
 
 const NODE_WIDTH = 210;
 const NODE_HEIGHT = 78;
-const PARTNER_GAP = 16;
+const PARTNER_GAP = 16; // vertikaler Abstand zwischen Partnern
 
 const halfHeight = (u: Unit | TreeNode) =>
   (u.persons.length === 2) ? (NODE_HEIGHT + PARTNER_GAP / 2) : (NODE_HEIGHT / 2);
 
+// Generation nur aus Code ableiten
 const unitGeneration = (u: Unit): number => {
   if (!u.persons.length) return 0;
   const base = u.persons.find(p => !p.code.endsWith('x')) ?? u.persons[0];
@@ -119,20 +121,24 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       return `u-${id1}-${id2}`;
     };
 
+    // Partner-Einheiten bilden (einseitige oder zweiseitige Verknüpfung reicht)
     people.forEach(p => {
       if (!p.partnerId) return;
       const partner = byId.get(p.partnerId);
       if (!partner) return;
-      if (partner.partnerId !== p.id) return;
       const uid = makeUnitIdForPair(p, partner);
       if (unitsById.has(uid)) return;
+
+      // Reihenfolge: nicht-x nach oben, x nach unten
       const top = p.code.endsWith('x') ? partner : p;
       const bottom = p.code.endsWith('x') ? p : partner;
+
       unitsById.set(uid, { id: uid, persons: [top, bottom], children: [] });
       paired.add(p.id);
       paired.add(partner.id);
     });
 
+    // Singles (keine Partner-Einheit)
     people.forEach(p => {
       if (paired.has(p.id)) return;
       const uid = `u-${p.id}`;
@@ -156,6 +162,7 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       if (!parent.children.some(c => c.id === child.id)) parent.children.push(child);
     };
 
+    // Eltern-Kind-Zuordnung auf Einheitsebene
     people.forEach(p => {
       if (!p.parentId) return;
       const parentUnit = unitOfPerson(p.parentId);
@@ -165,6 +172,7 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       hasParent.set(childUnit.id, true);
     });
 
+    // Wurzeln (Einheiten ohne Eltern)
     const roots: Unit[] = [];
     for (const u of unitsById.values()) {
       if (!hasParent.get(u.id)) roots.push(u);
@@ -309,4 +317,25 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
           </g>
 
           {headers.map((h, i) => (
-            <g key={`hdr-${i}`} transform={`translate(${h.x},
+            <g key={`hdr-${i}`} transform={`translate(${h.x},${headerY})`} pointerEvents="none">
+              <text
+                x={0}
+                y={0}
+                textAnchor="middle"
+                fontWeight="bold"
+                fontSize="18"
+                fill="#0D3B66"
+              >
+                {getGenerationName(h.gen)}
+              </text>
+            </g>
+          ))}
+
+          {nodes.map((n, i) => (
+            <UnitNode key={i} node={n as HierarchyPointNode<TreeNode>} onEdit={onEdit} />
+          ))}
+        </g>
+      </svg>
+    </div>
+  );
+};
