@@ -1,15 +1,14 @@
 // src/hooks/useFamilyData.ts
 import { useReducer, useCallback } from 'react';
 import type { AppState, Action, History } from '../types';
-import { samplePeople } from '../services/sampleData';
+import { samplePeople } from '../data/sampleData';  // ⚠️ Pfad angepasst!
 import { validateData } from '../services/validateData';
 
 const defaultState: AppState = { people: [] };
 
 const saveStateToLocalStorage = (state: AppState) => {
     try {
-        const serializedState = JSON.stringify(state);
-        localStorage.setItem('familyTreeState', serializedState);
+        localStorage.setItem('familyTreeState', JSON.stringify(state));
     } catch (e) {
         console.warn("Could not save state to local storage", e);
     }
@@ -20,6 +19,7 @@ const loadStateFromLocalStorage = (): AppState => {
         const serializedState = localStorage.getItem('familyTreeState');
         const hasBeenInitialized = localStorage.getItem('databaseHasBeenInitialized');
 
+        // Fall 1: Nichts im LocalStorage
         if (serializedState === null) {
             if (hasBeenInitialized) {
                 return defaultState;
@@ -29,9 +29,10 @@ const loadStateFromLocalStorage = (): AppState => {
             saveStateToLocalStorage(initialStateWithSample);
             return initialStateWithSample;
         }
-        
+
+        // Fall 2: Es gibt ein Objekt, aber ohne `people`
         const parsedState = JSON.parse(serializedState);
-        if (parsedState.people === undefined) {
+        if (!parsedState.people) {
             if (hasBeenInitialized) {
                 return defaultState;
             }
@@ -41,10 +42,11 @@ const loadStateFromLocalStorage = (): AppState => {
             return initialStateWithSample;
         }
 
+        // Sicherstellen, dass `databaseHasBeenInitialized` gesetzt ist
         if (!hasBeenInitialized) {
             localStorage.setItem('databaseHasBeenInitialized', 'true');
         }
-        
+
         return { ...defaultState, ...parsedState };
     } catch (e) {
         console.warn("Could not load state from local storage", e);
@@ -72,7 +74,7 @@ const reducer = (state: AppState, action: Action): AppState => {
             }
             return { ...state, people: [...state.people, newPerson] };
         }
-        
+
         case 'ADD_PERSON_WITH_RECALCULATION': {
             const { newPerson, updates } = action.payload;
             const updatedPeople = state.people.map(p => {
@@ -139,16 +141,14 @@ const reducer = (state: AppState, action: Action): AppState => {
         }
 
         case 'RESET': {
-            // konsequent leeren
             localStorage.removeItem('familyTreeState');
             localStorage.removeItem('databaseHasBeenInitialized');
-            return { ...state, people: [] };
+            return { ...defaultState };
         }
-        
+
         case 'LOAD_SAMPLE_DATA': {
-            // immer frische Beispieldaten + persistieren
             localStorage.setItem('databaseHasBeenInitialized', 'true');
-            const freshState = { ...state, people: samplePeople };
+            const freshState = { ...defaultState, people: samplePeople };
             saveStateToLocalStorage(freshState);
             return freshState;
         }
@@ -177,7 +177,7 @@ const historyReducer = (state: History, action: Action | { type: 'UNDO' } | { ty
         return { past: [...past, present], present: next, future: newFuture };
     }
 
-    const newPresent = reducer(present, action);
+    const newPresent = reducer(present, action as Action);
     if (present === newPresent) return state;
 
     saveStateToLocalStorage(newPresent);
@@ -194,7 +194,6 @@ export const useFamilyData = () => {
 
     const { present, past, future } = state;
 
-    // Laufende Validierung
     const validationErrors = validateData(present.people);
 
     const dispatchWithHistory = useCallback((action: Action) => {
