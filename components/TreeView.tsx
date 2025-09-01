@@ -4,7 +4,7 @@ import { hierarchy, tree, HierarchyPointNode } from 'd3-hierarchy';
 import { select } from 'd3-selection';
 import { zoom } from 'd3-zoom';
 import { linkHorizontal } from 'd3-shape';
-import { EditIcon, UserIcon } from './Icons';
+import { UserIcon } from './Icons';
 import { getGeneration, getGenerationName, generationBackgroundColors } from '../services/familyTreeService';
 
 type Unit = {
@@ -67,7 +67,6 @@ const UnitNode: React.FC<{ node: HierarchyPointNode<TreeNode>; onEdit: (p: Perso
 
   return (
     <g transform={`translate(${y},${x})`}>
-      {/* Partner-Karten */}
       {data.persons.length === 1 && (
         <Card p={data.persons[0]} onClick={onEdit} offsetX={0} />
       )}
@@ -75,7 +74,6 @@ const UnitNode: React.FC<{ node: HierarchyPointNode<TreeNode>; onEdit: (p: Perso
         <>
           <Card p={data.persons[0]} onClick={onEdit} offsetX={leftOffset} />
           <Card p={data.persons[1]} onClick={onEdit} offsetX={rightOffset} />
-          {/* Ehe-Balken */}
           <line
             x1={leftOffset + NODE_WIDTH/2 - 10}
             y1={0}
@@ -99,7 +97,6 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
 
     const byId = new Map<string, Person>(people.map(p => [p.id, p]));
 
-    // Symmetrische Partner-Paare (nur wenn beide Seiten aufeinander zeigen)
     const paired = new Set<string>();
     const unitsById = new Map<string, Unit>();
 
@@ -108,15 +105,13 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       return `u-${id1}-${id2}`;
     };
 
-    // (1) Paar-Units anlegen
     people.forEach(p => {
       if (!p.partnerId) return;
       const partner = byId.get(p.partnerId);
       if (!partner) return;
-      if (partner.partnerId !== p.id) return; // Reziprozität erforderlich
+      if (partner.partnerId !== p.id) return;
       const uid = makeUnitIdForPair(p, partner);
       if (unitsById.has(uid)) return;
-      // Reihenfolge: bevorzugt die Nicht-„x“-Person links
       const leftFirst = p.code.endsWith('x') ? partner : p;
       const rightSecond = p.code.endsWith('x') ? p : partner;
       unitsById.set(uid, { id: uid, persons: [leftFirst, rightSecond], children: [] });
@@ -124,14 +119,12 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       paired.add(partner.id);
     });
 
-    // (2) Einzel-Units für alle übrigen Personen
     people.forEach(p => {
       if (paired.has(p.id)) return;
       const uid = `u-${p.id}`;
       unitsById.set(uid, { id: uid, persons: [p], children: [] });
     });
 
-    // Helper: Unit zu Person finden
     const unitOfPerson = (pid: string): Unit | undefined => {
       const direct = unitsById.get(`u-${pid}`);
       if (direct) return direct;
@@ -141,8 +134,7 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       return undefined;
     };
 
-    // (3) Kinder-Units anhängen (Kinder hängen an der Eltern-Unit)
-    const hasParent = new Map<string, boolean>(); // unit.id -> hat Eltern?
+    const hasParent = new Map<string, boolean>();
     for (const u of unitsById.values()) hasParent.set(u.id, false);
 
     people.forEach(p => {
@@ -154,7 +146,6 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       hasParent.set(childUnit.id, true);
     });
 
-    // (4) Wurzeln (alle Units ohne Eltern) -> als Wald unter Pseudo-Root
     const roots: Unit[] = [];
     for (const u of unitsById.values()) {
       if (!hasParent.get(u.id)) roots.push(u);
@@ -167,7 +158,7 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
   const layout = useMemo(() => {
     if (!forest) return null;
     const t = tree<TreeNode>()
-      .nodeSize([NODE_HEIGHT + 60, NODE_WIDTH + (NODE_WIDTH + PARTNER_GAP) + 120])
+      .nodeSize([NODE_HEIGHT + 60, NODE_WIDTH * 2])
       .separation((a, b) => {
         const aw = a.data.persons.length === 2 ? 2 : 1;
         const bw = b.data.persons.length === 2 ? 2 : 1;
@@ -183,7 +174,6 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     const svg = select(svgRef.current);
     const g = select(gRef.current);
 
-    // ViewBox an Inhalt anpassen
     const { x, y, width, height } = (g.node() as SVGGElement).getBBox();
     const pad = 120;
     setViewBox(`${x - pad} ${y - pad} ${width + pad * 2} ${height + pad * 2}`);
@@ -202,7 +192,6 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     return <div className="text-gray-600 italic p-4">Keine Daten vorhanden.</div>;
   }
 
-  // Pseudo-Root ausblenden
   const nodes = layout.descendants().filter(n => n.data.id !== 'root');
   const links = layout.links().filter(l => l.source.data.id !== 'root');
 
@@ -210,16 +199,43 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     .x(d => d.y)
     .y(d => d.x);
 
+  // Spaltenüberschriften vorbereiten
+  const generationY: Record<number, number> = {};
+  nodes.forEach(n => {
+    if (!n.data.persons.length) return;
+    const g = getGeneration(n.data.persons[0].code);
+    if (!(g in generationY)) generationY[g] = n.y;
+    else generationY[g] = Math.min(generationY[g], n.y);
+  });
+  const headers = Object.entries(generationY)
+    .map(([g, y]) => ({ gen: parseInt(g), y }))
+    .sort((a, b) => a.y - b.y);
+
   return (
     <div className="bg-white p-2 rounded-lg shadow-lg animate-fade-in w-full h-[70vh]">
       <svg ref={svgRef} width="100%" height="100%" viewBox={viewBox}>
         <g ref={gRef}>
-          {/* Eltern-Kind-Verbindungen zwischen Units */}
+          {/* Linien */}
           <g fill="none" stroke="#9AA6B2" strokeOpacity={0.8} strokeWidth={1.5}>
             {links.map((l, i) => (
               <path key={i} d={linkPath({ source: l.source, target: l.target }) || ''} />
             ))}
           </g>
+
+          {/* Generation-Überschriften */}
+          {headers.map((h, i) => (
+            <text
+              key={i}
+              x={h.y}
+              y={-60}
+              textAnchor="middle"
+              fontWeight="bold"
+              fontSize="16"
+              fill="#0D3B66"
+            >
+              {getGenerationName(h.gen)}
+            </text>
+          ))}
 
           {/* Knoten */}
           {nodes.map((n, i) => (
@@ -227,9 +243,6 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
           ))}
         </g>
       </svg>
-      <div className="px-2 py-1 text-xs text-gray-700">
-        <span className="font-semibold">{getGenerationName(1)}</span> – Partner stehen nebeneinander; Kinder hängen an der Verbindungslinie.
-      </div>
     </div>
   );
 };
