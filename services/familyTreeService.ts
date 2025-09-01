@@ -1,3 +1,4 @@
+// src/services/familyTreeService.ts
 
 import type { Person, PersonFormData } from '../types';
 
@@ -10,9 +11,16 @@ export const getGeneration = (code: string): number => {
 };
 
 export const generationBackgroundColors = [
-    '#ffcdd2','#c8e6c9','#bbdefb','#fff9c4','#d1c4e9','#ffecb3','#b2dfdb',
+    '#ffcdd2', // rot
+    '#c8e6c9', // grün
+    '#bbdefb', // blau
+    '#fff9c4', // gelb
+    '#d1c4e9', // lila
+    '#ffecb3', // orange
+    '#b2dfdb', // türkis
 ];
 
+/** Sprechende Bezeichnungen für Generationen */
 export const getGenerationName = (generation: number): string => {
     switch (generation) {
         case 1: return 'Stammeltern';
@@ -102,3 +110,4 @@ export const getCodeRecalculation = (
 
     return { updates };
 };
+
