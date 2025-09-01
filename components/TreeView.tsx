@@ -17,10 +17,10 @@ type TreeNode = Unit;
 
 const NODE_WIDTH = 210;
 const NODE_HEIGHT = 78;
-const PARTNER_GAP = 16;
+const PARTNER_GAP = 16; // vertikaler Abstand zwischen Partnern
 
-const halfWidth = (u: Unit | TreeNode) =>
-  (u.persons.length === 2) ? (NODE_WIDTH + PARTNER_GAP / 2) : (NODE_WIDTH / 2);
+const halfHeight = (u: Unit | TreeNode) =>
+  (u.persons.length === 2) ? (NODE_HEIGHT + PARTNER_GAP / 2) : (NODE_HEIGHT / 2);
 
 // Generation nur aus Code ableiten
 const unitGeneration = (u: Unit): number => {
@@ -36,13 +36,13 @@ const median = (arr: number[]) => {
   return a.length % 2 ? a[mid] : (a[mid - 1] + a[mid]) / 2;
 };
 
-const Card: React.FC<{ p: Person; onClick: (p: Person) => void; offsetX?: number }> = ({ p, onClick, offsetX = 0 }) => {
+const Card: React.FC<{ p: Person; onClick: (p: Person) => void; offsetY?: number }> = ({ p, onClick, offsetY = 0 }) => {
   const g = getGeneration(p.code);
   const c = g > 0 ? generationBackgroundColors[(g - 1) % generationBackgroundColors.length] : '#FFFFFF';
   const partnerStyle = p.code.endsWith('x');
 
   return (
-    <g transform={`translate(${offsetX},0)`} className="cursor-pointer" onClick={() => onClick(p)}>
+    <g transform={`translate(0,${offsetY})`} className="cursor-pointer" onClick={() => onClick(p)}>
       <rect
         width={NODE_WIDTH}
         height={NODE_HEIGHT}
@@ -79,23 +79,23 @@ const UnitNode: React.FC<{ node: HierarchyPointNode<TreeNode>; onEdit: (p: Perso
   const { x, y, data } = node;
   const hasTwo = data.persons.length === 2;
 
-  const leftOffset = hasTwo ? -(NODE_WIDTH / 2 + PARTNER_GAP / 2) : 0;
-  const rightOffset = hasTwo ? (NODE_WIDTH / 2 + PARTNER_GAP / 2) : 0;
+  const topOffset = hasTwo ? -(NODE_HEIGHT / 2 + PARTNER_GAP / 2) : 0;
+  const bottomOffset = hasTwo ? (NODE_HEIGHT / 2 + PARTNER_GAP / 2) : 0;
 
   return (
     <g transform={`translate(${y},${x})`}>
       {data.persons.length === 1 && (
-        <Card p={data.persons[0]} onClick={onEdit} offsetX={0} />
+        <Card p={data.persons[0]} onClick={onEdit} offsetY={0} />
       )}
       {data.persons.length === 2 && (
         <>
-          <Card p={data.persons[0]} onClick={onEdit} offsetX={leftOffset} />
-          <Card p={data.persons[1]} onClick={onEdit} offsetX={rightOffset} />
+          <Card p={data.persons[0]} onClick={onEdit} offsetY={topOffset} />
+          <Card p={data.persons[1]} onClick={onEdit} offsetY={bottomOffset} />
           <line
-            x1={leftOffset + NODE_WIDTH / 2 - 10}
-            y1={0}
-            x2={rightOffset - NODE_WIDTH / 2 + 10}
-            y2={0}
+            x1={0}
+            y1={topOffset + NODE_HEIGHT / 2 - 10}
+            x2={0}
+            y2={bottomOffset - NODE_HEIGHT / 2 + 10}
             stroke="#0D3B66"
             strokeWidth={2}
           />
@@ -128,9 +128,9 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       if (partner.partnerId !== p.id) return;
       const uid = makeUnitIdForPair(p, partner);
       if (unitsById.has(uid)) return;
-      const left = p.code.endsWith('x') ? partner : p;
-      const right = p.code.endsWith('x') ? p : partner;
-      unitsById.set(uid, { id: uid, persons: [left, right], children: [] });
+      const top = p.code.endsWith('x') ? partner : p;
+      const bottom = p.code.endsWith('x') ? p : partner;
+      unitsById.set(uid, { id: uid, persons: [top, bottom], children: [] });
       paired.add(p.id);
       paired.add(partner.id);
     });
@@ -179,15 +179,15 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
   const layout = useMemo(() => {
     if (!forest) return null;
 
-    const vertical = NODE_HEIGHT + 90;
-    const horizontal = NODE_WIDTH + PARTNER_GAP + 180;
+    const vertical = NODE_HEIGHT + PARTNER_GAP + 90;
+    const horizontal = NODE_WIDTH + 180;
 
     const t = tree<TreeNode>()
       .nodeSize([vertical, horizontal])
       .separation((a, b) => {
-        const aw = a.data.persons.length === 2 ? 2 : 1;
-        const bw = b.data.persons.length === 2 ? 2 : 1;
-        const base = (aw + bw) / 2;
+        const ah = a.data.persons.length === 2 ? 2 : 1;
+        const bh = b.data.persons.length === 2 ? 2 : 1;
+        const base = (ah + bh) / 2;
         return (a.parent && b.parent && a.parent === b.parent) ? base : base + 0.6;
       });
 
@@ -205,11 +205,11 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
 
     all.forEach(n => {
-      const hw = halfWidth(n.data);
-      const top = n.x - NODE_HEIGHT / 2;
-      const bottom = n.x + NODE_HEIGHT / 2;
-      const left = n.y - hw;
-      const right = n.y + hw;
+      const hh = halfHeight(n.data);
+      const top = n.x - hh;
+      const bottom = n.x + hh;
+      const left = n.y - NODE_WIDTH / 2;
+      const right = n.y + NODE_WIDTH / 2;
       if (top < minX) minX = top;
       if (bottom > maxX) maxX = bottom;
       if (left < minY) minY = left;
@@ -225,7 +225,7 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     const g = select(gRef.current);
 
     const zoomBehavior = zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.05, 20]) // erweitert
+      .scaleExtent([0.05, 20])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
       });
@@ -263,11 +263,11 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
 
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   nodes.forEach(n => {
-    const hw = halfWidth(n.data);
-    const top = n.x - NODE_HEIGHT / 2;
-    const bottom = n.x + NODE_HEIGHT / 2;
-    const left = n.y - hw;
-    const right = n.y + hw;
+    const hh = halfHeight(n.data);
+    const top = n.x - hh;
+    const bottom = n.x + hh;
+    const left = n.y - NODE_WIDTH / 2;
+    const right = n.y + NODE_WIDTH / 2;
     if (top < minX) minX = top;
     if (bottom > maxX) maxX = bottom;
     if (left < minY) minY = left;
