@@ -1,4 +1,3 @@
-// src/components/TreeView.tsx
 import React, { useRef, useLayoutEffect, useState, useMemo } from 'react';
 import type { Person } from '../types';
 import { hierarchy, tree, HierarchyPointNode } from 'd3-hierarchy';
@@ -10,19 +9,18 @@ import { getGeneration, getGenerationName, generationBackgroundColors } from '..
 
 type Unit = {
   id: string;
-  persons: Person[];      // 1 (Single) oder 2 (Partner)
+  persons: Person[];
   children: Unit[];
 };
 type TreeNode = Unit;
 
 const NODE_WIDTH = 210;
 const NODE_HEIGHT = 78;
-const PARTNER_GAP = 16; // vertikaler Abstand zwischen Partnern
+const PARTNER_GAP = 16;
 
 const halfHeight = (u: Unit | TreeNode) =>
   (u.persons.length === 2) ? (NODE_HEIGHT + PARTNER_GAP / 2) : (NODE_HEIGHT / 2);
 
-// Generation nur aus Code ableiten
 const unitGeneration = (u: Unit): number => {
   if (!u.persons.length) return 0;
   const base = u.persons.find(p => !p.code.endsWith('x')) ?? u.persons[0];
@@ -311,25 +309,4 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
           </g>
 
           {headers.map((h, i) => (
-            <g key={`hdr-${i}`} transform={`translate(${h.x},${headerY})`} pointerEvents="none">
-              <text
-                x={0}
-                y={0}
-                textAnchor="middle"
-                fontWeight="bold"
-                fontSize="18"
-                fill="#0D3B66"
-              >
-                {getGenerationName(h.gen)}
-              </text>
-            </g>
-          ))}
-
-          {nodes.map((n, i) => (
-            <UnitNode key={i} node={n as HierarchyPointNode<TreeNode>} onEdit={onEdit} />
-          ))}
-        </g>
-      </svg>
-    </div>
-  );
-};
+            <g key={`hdr-${i}`} transform={`translate(${h.x},
