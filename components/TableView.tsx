@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import type { Person } from '../types';
 import { getGeneration, getGenerationName, generationBackgroundColors } from '../services/familyTreeService';
@@ -33,16 +32,15 @@ export const TableView: React.FC<TableViewProps> = ({ people, onEdit, searchTerm
         let sortablePeople = [...people];
         if (sortConfig !== null) {
             sortablePeople.sort((a, b) => {
+                const genA = getGeneration(a.code);
+                const genB = getGeneration(b.code);
+
+                if (genA !== genB) {
+                    return sortConfig.direction === 'ascending' ? genA - genB : genB - genA;
+                }
+
                 const aValue = a[sortConfig.key];
                 const bValue = b[sortConfig.key];
-                
-                if (sortConfig.key === 'code') {
-                    const genA = getGeneration(a.code);
-                    const genB = getGeneration(b.code);
-                    if (genA !== genB) {
-                        return sortConfig.direction === 'ascending' ? genA - genB : genB - genA;
-                    }
-                }
 
                 if (aValue === undefined || bValue === undefined || aValue === null || bValue === null) return 0;
                 
