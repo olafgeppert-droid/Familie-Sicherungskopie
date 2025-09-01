@@ -117,3 +117,53 @@ export const getCodeRecalculation = (
 
     return { updates };
 };
+
+/* ============================================================
+   RING-CODE LOGIK
+   ============================================================ */
+
+/**
+ * Vergibt einen Ring-Code für ein Kind.
+ * - Ring-Code Kind = Ring-Code Eltern (ohne "x") + Zähler nach Geburtsreihenfolge
+ * - In der 1. Kindergeneration: Buchstaben (A, B, C, …)
+ * - Ab 2. Kindergeneration: Zahlen (1, 2, 3, …)
+ */
+export const generateRingCode = (person: Person, allPeople: Person[]): string | undefined => {
+    if (!person.parentId) {
+        // Stammeltern: Ring-Code = Personen-Code
+        return person.code;
+    }
+
+    const parent = allPeople.find(p => p.id === person.parentId);
+    if (!parent) return undefined;
+
+    const siblings = allPeople
+        .filter(p => p.parentId === person.parentId)
+        .filter(p => !p.code.endsWith('x'));
+
+    const ordered = [...siblings, person].sort(
+        (a, b) => new Date(a.birthDate).getTime() - new Date(b.birthDate).getTime()
+    );
+
+    const index = ordered.findIndex(c => c.id === person.id);
+
+    const base = parent.ringCode?.replace(/x$/, '') || parent.code.replace(/x$/, '');
+
+    if (parent.code === '1') {
+        // Erste Kindergeneration → A, B, C …
+        return `${base}${ALPHABET[index]}`;
+    } else {
+        // Ab 2. Generation → 1, 2, 3 …
+        return `${base}${index + 1}`;
+    }
+};
+
+/**
+ * Wendet eine Ringvererbung an.
+ * - Alte Gravur bleibt bestehen
+ * - Erbender Code wird mit "->" angehängt
+ * Beispiel: Ring von "1" wird von "1C2" geerbt → "1 -> 1C2"
+ */
+export const inheritRingCode = (fromPerson: Person, toPerson: Person): string => {
+    return `${fromPerson.ringCode || fromPerson.code} -> ${toPerson.code}`;
+};
