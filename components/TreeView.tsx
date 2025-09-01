@@ -1,3 +1,4 @@
+// src/components/TreeView.tsx
 import React, { useRef, useLayoutEffect, useState, useMemo } from 'react';
 import type { Person } from '../types';
 import { hierarchy, tree, HierarchyPointNode } from 'd3-hierarchy';
@@ -105,6 +106,7 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       return `u-${id1}-${id2}`;
     };
 
+    // Paare bilden (nur bei beidseitiger Verlinkung)
     people.forEach(p => {
       if (!p.partnerId) return;
       const partner = byId.get(p.partnerId);
@@ -112,6 +114,7 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       if (partner.partnerId !== p.id) return;
       const uid = makeUnitIdForPair(p, partner);
       if (unitsById.has(uid)) return;
+      // Person ohne 'x' links, Partner mit 'x' rechts
       const leftFirst = p.code.endsWith('x') ? partner : p;
       const rightSecond = p.code.endsWith('x') ? p : partner;
       unitsById.set(uid, { id: uid, persons: [leftFirst, rightSecond], children: [] });
@@ -119,6 +122,7 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       paired.add(partner.id);
     });
 
+    // Singles hinzufügen
     people.forEach(p => {
       if (paired.has(p.id)) return;
       const uid = `u-${p.id}`;
@@ -134,6 +138,7 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       return undefined;
     };
 
+    // Kanten (Eltern → Kinder) auf Unit-Ebene
     const hasParent = new Map<string, boolean>();
     for (const u of unitsById.values()) hasParent.set(u.id, false);
 
@@ -146,10 +151,13 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       hasParent.set(childUnit.id, true);
     });
 
+    // Wurzeln (können mehrere sein)
     const roots: Unit[] = [];
     for (const u of unitsById.values()) {
       if (!hasParent.get(u.id)) roots.push(u);
     }
+
+    // Pseudo-Root, damit d3.tree mit einem Baum arbeiten kann
     const pseudoRoot: Unit = { id: 'root', persons: [], children: roots };
 
     return hierarchy<TreeNode>(pseudoRoot);
@@ -157,13 +165,24 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
 
   const layout = useMemo(() => {
     if (!forest) return null;
+
+    // Mehr vertikaler/horizontaler Abstand gegen Überlappungen
+    const vertical = NODE_HEIGHT + 90;               // vorher: +60
+    const horizontal = NODE_WIDTH + PARTNER_GAP + 180; // ausreichend Platz für Paare
+
     const t = tree<TreeNode>()
-      .nodeSize([NODE_HEIGHT + 60, NODE_WIDTH * 2])
+      .nodeSize([vertical, horizontal])
       .separation((a, b) => {
+        // Paare (2 Karten) brauchen mehr seitlichen Abstand als Singles
         const aw = a.data.persons.length === 2 ? 2 : 1;
         const bw = b.data.persons.length === 2 ? 2 : 1;
-        return (aw + bw) / 2;
+
+        // Etwas mehr Abstand zwischen nicht-Geschwistern
+        const sameParent = a.parent && b.parent && a.parent === b.parent;
+        const base = (aw + bw) / 2;
+        return sameParent ? base : base + 0.5;
       });
+
     return t(forest);
   }, [forest]);
 
@@ -174,10 +193,12 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     const svg = select(svgRef.current);
     const g = select(gRef.current);
 
+    // Alles in den ViewBox-Rahmen packen
     const { x, y, width, height } = (g.node() as SVGGElement).getBBox();
-    const pad = 120;
-    setViewBox(`${x - pad} ${y - pad} ${width + pad * 2} ${height + pad * 2}`);
+    const pad = 140;
+    setViewBox(`${x - pad} ${y - pad - 90} ${width + pad * 2} ${height + pad * 2 + 90}`);
 
+    // Zoom & Pan
     const zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.3, 2.2])
       .on('zoom', (event) => {
@@ -185,6 +206,7 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       });
 
     svg.call(zoomBehavior as any);
+
     return () => { svg.on('.zoom', null); };
   }, [layout]);
 
@@ -199,7 +221,7 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     .x(d => d.y)
     .y(d => d.x);
 
-  // Spaltenüberschriften vorbereiten
+  // Generations-Header (Spaltenüberschriften) vorbereiten
   const generationY: Record<number, number> = {};
   nodes.forEach(n => {
     if (!n.data.persons.length) return;
@@ -208,15 +230,31 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     else generationY[g] = Math.min(generationY[g], n.y);
   });
   const headers = Object.entries(generationY)
-    .map(([g, y]) => ({ gen: parseInt(g), y }))
+    .map(([g, y]) => ({ gen: parseInt(g, 10), y }))
     .sort((a, b) => a.y - b.y);
 
   return (
     <div className="bg-white p-2 rounded-lg shadow-lg animate-fade-in w-full h-[70vh]">
       <svg ref={svgRef} width="100%" height="100%" viewBox={viewBox}>
         <g ref={gRef}>
-          {/* Linien */}
-          <g fill="none" stroke="#9AA6B2" strokeOpacity={0.8} strokeWidth={1.5}>
+          {/* Vertikale Hilfslinien je Generation (dezent) */}
+          {headers.map((h, i) => (
+            <line
+              key={`vline-${i}`}
+              x1={h.y}
+              y1={-9999}
+              x2={h.y}
+              y2={9999}
+              stroke="#E5E7EB"
+              strokeDasharray="6 6"
+              strokeWidth={1}
+              opacity={0.7}
+              pointerEvents="none"
+            />
+          ))}
+
+          {/* Verbindungslinien */}
+          <g fill="none" stroke="#9AA6B2" strokeOpacity={0.85} strokeWidth={1.5}>
             {links.map((l, i) => (
               <path key={i} d={linkPath({ source: l.source, target: l.target }) || ''} />
             ))}
@@ -224,17 +262,18 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
 
           {/* Generation-Überschriften */}
           {headers.map((h, i) => (
-            <text
-              key={i}
-              x={h.y}
-              y={-60}
-              textAnchor="middle"
-              fontWeight="bold"
-              fontSize="16"
-              fill="#0D3B66"
-            >
-              {getGenerationName(h.gen)}
-            </text>
+            <g key={`hdr-${i}`} transform={`translate(${h.y},-60)`} pointerEvents="none">
+              <text
+                x={0}
+                y={0}
+                textAnchor="middle"
+                fontWeight="bold"
+                fontSize="16"
+                fill="#0D3B66"
+              >
+                {getGenerationName(h.gen)}
+              </text>
+            </g>
           ))}
 
           {/* Knoten */}
