@@ -23,8 +23,24 @@ const PARTNER_GAP = 16;
 const halfWidth = (u: Unit | TreeNode) =>
   (u.persons.length === 2) ? (NODE_WIDTH + PARTNER_GAP / 2) : (NODE_WIDTH / 2);
 
+// Bestimme die Generation einer Unit ausschließlich aus Personen-Codes.
+// Für Paare wird die Person ohne "x" priorisiert, sonst erster Code ohne "x"-Suffix.
+const unitGeneration = (u: Unit): number => {
+  if (!u.persons.length) return 0;
+  const base = u.persons.find(p => !p.code.endsWith('x')) ?? u.persons[0];
+  return getGeneration(base.code);
+};
+
+// Median-Helfer für Spalten-x
+const median = (arr: number[]) => {
+  if (arr.length === 0) return 0;
+  const a = [...arr].sort((x, y) => x - y);
+  const mid = Math.floor(a.length / 2);
+  return a.length % 2 ? a[mid] : (a[mid - 1] + a[mid]) / 2;
+};
+
 const Card: React.FC<{ p: Person; onClick: (p: Person) => void; offsetX?: number }> = ({ p, onClick, offsetX = 0 }) => {
-  const g = getGeneration(p.code);
+  const g = getGeneration(p.code); // nutzt Code (ohne x) → Generation
   const c = g > 0 ? generationBackgroundColors[(g - 1) % generationBackgroundColors.length] : '#FFFFFF';
   const partnerStyle = p.code.endsWith('x');
 
@@ -174,8 +190,8 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
   const layout = useMemo(() => {
     if (!forest) return null;
 
-    const vertical = NODE_HEIGHT + 90;                   // viel vertikaler Abstand
-    const horizontal = NODE_WIDTH + PARTNER_GAP + 180;   // viel horizontaler Abstand
+    const vertical = NODE_HEIGHT + 90;                   // vertikaler Abstand
+    const horizontal = NODE_WIDTH + PARTNER_GAP + 180;   // horizontaler Abstand
 
     const t = tree<TreeNode>()
       .nodeSize([vertical, horizontal])
@@ -196,12 +212,12 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     if (!layout || !svgRef.current || !gRef.current) return;
 
     // Bounds AUS KOORDINATEN berechnen (unabhängig von foreignObject/BBox)
-    const nodes = layout.descendants().filter(n => n.data.id !== 'root');
-    if (nodes.length === 0) return;
+    const all = layout.descendants().filter(n => n.data.id !== 'root');
+    if (all.length === 0) return;
 
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
 
-    nodes.forEach(n => {
+    all.forEach(n => {
       const hw = halfWidth(n.data);
       const top = n.x - NODE_HEIGHT / 2;
       const bottom = n.x + NODE_HEIGHT / 2;
@@ -214,17 +230,17 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     });
 
     // Platz für Header oberhalb
-    const headerSpace = 80;
-    const pad = 140;
+    const headerSpace = 100;
+    const pad = 160;
 
     setViewBox(`${minY - pad} ${minX - pad - headerSpace} ${(maxY - minY) + 2 * pad} ${(maxX - minX) + 2 * pad + headerSpace}`);
 
-    // Zoom initialisieren/neu binden
+    // Zoom initialisieren/neu binden – deutlich größere Range
     const svg = select(svgRef.current);
     const g = select(gRef.current);
 
     const zoomBehavior = zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.3, 2.5])
+      .scaleExtent([0.1, 12]) // << viel stärkeres Reinzoomen erlaubt
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
       });
@@ -247,22 +263,22 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     .x(d => d.y)
     .y(d => d.x);
 
-  // ---------- Spalten-Header vorbereiten ----------
-  // Spalten-X (y in Layout) pro Generation bestimmen
-  const genColX: Record<number, number> = {};
+  // ---------- Spalten-Header vorbereiten (rein auf Basis der Codes) ----------
+  const genToYs = new Map<number, number[]>();
   nodes.forEach(n => {
-    if (n.data.persons.length === 0) return;
-    const gen = getGeneration(n.data.persons[0].code);
-    const x = n.y;
-    if (!(gen in genColX)) genColX[gen] = x;
-    else genColX[gen] = Math.min(genColX[gen], x); // linkeste Spalte dieser Generation
+    const gen = unitGeneration(n.data); // aus Codes, nicht aus D3-Tiefe
+    if (gen <= 0) return;
+    const arr = genToYs.get(gen) ?? [];
+    arr.push(n.y);
+    genToYs.set(gen, arr);
   });
 
-  const headers = Object.entries(genColX)
-    .map(([g, x]) => ({ gen: parseInt(g, 10), x }))
+  // Für jede Generation die Spalten-x (median) bestimmen
+  const headers = Array.from(genToYs.entries())
+    .map(([gen, ys]) => ({ gen, x: median(ys) }))
     .sort((a, b) => a.x - b.x);
 
-  // Für Hintergrund-Rect und Header-Zeichnung brauchen wir die sichtbaren Bounds (wie oben berechnet)
+  // Für Hintergrund-Rect & Header-Positionen die sichtbaren Bounds erneut bestimmen
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   nodes.forEach(n => {
     const hw = halfWidth(n.data);
@@ -275,8 +291,8 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     if (left < minY) minY = left;
     if (right > maxY) maxY = right;
   });
-  const headerY = minX - 60; // Text oberhalb der obersten Knoten
-  const bgPad = 300;         // großes Pan-/Zoom-Fangrechteck
+  const headerY = minX - 70; // Text oberhalb der obersten Knoten
+  const bgPad = 400;         // großes Pan-/Zoom-Fangrechteck
 
   return (
     <div className="bg-white p-2 rounded-lg shadow-lg animate-fade-in w-full h-[70vh]">
@@ -286,9 +302,9 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
           {/* Unsichtbares Hintergrund-Rect zum Pannen/Zoomen */}
           <rect
             x={minY - bgPad}
-            y={minX - bgPad - 120}
+            y={minX - bgPad - 160}
             width={(maxY - minY) + 2 * bgPad}
-            height={(maxX - minX) + 2 * bgPad + 160}
+            height={(maxX - minX) + 2 * bgPad + 220}
             fill="transparent"
             pointerEvents="all"
           />
@@ -298,9 +314,9 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
             <line
               key={`vline-${i}`}
               x1={h.x}
-              y1={minX - 120}
+              y1={minX - 160}
               x2={h.x}
-              y2={maxX + 120}
+              y2={maxX + 160}
               stroke="#E5E7EB"
               strokeDasharray="6 6"
               strokeWidth={1}
@@ -316,7 +332,7 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
             ))}
           </g>
 
-          {/* Spalten-Header */}
+          {/* Spalten-Header (aus Codes abgeleitet) */}
           {headers.map((h, i) => (
             <g key={`hdr-${i}`} transform={`translate(${h.x},${headerY})`} pointerEvents="none">
               <text
@@ -324,7 +340,7 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
                 y={0}
                 textAnchor="middle"
                 fontWeight="bold"
-                fontSize="16"
+                fontSize="18"
                 fill="#0D3B66"
               >
                 {getGenerationName(h.gen)}
