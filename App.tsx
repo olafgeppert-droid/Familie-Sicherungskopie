@@ -225,14 +225,17 @@ const App: React.FC = () => {
   };
 
   const confirmLoadSampleData = () => {
-    dispatch({ type: 'LOAD_SAMPLE_DATA' });
-    setLoadSampleDataDialogOpen(false);
+  dispatch({ type: 'LOAD_SAMPLE_DATA' });
+  setLoadSampleDataDialogOpen(false);
 
-    const errors = validateData(state.people);
-    if (errors.length > 0) {
-      setValidationErrors(errors);
-    }
-  };
+  // 🔽 wichtig: Filter zurücksetzen, damit du die neuen Daten siehst
+  setSearchTerm('');
+
+  const errors = validateData(state.people);
+  if (errors.length > 0) {
+    setValidationErrors(errors);
+  }
+};
 
   const filteredPeople = useMemo(() => {
     if (!searchTerm) return people;
