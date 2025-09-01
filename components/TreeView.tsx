@@ -7,37 +7,40 @@ import { linkHorizontal } from 'd3-shape';
 import { EditIcon, UserIcon } from './Icons';
 import { getGeneration, getGenerationName, generationBackgroundColors } from '../services/familyTreeService';
 
-type TreeNode = {
-  type: 'person' | 'marriage';
-  person?: Person;
-  partner?: Person;
-  children?: TreeNode[];
+type Unit = {
+  id: string;
+  persons: Person[];        // 1 oder 2 Personen (Partner)
+  children: Unit[];
 };
 
-const PersonCard: React.FC<{ p: Person; onEdit: (p: Person) => void; offsetX: number }> = ({ p, onEdit, offsetX }) => {
-  const nodeWidth = 240;
-  const nodeHeight = 80;
-  const generation = getGeneration(p.code);
-  const c = generation > 0 ? generationBackgroundColors[(generation - 1) % generationBackgroundColors.length] : '#FFFFFF';
+type TreeNode = Unit;
+
+const NODE_WIDTH = 210;
+const NODE_HEIGHT = 78;
+const PARTNER_GAP = 16;
+
+const Card: React.FC<{ p: Person; onClick: (p: Person) => void; offsetX?: number }> = ({ p, onClick, offsetX = 0 }) => {
+  const g = getGeneration(p.code);
+  const c = g > 0 ? generationBackgroundColors[(g - 1) % generationBackgroundColors.length] : '#FFFFFF';
   const partnerStyle = p.code.endsWith('x');
 
   return (
-    <g transform={`translate(${offsetX},0)`} className="cursor-pointer" onClick={() => onEdit(p)}>
+    <g transform={`translate(${offsetX},0)`} className="cursor-pointer" onClick={() => onClick(p)}>
       <rect
-        width={nodeWidth}
-        height={nodeHeight}
-        x={-nodeWidth / 2}
-        y={-nodeHeight / 2}
+        width={NODE_WIDTH}
+        height={NODE_HEIGHT}
+        x={-NODE_WIDTH / 2}
+        y={-NODE_HEIGHT / 2}
         rx="10"
         ry="10"
         fill={partnerStyle ? "#FAF0CA" : c}
         stroke={partnerStyle ? "#F4D35E" : "#0D3B66"}
-        strokeWidth="2"
+        strokeWidth={2}
       />
-      <foreignObject x={-nodeWidth/2} y={-nodeHeight/2} width={nodeWidth} height={nodeHeight}>
+      <foreignObject x={-NODE_WIDTH / 2} y={-NODE_HEIGHT / 2} width={NODE_WIDTH} height={NODE_HEIGHT}>
         <div className="w-full h-full flex items-center p-2 text-left">
-          <div className="w-16 h-16 rounded-full bg-white/50 flex-shrink-0 flex items-center justify-center overflow-hidden mr-3 border-2 border-white/80">
-            {p.photoUrl ? <img src={p.photoUrl} alt={p.name} className="w-full h-full object-cover" /> : <UserIcon className="w-12 h-12 text-gray-500" />}
+          <div className="w-14 h-14 rounded-full bg-white/50 flex-shrink-0 flex items-center justify-center overflow-hidden mr-3 border-2 border-white/80">
+            {p.photoUrl ? <img src={p.photoUrl} alt={p.name} className="w-full h-full object-cover" /> : <UserIcon className="w-10 h-10 text-gray-500" />}
           </div>
           <div className="flex-grow overflow-hidden">
             <div className="text-sm font-bold truncate" style={{ color: "#0D3B66" }} title={`${p.code} / ${p.name}`}>
@@ -49,140 +52,161 @@ const PersonCard: React.FC<{ p: Person; onEdit: (p: Person) => void; offsetX: nu
               {p.deathDate ? ` † ${new Date(p.deathDate).toLocaleDateString('de-DE')}` : ''}
             </div>
           </div>
-          <EditIcon className="w-4 h-4 ml-2 text-gray-600" />
         </div>
       </foreignObject>
     </g>
   );
 };
 
-const Node: React.FC<{ node: HierarchyPointNode<TreeNode>; onEdit: (p: Person) => void; }> = ({ node, onEdit }) => {
+const UnitNode: React.FC<{ node: HierarchyPointNode<TreeNode>; onEdit: (p: Person) => void; }> = ({ node, onEdit }) => {
   const { x, y, data } = node;
+  const hasTwo = data.persons.length === 2;
 
-  if (data.type === 'person' && data.person) {
-    return (
-      <g transform={`translate(${y},${x})`}>
-        <PersonCard p={data.person} onEdit={onEdit} offsetX={0} />
-      </g>
-    );
-  }
+  const leftOffset = hasTwo ? -(NODE_WIDTH/2 + PARTNER_GAP/2) : 0;
+  const rightOffset = hasTwo ? (NODE_WIDTH/2 + PARTNER_GAP/2) : 0;
 
-  if (data.type === 'marriage' && data.person && data.partner) {
-    const nodeWidth = 240;
-    const gap = 18;
-    return (
-      <g transform={`translate(${y},${x})`}>
-        <PersonCard p={data.person} onEdit={onEdit} offsetX={-(nodeWidth/2 + gap/2)} />
-        <PersonCard p={data.partner} onEdit={onEdit} offsetX={(nodeWidth/2 + gap/2)} />
-        <line
-          x1={-(nodeWidth/2 - 6)} y1={0}
-          x2={(nodeWidth/2 + gap - 6)} y2={0}
-          stroke="#0D3B66" strokeWidth={2}
-        />
-      </g>
-    );
-  }
-
-  return null;
+  return (
+    <g transform={`translate(${y},${x})`}>
+      {/* Partner-Karten */}
+      {data.persons.length === 1 && (
+        <Card p={data.persons[0]} onClick={onEdit} offsetX={0} />
+      )}
+      {data.persons.length === 2 && (
+        <>
+          <Card p={data.persons[0]} onClick={onEdit} offsetX={leftOffset} />
+          <Card p={data.persons[1]} onClick={onEdit} offsetX={rightOffset} />
+          {/* Ehe-Balken */}
+          <line
+            x1={leftOffset + NODE_WIDTH/2 - 10}
+            y1={0}
+            x2={rightOffset - NODE_WIDTH/2 + 10}
+            y2={0}
+            stroke="#0D3B66"
+            strokeWidth={2}
+          />
+        </>
+      )}
+    </g>
+  );
 };
 
 export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void; }> = ({ people, onEdit }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
 
-  const hierarchyData = useMemo(() => {
-    if (people.length === 0) return null;
+  const forest = useMemo(() => {
+    if (!people || people.length === 0) return null;
 
-    const map: Map<string, Person> = new Map(people.map(p => [p.id, p]));
-    const roots: TreeNode[] = [];
+    const byId = new Map<string, Person>(people.map(p => [p.id, p]));
 
-    const marriageNodes: TreeNode[] = [];
-    const attachedChildren: Set<string> = new Set();
+    // Symmetrische Partner-Paare (nur wenn beide Seiten aufeinander zeigen)
+    const paired = new Set<string>();
+    const unitsById = new Map<string, Unit>();
+
+    const makeUnitIdForPair = (a: Person, b: Person) => {
+      const [id1, id2] = [a.id, b.id].sort();
+      return `u-${id1}-${id2}`;
+    };
+
+    // (1) Paar-Units anlegen
+    people.forEach(p => {
+      if (!p.partnerId) return;
+      const partner = byId.get(p.partnerId);
+      if (!partner) return;
+      if (partner.partnerId !== p.id) return; // Reziprozität erforderlich
+      const uid = makeUnitIdForPair(p, partner);
+      if (unitsById.has(uid)) return;
+      // Reihenfolge: bevorzugt die Nicht-„x“-Person links
+      const leftFirst = p.code.endsWith('x') ? partner : p;
+      const rightSecond = p.code.endsWith('x') ? p : partner;
+      unitsById.set(uid, { id: uid, persons: [leftFirst, rightSecond], children: [] });
+      paired.add(p.id);
+      paired.add(partner.id);
+    });
+
+    // (2) Einzel-Units für alle übrigen Personen
+    people.forEach(p => {
+      if (paired.has(p.id)) return;
+      const uid = `u-${p.id}`;
+      unitsById.set(uid, { id: uid, persons: [p], children: [] });
+    });
+
+    // Helper: Unit zu Person finden
+    const unitOfPerson = (pid: string): Unit | undefined => {
+      const direct = unitsById.get(`u-${pid}`);
+      if (direct) return direct;
+      for (const u of unitsById.values()) {
+        if (u.persons.some(pp => pp.id === pid)) return u;
+      }
+      return undefined;
+    };
+
+    // (3) Kinder-Units anhängen (Kinder hängen an der Eltern-Unit)
+    const hasParent = new Map<string, boolean>(); // unit.id -> hat Eltern?
+    for (const u of unitsById.values()) hasParent.set(u.id, false);
 
     people.forEach(p => {
-      if (p.partnerId) {
-        const partner = map.get(p.partnerId);
-        if (partner && partner.partnerId === p.id) {
-          // Prüfen, ob Ehe-Knoten schon existiert
-          if (!marriageNodes.find(m =>
-            (m.person?.id === p.id && m.partner?.id === partner.id) ||
-            (m.person?.id === partner.id && m.partner?.id === p.id))) {
-            marriageNodes.push({ type: 'marriage', person: p, partner: partner, children: [] });
-          }
-        }
-      }
+      if (!p.parentId) return;
+      const parentUnit = unitOfPerson(p.parentId);
+      const childUnit = unitOfPerson(p.id);
+      if (!parentUnit || !childUnit) return;
+      parentUnit.children.push(childUnit);
+      hasParent.set(childUnit.id, true);
     });
 
-    // Kinder an Ehe-Knoten hängen
-    people.forEach(child => {
-      if (child.parentId) {
-        const parent = map.get(child.parentId);
-        if (parent) {
-          const marriage = marriageNodes.find(m => m.person?.id === parent.id || m.partner?.id === parent.id);
-          if (marriage) {
-            marriage.children!.push({ type: 'person', person: child });
-            attachedChildren.add(child.id);
-          }
-        }
-      }
-    });
+    // (4) Wurzeln (alle Units ohne Eltern) -> als Wald unter Pseudo-Root
+    const roots: Unit[] = [];
+    for (const u of unitsById.values()) {
+      if (!hasParent.get(u.id)) roots.push(u);
+    }
+    const pseudoRoot: Unit = { id: 'root', persons: [], children: roots };
 
-    // Roots bestimmen
-    people.forEach(p => {
-      const isChild = attachedChildren.has(p.id);
-      const isPartner = marriageNodes.some(m => m.person?.id === p.id || m.partner?.id === p.id);
-      if (!p.parentId && !isChild) {
-        if (isPartner) {
-          const marriage = marriageNodes.find(m => m.person?.id === p.id || m.partner?.id === p.id);
-          if (marriage && !roots.includes(marriage)) roots.push(marriage);
-        } else {
-          roots.push({ type: 'person', person: p });
-        }
-      }
-    });
-
-    const progenitor = roots.find(r => r.type === 'person' && r.person?.code === '1') || roots[0];
-    if (!progenitor) return null;
-
-    return hierarchy(progenitor);
+    return hierarchy<TreeNode>(pseudoRoot);
   }, [people]);
 
-  const treeLayout = useMemo(() => {
-    if (!hierarchyData) return null;
-    return tree<TreeNode>().nodeSize([120, 300])(hierarchyData);
-  }, [hierarchyData]);
+  const layout = useMemo(() => {
+    if (!forest) return null;
+    const t = tree<TreeNode>()
+      .nodeSize([NODE_HEIGHT + 60, NODE_WIDTH + (NODE_WIDTH + PARTNER_GAP) + 120])
+      .separation((a, b) => {
+        const aw = a.data.persons.length === 2 ? 2 : 1;
+        const bw = b.data.persons.length === 2 ? 2 : 1;
+        return (aw + bw) / 2;
+      });
+    return t(forest);
+  }, [forest]);
 
   const [viewBox, setViewBox] = useState('0 0 1000 800');
 
   useLayoutEffect(() => {
-    if (!svgRef.current || !gRef.current) return;
-
+    if (!layout || !svgRef.current || !gRef.current) return;
     const svg = select(svgRef.current);
     const g = select(gRef.current);
 
-    const handleZoom = zoom<SVGSVGElement, unknown>().scaleExtent([0.3, 2]).on('zoom', (event) => {
-      g.attr('transform', event.transform);
-    });
+    // ViewBox an Inhalt anpassen
+    const { x, y, width, height } = (g.node() as SVGGElement).getBBox();
+    const pad = 120;
+    setViewBox(`${x - pad} ${y - pad} ${width + pad * 2} ${height + pad * 2}`);
 
-    svg.call(handleZoom as any);
+    const zoomBehavior = zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.3, 2.2])
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform);
+      });
 
-    const initialTransform = `translate(${500}, ${400}) scale(0.8)`;
-    g.attr('transform', initialTransform);
-    setViewBox('0 0 1000 800');
+    svg.call(zoomBehavior as any);
+    return () => { svg.on('.zoom', null); };
+  }, [layout]);
 
-    return () => {
-      svg.on('.zoom', null);
-    };
-  }, []);
-
-  if (!treeLayout) {
+  if (!layout) {
     return <div className="text-gray-600 italic p-4">Keine Daten vorhanden.</div>;
   }
 
-  const nodes = treeLayout.descendants();
-  const links = treeLayout.links();
+  // Pseudo-Root ausblenden
+  const nodes = layout.descendants().filter(n => n.data.id !== 'root');
+  const links = layout.links().filter(l => l.source.data.id !== 'root');
 
-  const linkPathGenerator = linkHorizontal<any, HierarchyPointNode<TreeNode>>()
+  const linkPath = linkHorizontal<any, HierarchyPointNode<TreeNode>>()
     .x(d => d.y)
     .y(d => d.x);
 
@@ -190,19 +214,21 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     <div className="bg-white p-2 rounded-lg shadow-lg animate-fade-in w-full h-[70vh]">
       <svg ref={svgRef} width="100%" height="100%" viewBox={viewBox}>
         <g ref={gRef}>
-          <g fill="none" stroke="#999" strokeOpacity="0.6" strokeWidth="1.5">
-            {links.map((link, i) => (
-              <path key={i} d={linkPathGenerator({ source: link.source, target: link.target }) || ''} />
+          {/* Eltern-Kind-Verbindungen zwischen Units */}
+          <g fill="none" stroke="#9AA6B2" strokeOpacity={0.8} strokeWidth={1.5}>
+            {links.map((l, i) => (
+              <path key={i} d={linkPath({ source: l.source, target: l.target }) || ''} />
             ))}
           </g>
 
-          {nodes.map((node, idx) => (
-            <Node key={idx} node={node} onEdit={onEdit} />
+          {/* Knoten */}
+          {nodes.map((n, i) => (
+            <UnitNode key={i} node={n as HierarchyPointNode<TreeNode>} onEdit={onEdit} />
           ))}
         </g>
       </svg>
       <div className="px-2 py-1 text-xs text-gray-700">
-        <span className="font-semibold">Stammeltern</span> · {getGenerationName(1)} – Partner werden nebeneinander angezeigt.
+        <span className="font-semibold">{getGenerationName(1)}</span> – Partner stehen nebeneinander; Kinder hängen an der Verbindungslinie.
       </div>
     </div>
   );
