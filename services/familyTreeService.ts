@@ -4,20 +4,25 @@ import type { Person, PersonFormData } from '../types';
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-/** Generation ohne 'x' ermitteln */
+/** 
+ * Ermittelt die Generation anhand des Codes. 
+ * Partner ("x") werden ignoriert. 
+ * Stammeltern = 1, Kinder = 2, usw. 
+ */
 export const getGeneration = (code: string): number => {
     if (!code) return 0;
     return code.replace(/x$/, '').length;
 };
 
+/** Farben für Generationen (rot, grün, blau, gelb, lila, orange, türkis) */
 export const generationBackgroundColors = [
-    '#ffcdd2', // rot
-    '#c8e6c9', // grün
-    '#bbdefb', // blau
-    '#fff9c4', // gelb
-    '#d1c4e9', // lila
-    '#ffecb3', // orange
-    '#b2dfdb', // türkis
+    '#ffcdd2',
+    '#c8e6c9',
+    '#bbdefb',
+    '#fff9c4',
+    '#d1c4e9',
+    '#ffecb3',
+    '#b2dfdb',
 ];
 
 /** Sprechende Bezeichnungen für Generationen */
@@ -33,15 +38,17 @@ export const getGenerationName = (generation: number): string => {
     }
 };
 
-/** Neuanlage-Code */
+/** Vergibt einen neuen Personen-Code */
 export const generatePersonCode = (personData: Partial<PersonFormData>, allPeople: Person[]): string => {
     if (personData.relationship === 'progenitor' || allPeople.length === 0) return '1';
 
+    // Partner bekommt denselben Code + "x"
     if (personData.relationship === 'partner' && personData.partnerId) {
         const partner = allPeople.find(p => p.id === personData.partnerId);
         return partner ? `${partner.code}x` : 'error-partner-not-found';
     }
 
+    // Kinder bekommen Code auf Basis des Elternteils
     if (personData.relationship === 'child' && personData.parentId) {
         const parent = allPeople.find(p => p.id === personData.parentId);
         if (!parent) return 'error-parent-not-found';
@@ -67,7 +74,7 @@ export const generatePersonCode = (personData: Partial<PersonFormData>, allPeopl
 
 const partnerCodeOf = (childCode: string) => `${childCode}x`;
 
-/** Recalculation inkl. Partner-Codes */
+/** Berechnet Codes für Kinder und ggf. deren Partner neu */
 export const getCodeRecalculation = (
     newPerson: Person,
     allPeople: Person[]
@@ -98,7 +105,7 @@ export const getCodeRecalculation = (
             newPerson.code = newChildCode;
         }
 
-        // Partner mitführen
+        // Partner anpassen
         const partner = allPeople.find(p => p.partnerId === child.id);
         if (partner) {
             const expectedPartnerCode = partnerCodeOf(newChildCode);
@@ -110,4 +117,3 @@ export const getCodeRecalculation = (
 
     return { updates };
 };
-
