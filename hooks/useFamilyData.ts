@@ -138,9 +138,12 @@ const reducer = (state: AppState, action: Action): AppState => {
         case 'RESET':
             return { ...state, people: [] };
         
-        case 'LOAD_SAMPLE_DATA':
-            // ✅ Immer aktuelle samplePeople laden
-            return { ...state, people: samplePeople };
+        case 'LOAD_SAMPLE_DATA': {
+            // ✅ LocalStorage zurücksetzen und neue Beispieldaten speichern
+            const newState = { ...defaultState, people: samplePeople };
+            saveStateToLocalStorage(newState);
+            return newState;
+        }
 
         default:
             return state;
