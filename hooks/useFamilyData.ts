@@ -1,3 +1,4 @@
+// src/hooks/useFamilyData.ts
 import { useReducer, useCallback } from 'react';
 import type { AppState, Action, History } from '../types';
 import { samplePeople } from '../services/sampleData';
@@ -132,15 +133,18 @@ const reducer = (state: AppState, action: Action): AppState => {
         }
 
         case 'SET_DATA':
+            saveStateToLocalStorage({ ...state, people: action.payload });
             return { ...state, people: action.payload };
 
         case 'RESET':
+            localStorage.removeItem('familyTreeState');
+            localStorage.removeItem('databaseHasBeenInitialized');
             return { ...state, people: [] };
         
         case 'LOAD_SAMPLE_DATA': {
-            const newState = { ...state, people: samplePeople };
-            saveStateToLocalStorage(newState); // ✅ Überschreibt LocalStorage mit neuen Beispieldaten
-            return newState;
+            const freshState = { ...state, people: samplePeople };
+            saveStateToLocalStorage(freshState);
+            return freshState;
         }
 
         default:
