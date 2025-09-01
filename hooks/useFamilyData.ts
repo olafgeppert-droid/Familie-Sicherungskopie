@@ -132,16 +132,22 @@ const reducer = (state: AppState, action: Action): AppState => {
             return { ...state, people: newPeople };
         }
 
-        case 'SET_DATA':
-            saveStateToLocalStorage({ ...state, people: action.payload });
-            return { ...state, people: action.payload };
+        case 'SET_DATA': {
+            const next = { ...state, people: action.payload };
+            saveStateToLocalStorage(next);
+            return next;
+        }
 
-        case 'RESET':
+        case 'RESET': {
+            // konsequent leeren
             localStorage.removeItem('familyTreeState');
             localStorage.removeItem('databaseHasBeenInitialized');
             return { ...state, people: [] };
+        }
         
         case 'LOAD_SAMPLE_DATA': {
+            // immer frische Beispieldaten + persistieren
+            localStorage.setItem('databaseHasBeenInitialized', 'true');
             const freshState = { ...state, people: samplePeople };
             saveStateToLocalStorage(freshState);
             return freshState;
