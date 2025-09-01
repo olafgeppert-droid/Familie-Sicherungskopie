@@ -1,5 +1,6 @@
+// src/hooks/useFamilyData.ts
 import { useReducer, useCallback } from 'react';
-import type { AppState, Action, History, Person } from '../types';
+import type { AppState, Action, History } from '../types';
 import { samplePeople } from '../services/sampleData';
 import { validateData } from '../services/validateData';
 
@@ -138,6 +139,7 @@ const reducer = (state: AppState, action: Action): AppState => {
             return { ...state, people: [] };
         
         case 'LOAD_SAMPLE_DATA':
+            // ✅ Immer aktuelle samplePeople laden
             return { ...state, people: samplePeople };
 
         default:
