@@ -1,6 +1,7 @@
 import { useReducer, useCallback } from 'react';
-import type { AppState, Action, History } from '../types';
+import type { AppState, Action, History, Person } from '../types';
 import { samplePeople } from '../services/sampleData';
+import { validateData } from '../services/validateData';
 
 const defaultState: AppState = { people: [] };
 
@@ -180,6 +181,9 @@ export const useFamilyData = () => {
 
     const { present, past, future } = state;
 
+    // Laufende Validierung
+    const validationErrors = validateData(present.people);
+
     const dispatchWithHistory = useCallback((action: Action) => {
         dispatch(action);
     }, []);
@@ -199,5 +203,6 @@ export const useFamilyData = () => {
         redo,
         canUndo: past.length > 0,
         canRedo: future.length > 0,
+        validationErrors,
     };
 };
