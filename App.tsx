@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Header } from './components/Header';
 import { TableView } from './components/TableView';
@@ -18,7 +17,8 @@ import { SettingsDialog } from './components/SettingsDialog';
 import { printView } from './services/printService';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { WappenInfo } from './components/WappenInfo';
-
+import { validateData } from './services/validateData';
+import { ValidationDialog } from './components/ValidationDialog';
 
 export interface AppColors {
   header: string;
@@ -30,7 +30,6 @@ const defaultColors: AppColors = {
   sidebar: '#cae2fc', // brand-sidebar
 };
 
-// FIX: The App component was restructured to correctly encapsulate all hooks, state, and handlers. This resolves numerous scope-related errors.
 const App: React.FC = () => {
     const { state, dispatch, undo, redo, canUndo, canRedo } = useFamilyData();
     const { people } = state;
@@ -47,6 +46,7 @@ const App: React.FC = () => {
     const [isResetDialogOpen, setResetDialogOpen] = useState(false);
     const [isFindPersonDialogOpen, setFindPersonDialogOpen] = useState(false);
     const [isLoadSampleDataDialogOpen, setLoadSampleDataDialogOpen] = useState(false);
+    const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
     const [colors, setColors] = useState<AppColors>(() => {
         try {
@@ -65,6 +65,15 @@ const App: React.FC = () => {
             console.warn('Could not save colors to local storage', e);
         }
     }, [colors]);
+
+    const runValidation = (updatedPeople: Person[]) => {
+        const errors = validateData(updatedPeople);
+        if (errors.length > 0) {
+            setValidationErrors(errors);
+            return false;
+        }
+        return true;
+    };
 
     const handleAddPerson = () => {
         setEditingPerson(null);
@@ -94,22 +103,23 @@ const App: React.FC = () => {
 
     const handleDeleteRequest = (person: Person) => {
         setPersonToDelete(person);
-        setPersonDialogOpen(false); // Close edit dialog when delete is initiated
+        setPersonDialogOpen(false);
     };
 
     const confirmDeletePerson = () => {
         if (personToDelete) {
-            dispatch({ type: 'DELETE_PERSON', payload: personToDelete.id });
+            const updatedPeople = people.filter(p => p.id !== personToDelete.id);
+            if (runValidation(updatedPeople)) {
+                dispatch({ type: 'DELETE_PERSON', payload: personToDelete.id });
+            }
             setPersonToDelete(null);
         }
     };
 
     const handleSavePerson = (personData: PersonFormData) => {
+        let updatedPeople: Person[] = [];
         if (personData.id) {
-            // Editing existing person
             const basePerson = { ...editingPerson!, ...personData };
-
-            // Determine the new ringCode based on inheritance
             let newRingCode = basePerson.code;
             if (personData.inheritedFrom && personData.inheritedFrom !== basePerson.inheritedFrom) {
                 const inheritedFromPerson = people.find(p => p.code === personData.inheritedFrom);
@@ -117,59 +127,58 @@ const App: React.FC = () => {
                     newRingCode = `${inheritedFromPerson.ringCode} → ${basePerson.code}`;
                 }
             } else if (!personData.inheritedFrom) {
-                // If inheritance is removed, revert to own code
                 newRingCode = basePerson.code;
             } else {
-                 newRingCode = basePerson.ringCode; // Keep existing if inheritedFrom hasn't changed
+                newRingCode = basePerson.ringCode;
             }
-            
-            const updatedPerson: Person = {
-                ...basePerson,
-                ringCode: newRingCode,
-            };
-            dispatch({ type: 'UPDATE_PERSON', payload: updatedPerson });
-
+            const updatedPerson: Person = { ...basePerson, ringCode: newRingCode };
+            updatedPeople = people.map(p => (p.id === updatedPerson.id ? updatedPerson : p));
+            if (runValidation(updatedPeople)) {
+                dispatch({ type: 'UPDATE_PERSON', payload: updatedPerson });
+                setPersonDialogOpen(false);
+            }
         } else {
-             // Adding new person
             const tempId = `temp-${Date.now()}`;
             const newPersonBase: Person = {
                 ...personData,
                 id: tempId,
-                code: '', // will be generated
-                ringCode: '', // will be generated
+                code: '',
+                ringCode: '',
                 ringHistory: [],
             };
-
             const newCode = generatePersonCode(newPersonBase, people);
             newPersonBase.code = newCode;
-            newPersonBase.ringCode = newCode; // Default ring code is the person code
-            
+            newPersonBase.ringCode = newCode;
             if (personData.inheritedFrom) {
                 const inheritedFromPerson = people.find(p => p.code === personData.inheritedFrom);
-                 if (inheritedFromPerson) {
+                if (inheritedFromPerson) {
                     newPersonBase.ringCode = `${inheritedFromPerson.ringCode} → ${newPersonBase.code}`;
                 }
             }
-            
             const { updates } = getCodeRecalculation(newPersonBase, people);
-            
+            updatedPeople = [...people, newPersonBase];
             if (updates.length > 0) {
-                 dispatch({ 
-                    type: 'ADD_PERSON_WITH_RECALCULATION', 
-                    payload: { newPerson: newPersonBase, updates }
-                });
+                updatedPeople = [...updatedPeople, ...updates.map(u => u.updatedPerson)];
+                if (runValidation(updatedPeople)) {
+                    dispatch({ type: 'ADD_PERSON_WITH_RECALCULATION', payload: { newPerson: newPersonBase, updates } });
+                    setPersonDialogOpen(false);
+                }
             } else {
-                dispatch({ type: 'ADD_PERSON', payload: newPersonBase });
+                if (runValidation(updatedPeople)) {
+                    dispatch({ type: 'ADD_PERSON', payload: newPersonBase });
+                    setPersonDialogOpen(false);
+                }
             }
         }
-        setPersonDialogOpen(false);
     };
 
     const handleImport = async (file: File) => {
         try {
             const importedPeople = await importData(file);
-            dispatch({ type: 'SET_DATA', payload: importedPeople });
-            alert('Daten erfolgreich importiert!');
+            if (runValidation(importedPeople)) {
+                dispatch({ type: 'SET_DATA', payload: importedPeople });
+                alert('Daten erfolgreich importiert!');
+            }
         } catch (error) {
             console.error(error);
             alert(`Fehler beim Import: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
@@ -200,9 +209,10 @@ const App: React.FC = () => {
 
     const confirmLoadSampleData = () => {
         dispatch({ type: 'LOAD_SAMPLE_DATA' });
+        const updatedPeople = state.people;
+        runValidation(updatedPeople);
         setLoadSampleDataDialogOpen(false);
     };
-
 
     const filteredPeople = useMemo(() => {
         if (!searchTerm) return people;
@@ -329,6 +339,12 @@ const App: React.FC = () => {
                 isOpen={isFindPersonDialogOpen}
                 onClose={() => setFindPersonDialogOpen(false)}
                 onFind={handleFindAndOpenForEditing}
+            />
+
+            <ValidationDialog
+                isOpen={validationErrors.length > 0}
+                errors={validationErrors}
+                onClose={() => setValidationErrors([])}
             />
         </div>
     );
