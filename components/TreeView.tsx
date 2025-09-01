@@ -19,19 +19,16 @@ const NODE_WIDTH = 210;
 const NODE_HEIGHT = 78;
 const PARTNER_GAP = 16;
 
-// Halbbreite eines Unit-Knotens (Single vs. Paar)
 const halfWidth = (u: Unit | TreeNode) =>
   (u.persons.length === 2) ? (NODE_WIDTH + PARTNER_GAP / 2) : (NODE_WIDTH / 2);
 
-// Bestimme die Generation einer Unit ausschließlich aus Personen-Codes.
-// Für Paare wird die Person ohne "x" priorisiert, sonst erster Code ohne "x"-Suffix.
+// Generation nur aus Code ableiten
 const unitGeneration = (u: Unit): number => {
   if (!u.persons.length) return 0;
   const base = u.persons.find(p => !p.code.endsWith('x')) ?? u.persons[0];
   return getGeneration(base.code);
 };
 
-// Median-Helfer für Spalten-x
 const median = (arr: number[]) => {
   if (arr.length === 0) return 0;
   const a = [...arr].sort((x, y) => x - y);
@@ -40,7 +37,7 @@ const median = (arr: number[]) => {
 };
 
 const Card: React.FC<{ p: Person; onClick: (p: Person) => void; offsetX?: number }> = ({ p, onClick, offsetX = 0 }) => {
-  const g = getGeneration(p.code); // nutzt Code (ohne x) → Generation
+  const g = getGeneration(p.code);
   const c = g > 0 ? generationBackgroundColors[(g - 1) % generationBackgroundColors.length] : '#FFFFFF';
   const partnerStyle = p.code.endsWith('x');
 
@@ -112,7 +109,6 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
 
-  // ---------- Daten → Units (Paare/Single) ----------
   const forest = useMemo(() => {
     if (!people || people.length === 0) return null;
 
@@ -125,7 +121,6 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       return `u-${id1}-${id2}`;
     };
 
-    // Paare (nur beidseitig verlinkt)
     people.forEach(p => {
       if (!p.partnerId) return;
       const partner = byId.get(p.partnerId);
@@ -140,14 +135,12 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       paired.add(partner.id);
     });
 
-    // Singles
     people.forEach(p => {
       if (paired.has(p.id)) return;
       const uid = `u-${p.id}`;
       if (!unitsById.has(uid)) unitsById.set(uid, { id: uid, persons: [p], children: [] });
     });
 
-    // Helper: finde Unit, zu der Person gehört
     const unitOfPerson = (pid: string): Unit | undefined => {
       const direct = unitsById.get(`u-${pid}`);
       if (direct) return direct;
@@ -157,11 +150,9 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       return undefined;
     };
 
-    // Kanten Single/Pair-Unit ↔ Kinder-Unit
     const hasParent = new Map<string, boolean>();
     for (const u of unitsById.values()) hasParent.set(u.id, false);
 
-    // Duplikate in children vermeiden
     const pushChild = (parent: Unit, child: Unit) => {
       if (parent === child) return;
       if (!parent.children.some(c => c.id === child.id)) parent.children.push(child);
@@ -176,7 +167,6 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       hasParent.set(childUnit.id, true);
     });
 
-    // Wurzeln identifizieren (Units ohne Eltern)
     const roots: Unit[] = [];
     for (const u of unitsById.values()) {
       if (!hasParent.get(u.id)) roots.push(u);
@@ -186,12 +176,11 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     return hierarchy<TreeNode>(pseudoRoot);
   }, [people]);
 
-  // ---------- Layout ----------
   const layout = useMemo(() => {
     if (!forest) return null;
 
-    const vertical = NODE_HEIGHT + 90;                   // vertikaler Abstand
-    const horizontal = NODE_WIDTH + PARTNER_GAP + 180;   // horizontaler Abstand
+    const vertical = NODE_HEIGHT + 90;
+    const horizontal = NODE_WIDTH + PARTNER_GAP + 180;
 
     const t = tree<TreeNode>()
       .nodeSize([vertical, horizontal])
@@ -205,13 +194,11 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     return t(forest);
   }, [forest]);
 
-  // ---------- ViewBox & Zoom ----------
   const [viewBox, setViewBox] = useState('0 0 1200 800');
 
   useLayoutEffect(() => {
     if (!layout || !svgRef.current || !gRef.current) return;
 
-    // Bounds AUS KOORDINATEN berechnen (unabhängig von foreignObject/BBox)
     const all = layout.descendants().filter(n => n.data.id !== 'root');
     if (all.length === 0) return;
 
@@ -229,25 +216,23 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
       if (right > maxY) maxY = right;
     });
 
-    // Platz für Header oberhalb
     const headerSpace = 100;
     const pad = 160;
 
     setViewBox(`${minY - pad} ${minX - pad - headerSpace} ${(maxY - minY) + 2 * pad} ${(maxX - minX) + 2 * pad + headerSpace}`);
 
-    // Zoom initialisieren/neu binden – deutlich größere Range
     const svg = select(svgRef.current);
     const g = select(gRef.current);
 
     const zoomBehavior = zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 12]) // << viel stärkeres Reinzoomen erlaubt
+      .scaleExtent([0.05, 20]) // erweitert
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
       });
 
-    svg.on('.zoom', null);            // alte Listener entfernen
+    svg.on('.zoom', null);
     svg.call(zoomBehavior as any);
-    svg.call(zoomBehavior.transform as any, zoomIdentity); // definierte Start-Transform
+    svg.call(zoomBehavior.transform as any, zoomIdentity);
 
     return () => { svg.on('.zoom', null); };
   }, [layout]);
@@ -263,22 +248,19 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     .x(d => d.y)
     .y(d => d.x);
 
-  // ---------- Spalten-Header vorbereiten (rein auf Basis der Codes) ----------
   const genToYs = new Map<number, number[]>();
   nodes.forEach(n => {
-    const gen = unitGeneration(n.data); // aus Codes, nicht aus D3-Tiefe
+    const gen = unitGeneration(n.data);
     if (gen <= 0) return;
     const arr = genToYs.get(gen) ?? [];
     arr.push(n.y);
     genToYs.set(gen, arr);
   });
 
-  // Für jede Generation die Spalten-x (median) bestimmen
   const headers = Array.from(genToYs.entries())
     .map(([gen, ys]) => ({ gen, x: median(ys) }))
     .sort((a, b) => a.x - b.x);
 
-  // Für Hintergrund-Rect & Header-Positionen die sichtbaren Bounds erneut bestimmen
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   nodes.forEach(n => {
     const hw = halfWidth(n.data);
@@ -291,15 +273,13 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
     if (left < minY) minY = left;
     if (right > maxY) maxY = right;
   });
-  const headerY = minX - 70; // Text oberhalb der obersten Knoten
-  const bgPad = 400;         // großes Pan-/Zoom-Fangrechteck
+  const headerY = minX - 70;
+  const bgPad = 400;
 
   return (
     <div className="bg-white p-2 rounded-lg shadow-lg animate-fade-in w-full h-[70vh]">
       <svg ref={svgRef} width="100%" height="100%" viewBox={viewBox}>
-        {/* Die Gruppe gRef wird gezoomt/verschoben */}
         <g ref={gRef}>
-          {/* Unsichtbares Hintergrund-Rect zum Pannen/Zoomen */}
           <rect
             x={minY - bgPad}
             y={minX - bgPad - 160}
@@ -309,7 +289,6 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
             pointerEvents="all"
           />
 
-          {/* Dezente vertikale Spaltenhilfslinien */}
           {headers.map((h, i) => (
             <line
               key={`vline-${i}`}
@@ -325,14 +304,12 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
             />
           ))}
 
-          {/* Verbindungslinien Eltern → Kind */}
           <g fill="none" stroke="#9AA6B2" strokeOpacity={0.85} strokeWidth={1.5}>
             {links.map((l, i) => (
               <path key={i} d={linkPath({ source: l.source, target: l.target }) || ''} />
             ))}
           </g>
 
-          {/* Spalten-Header (aus Codes abgeleitet) */}
           {headers.map((h, i) => (
             <g key={`hdr-${i}`} transform={`translate(${h.x},${headerY})`} pointerEvents="none">
               <text
@@ -348,7 +325,6 @@ export const TreeView: React.FC<{ people: Person[]; onEdit: (p: Person) => void;
             </g>
           ))}
 
-          {/* Knoten (Singles/Paare) */}
           {nodes.map((n, i) => (
             <UnitNode key={i} node={n as HierarchyPointNode<TreeNode>} onEdit={onEdit} />
           ))}
