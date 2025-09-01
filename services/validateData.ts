@@ -61,24 +61,24 @@ export function validateData(people: Person[]): ValidationError[] {
 
     // 3. Generation prüfen
     const gen = getGeneration(p.code);
-    if (p.generation !== gen) {
+    if ((p as any).generation !== gen) {
       errors.push({
         personId: p.id,
-        message: `Generation von ${p.name} ist ${p.generation}, sollte aber ${gen} sein.`,
+        message: `Generation von ${p.name} ist ${(p as any).generation}, sollte aber ${gen} sein.`,
         severity: 'error',
-        fix: () => { p.generation = gen; }
+        fix: () => { (p as any).generation = gen; }
       });
     }
 
-    // 4. Ringprüfung (optional, falls Ring-Logik vorhanden)
-    if (p.ringId) {
-      const duplicates = people.filter(pp => pp.ringId === p.ringId);
-      if (duplicates.length > 1 && !p.isRingHolder) {
+    // 4. Ringprüfung
+    if (p.ringCode) {
+      const duplicates = people.filter(pp => pp.ringCode === p.ringCode);
+      if (duplicates.length > 1) {
         errors.push({
           personId: p.id,
-          message: `Ring ${p.ringId} mehrfach vergeben (z.B. bei ${duplicates[0].name}).`,
+          message: `Ringgravur ${p.ringCode} mehrfach vergeben (z.B. bei ${duplicates[0].name}).`,
           severity: 'error',
-          fix: () => { p.ringId = undefined; }
+          fix: () => { p.ringCode = null; }
         });
       }
     }
