@@ -1,3 +1,4 @@
+// src/components/SettingsDialog.tsx
 import React from 'react';
 import type { AppColors } from '../App';
 import { CloseIcon, ResetIcon, BeakerIcon } from './Icons';
@@ -17,6 +18,11 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose,
     const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         onColorsChange({ ...colors, [name]: value });
+    };
+
+    const handleFullReset = () => {
+        localStorage.clear();
+        window.location.reload();
     };
 
     return (
@@ -80,12 +86,18 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose,
                                 <BeakerIcon className="w-5 h-5 mr-2" />
                                 30+ Beispieldaten laden
                             </button>
-                             <button
+                            <button
                                 onClick={onReset}
                                 className="w-full flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                             >
                                 <ResetIcon className="w-5 h-5 mr-2" />
                                 Alle Personendaten zurücksetzen
+                            </button>
+                            <button
+                                onClick={handleFullReset}
+                                className="w-full flex items-center justify-center px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-800 transition-colors"
+                            >
+                                💣 Speicher komplett löschen
                             </button>
                         </div>
                     </div>
