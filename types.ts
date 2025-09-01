@@ -2,7 +2,7 @@ export type Gender = 'm' | 'f' | 'd';
 
 export interface Person {
     id: string;
-    code: string;
+    code: string; // Personen-Code (z.B. "1A2")
     name: string;
     gender: Gender;
     birthDate: string; // ISO string format 'YYYY-MM-DD'
@@ -10,10 +10,12 @@ export interface Person {
     birthPlace?: string | null;
     parentId?: string | null; // ID of the non-partner parent for children
     partnerId?: string | null; // ID of the partner
-    ringCode: string;
-    inheritedFrom?: string | null;
+
     hasRing: boolean;
-    ringHistory: string[]; // e.g., ["1B", "1B -> 1B2"]
+    ringCode?: string | null;      // Gravur im Ring, z.B. "1 -> 1C2"
+    ringHistory?: string[];        // Verlauf der Gravuränderungen
+
+    inheritedFrom?: string | null; // ID der Person, von der der Ring stammt
     comment?: string | null;
     photoUrl?: string | null;
 }
@@ -22,9 +24,7 @@ export type PersonFormData = Omit<Person, 'code' | 'ringCode' | 'ringHistory'> &
     relationship: 'progenitor' | 'child' | 'partner';
 };
 
-
 export type View = 'table' | 'tree' | 'stats';
-
 
 // State management types
 export interface AppState {
