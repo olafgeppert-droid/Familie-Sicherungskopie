@@ -565,4 +565,3 @@ export const samplePeople: Person[] = [
 ];
 
 export const samplePeople: Person[] = sampleData;
-export default samplePeople;
