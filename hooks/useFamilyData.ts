@@ -139,12 +139,6 @@ const reducer = (state: AppState, action: Action): AppState => {
       return clearedState;
     }
 
-    case 'RESET_APP': {
-      localStorage.removeItem('familyTreeState');
-      localStorage.removeItem('databaseHasBeenInitialized');
-      return { ...defaultState };
-    }
-
     case 'LOAD_SAMPLE_DATA': {
       localStorage.setItem('databaseHasBeenInitialized', 'true');
       const freshState = { ...defaultState, people: sampleData };
