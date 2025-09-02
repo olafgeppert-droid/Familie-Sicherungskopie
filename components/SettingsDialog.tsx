@@ -2,6 +2,7 @@
 import React from 'react';
 import type { AppColors } from '../App';
 import { CloseIcon, ResetIcon, BeakerIcon } from './Icons';
+import { useFamilyData } from '../hooks/useFamilyData';
 
 interface SettingsDialogProps {
     isOpen: boolean;
@@ -20,6 +21,8 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
     colors,
     onColorsChange,
 }) => {
+    const { dispatch } = useFamilyData();
+
     if (!isOpen) return null;
 
     const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,8 +31,8 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
     };
 
     const handleFullReset = () => {
-        localStorage.clear();
-        window.location.reload();
+        dispatch({ type: 'RESET_APP' }); // App komplett zurücksetzen
+        onClose();
     };
 
     const handlePersonDataReset = () => {
