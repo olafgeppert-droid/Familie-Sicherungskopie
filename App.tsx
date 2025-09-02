@@ -217,7 +217,7 @@ const App: React.FC = () => {
   const handlePrint = () => {
     const printDateElement = document.querySelector('#printable-area .print-header p');
     if (printDateElement) {
-      printDateElement.textContent = `Stand: ${new Date().toLocaleString('de-DE')}`;
+      printDateElement.textContent = `Stand: ${new Date().toLocaleString('de-DE')} | Version ${version}`;
     }
     printView('printable-area');
   };
@@ -272,7 +272,7 @@ const App: React.FC = () => {
       <WelcomeScreen
         onShowDatabase={() => setAppState('database')}
         onShowInfo={() => setAppState('info')}
-        version={version}
+        version={version} // 🔽 Version im Welcome-Screen anzeigen
       />
     );
   }
@@ -283,7 +283,7 @@ const App: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
-      <Header version={version} color={colors.header} />
+      <Header version={version} color={colors.header} /> {/* 🔽 Version im Header anzeigen */}
 
       <div className="flex-grow flex overflow-hidden">
         <Sidebar
@@ -385,3 +385,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+ult App;
