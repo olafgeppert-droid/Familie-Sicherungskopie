@@ -1,7 +1,7 @@
 // src/hooks/useFamilyData.ts
 import { useReducer, useCallback } from 'react';
 import type { AppState, Action, History } from '../types';
-import { samplePeople } from '../services/sampleData';
+import sampleData from '../services/sampleData';
 import { validateData } from '../services/validateData';
 
 const defaultState: AppState = { people: [] };
@@ -22,7 +22,7 @@ const loadStateFromLocalStorage = (): AppState => {
     if (serializedState === null) {
       if (hasBeenInitialized) return defaultState;
       localStorage.setItem('databaseHasBeenInitialized', 'true');
-      const initialStateWithSample = { ...defaultState, people: samplePeople };
+      const initialStateWithSample = { ...defaultState, people: sampleData };
       saveStateToLocalStorage(initialStateWithSample);
       return initialStateWithSample;
     }
@@ -31,7 +31,7 @@ const loadStateFromLocalStorage = (): AppState => {
     if (!parsedState.people) {
       if (hasBeenInitialized) return defaultState;
       localStorage.setItem('databaseHasBeenInitialized', 'true');
-      const initialStateWithSample = { ...defaultState, people: samplePeople };
+      const initialStateWithSample = { ...defaultState, people: sampleData };
       saveStateToLocalStorage(initialStateWithSample);
       return initialStateWithSample;
     }
@@ -44,7 +44,7 @@ const loadStateFromLocalStorage = (): AppState => {
     console.warn('Could not load state from local storage');
     if (!localStorage.getItem('databaseHasBeenInitialized')) {
       localStorage.setItem('databaseHasBeenInitialized', 'true');
-      const initialStateWithSample = { ...defaultState, people: samplePeople };
+      const initialStateWithSample = { ...defaultState, people: sampleData };
       saveStateToLocalStorage(initialStateWithSample);
       return initialStateWithSample;
     }
@@ -141,7 +141,7 @@ const reducer = (state: AppState, action: Action): AppState => {
 
     case 'LOAD_SAMPLE_DATA': {
       localStorage.setItem('databaseHasBeenInitialized', 'true');
-      const freshState = { ...defaultState, people: samplePeople };
+      const freshState = { ...defaultState, people: sampleData };
       saveStateToLocalStorage(freshState);
       return freshState;
     }
