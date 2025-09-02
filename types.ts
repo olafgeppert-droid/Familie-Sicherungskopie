@@ -37,7 +37,7 @@ export type Action =
     | { type: 'UPDATE_PERSON'; payload: Person }
     | { type: 'DELETE_PERSON'; payload: string }
     | { type: 'SET_DATA'; payload: Person[] }
-    | { type: 'RESET' }
+    | { type: 'RESET_PERSON_DATA' }   // ✅ korrigiert: RESET → RESET_PERSON_DATA
     | { type: 'LOAD_SAMPLE_DATA' };
 
 export interface History {
