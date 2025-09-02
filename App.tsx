@@ -21,7 +21,7 @@ import { validateData } from './services/validateData';
 import { ValidationDialog } from './components/ValidationDialog';
 
 // 🔽 Version aus package.json importieren
-import packageJson from '../package.json';
+import packageJson from './package.json';
 
 export interface AppColors {
   header: string;
