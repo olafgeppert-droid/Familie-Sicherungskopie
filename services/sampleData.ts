@@ -563,4 +563,3 @@ export const samplePeople: Person[] = [
     comment: 'Enkel mit Ring, letzte Generation.',
   },
 ];
-export const samplePeople: Person[] = sampleData;
