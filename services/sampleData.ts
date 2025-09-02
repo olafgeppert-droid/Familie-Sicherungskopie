@@ -505,4 +505,9 @@ export const sampleData: Person[] = [
     inheritedFrom: null,
     comment: 'Kind von Lina; baut Legomodelle.',
   },
+  const sampleData: Person[] = [
+  // ... deine 50 Personen-Objekte ...
+];
+
+export default sampleData;
 ];
