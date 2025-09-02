@@ -1,3 +1,5 @@
+// src/components/TableView.tsx
+
 import React, { useState, useMemo } from 'react';
 import type { Person } from '../types';
 import { getGeneration, getGenerationName, generationBackgroundColors } from '../services/familyTreeService';
@@ -170,12 +172,12 @@ export const TableView: React.FC<TableViewProps> = ({ people, onEdit, searchTerm
                                         {highlightText(person.name, searchTerm)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.birthDate ? new Date(person.birthDate).toLocaleDateString('de-DE') : ''}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.birthPlace || ''}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" title={person.birthPlace || ''}>{person.birthPlace || ''}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.deathDate ? new Date(person.deathDate).toLocaleDateString('de-DE') : ''}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono" title={parent?.name}>{parent?.code || ''}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono" title={partner?.name}>{partner?.code || ''}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{person.inheritedFrom || ''}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate" title={person.comment || ''}>{person.comment || ''}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" title={person.comment || ''}>{person.comment || ''}</td>
                                 </tr>
                                 </React.Fragment>
                             );
