@@ -23,7 +23,33 @@ export function validateFamilyData(people: Person[]) {
         const pX = p.ringCode.endsWith("x");
         const qX = partner.ringCode.endsWith("x");
         if (!(pX ^ qX)) {
-          warnings.push(`⚠️ Partnercodes inkonsistent bei ${p.name} (${p.ringCode}) und ${partner.name} (${partner.ringCode})`);
+          warnings.push(
+            `⚠️ Partnercodes inkonsistent bei ${p.name} (${p.ringCode}) und ${partner.name} (${partner.ringCode})`
+          );
+        }
+      }
+    }
+  });
+
+  // Code-Syntax-Validierung
+  people.forEach(p => {
+    if (!/^[0-9]+[A-Z0-9]*$/.test(p.code)) {
+      warnings.push(`❌ Ungültiger Code bei ${p.name} (${p.id}): "${p.code}"`);
+    }
+  });
+
+  // Eltern/Kind-Konsistenz
+  people.forEach(child => {
+    if (child.parentId) {
+      const parent = people.find(p => p.id === child.parentId);
+      if (!parent) {
+        warnings.push(`❌ Person ${child.name} (${child.id}) verweist auf ungültigen parentId=${child.parentId}`);
+      } else {
+        // einfache Plausibilitätsprüfung: Kind-Code muss mit Parent-Code beginnen
+        if (child.code && parent.code && !child.code.startsWith(parent.code)) {
+          warnings.push(
+            `⚠️ Kind ${child.name} (${child.code}) ist nicht konsistent mit Elternteil ${parent.name} (${parent.code})`
+          );
         }
       }
     }
