@@ -502,8 +502,8 @@ export const samplePeople: Person[] = [
   {
     id: 'p031',
     name: 'Emilia Geppert',
-    code: '1C21a',
-    ringCode: '1C21a',
+    code: '1C211',
+    ringCode: '1C211',
     parentId: 'p027',
     partnerId: null,
     gender: 'w',
@@ -518,8 +518,8 @@ export const samplePeople: Person[] = [
   {
     id: 'p032',
     name: 'Finn Geppert',
-    code: '1D21a',
-    ringCode: '1D21a',
+    code: '1D211',
+    ringCode: '1D211',
     parentId: 'p029',
     partnerId: null,
     gender: 'm',
@@ -534,7 +534,7 @@ export const samplePeople: Person[] = [
   {
     id: 'p033',
     name: 'Ella Geppert',
-    code: '1D31a',
+    code: '1D311',
     ringCode: null,
     parentId: 'p030',
     partnerId: null,
@@ -550,8 +550,8 @@ export const samplePeople: Person[] = [
   {
     id: 'p034',
     name: 'Noah Geppert',
-    code: '1B11a',
-    ringCode: '1B11a',
+    code: '1B111',
+    ringCode: '1B111',
     parentId: 'p025',
     partnerId: null,
     gender: 'm',
@@ -566,8 +566,8 @@ export const samplePeople: Person[] = [
   {
     id: 'p035',
     name: 'Clara Geppert',
-    code: '1C11a',
-    ringCode: '1C11a',
+    code: '1C111',
+    ringCode: '1C111',
     parentId: 'p026',
     partnerId: null,
     gender: 'w',
