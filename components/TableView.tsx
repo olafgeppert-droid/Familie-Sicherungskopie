@@ -17,14 +17,14 @@ type SortConfig =
   | { key: keyof Person; direction: 'ascending' | 'descending' }
   | null;
 
-const getGenderIcon = (gender: 'm' | 'f' | 'd') => {
+const getGenderIcon = (gender: 'm' | 'w' | 'd') => {
   switch (gender) {
     case 'm':
       return '♂';
-    case 'f':
+    case 'w':
       return '♀';
     case 'd':
-      return '⚥';
+      return '⚧';
     default:
       return '';
   }
@@ -199,6 +199,9 @@ export const TableView: React.FC<TableViewProps> = ({
               const partner = person.partnerId
                 ? peopleMap.get(person.partnerId)
                 : null;
+              const inheritedFrom = person.inheritedFrom
+                ? peopleMap.get(person.inheritedFrom)
+                : null;
               const generation = getGeneration(person.code);
 
               const rowStyle =
@@ -328,8 +331,11 @@ export const TableView: React.FC<TableViewProps> = ({
                     </td>
 
                     {/* Geerbt von */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                      {person.inheritedFrom || ''}
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono"
+                      title={inheritedFrom?.name}
+                    >
+                      {inheritedFrom?.code || ''}
                     </td>
 
                     {/* Kommentar */}
