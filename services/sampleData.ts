@@ -578,3 +578,5 @@ export const samplePeople: Person[] = [
     comment: 'Jüngste im Stammbaum (Generation 5).',
   },
 ];
+
+export default samplePeople;
