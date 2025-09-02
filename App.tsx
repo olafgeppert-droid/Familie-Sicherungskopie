@@ -20,6 +20,9 @@ import { WappenInfo } from './components/WappenInfo';
 import { validateData } from './services/validateData';
 import { ValidationDialog } from './components/ValidationDialog';
 
+// 🔽 Version aus package.json importieren
+import packageJson from '../package.json';
+
 export interface AppColors {
   header: string;
   sidebar: string;
@@ -33,7 +36,7 @@ const defaultColors: AppColors = {
 const App: React.FC = () => {
   const { state, dispatch, undo, redo, canUndo, canRedo } = useFamilyData();
   const { people } = state;
-  const version = '2.01';
+  const version = packageJson.version; // 🔽 Version aus package.json verwenden
 
   const [appState, setAppState] = useState<'welcome' | 'info' | 'database'>('welcome');
   const [currentView, setCurrentView] = useState<View>('table');
@@ -225,17 +228,17 @@ const App: React.FC = () => {
   };
 
   const confirmLoadSampleData = () => {
-  dispatch({ type: 'LOAD_SAMPLE_DATA' });
-  setLoadSampleDataDialogOpen(false);
+    dispatch({ type: 'LOAD_SAMPLE_DATA' });
+    setLoadSampleDataDialogOpen(false);
 
-  // 🔽 wichtig: Filter zurücksetzen, damit du die neuen Daten siehst
-  setSearchTerm('');
+    // 🔽 wichtig: Filter zurücksetzen, damit du die neuen Daten siehst
+    setSearchTerm('');
 
-  const errors = validateData(state.people);
-  if (errors.length > 0) {
-    setValidationErrors(errors);
-  }
-};
+    const errors = validateData(state.people);
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+    }
+  };
 
   const filteredPeople = useMemo(() => {
     if (!searchTerm) return people;
