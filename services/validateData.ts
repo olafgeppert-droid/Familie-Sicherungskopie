@@ -72,14 +72,30 @@ export function validateData(people: Person[]): ValidationError[] {
 
     // 4. Ringprüfung
     if (p.ringCode) {
-      const duplicates = people.filter(pp => pp.ringCode === p.ringCode);
-      if (duplicates.length > 1) {
+      // Muss auf eigenen Code enden
+      if (!p.ringCode.endsWith(p.code)) {
         errors.push({
           personId: p.id,
-          message: `Ringgravur ${p.ringCode} mehrfach vergeben (z.B. bei ${duplicates[0].name}).`,
+          message: `Ringcode ${p.ringCode} endet nicht mit eigenem Code ${p.code}.`,
           severity: 'error',
           fix: () => { p.ringCode = null; }
         });
+      }
+
+      // Falls Elternteil verstorben: Ring muss vom Eltern-Ring stammen
+      if (p.parentId) {
+        const parent = people.find(pp => pp.id === p.parentId);
+        if (parent?.ringCode) {
+          const expectedPrefix = `${parent.ringCode}→`;
+          if (!p.ringCode.startsWith(expectedPrefix)) {
+            errors.push({
+              personId: p.id,
+              message: `Ringcode ${p.ringCode} von ${p.name} passt nicht zum Erblasser (${parent.name}, ${parent.ringCode}).`,
+              severity: 'error',
+              fix: () => { p.ringCode = `${parent.ringCode}→${p.code}`; }
+            });
+          }
+        }
       }
     }
   });
@@ -104,3 +120,4 @@ export function autoFixData(people: Person[]): boolean {
 
   return fixed;
 }
+
