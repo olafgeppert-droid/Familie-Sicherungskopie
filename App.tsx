@@ -210,15 +210,13 @@ const App: React.FC = () => {
     exportData(people, format);
   };
 
+  // ⬇️ Fix: Personendaten wirklich leeren + zur TreeView wechseln
   const confirmReset = () => {
-    dispatch({ type: 'RESET' });
+    dispatch({ type: 'RESET_PERSON_DATA' }); // vorher: RESET (gab’s nicht mehr)
     setResetDialogOpen(false);
-
-    const errors = validateData(state.people);
-    if (errors.length > 0) {
-      setValidationErrors(errors);
-    }
-
+    setSearchTerm('');
+    setCurrentView('tree');       // gewünschter Wechsel zur Stammbaum-Ansicht
+    setAppState('database');      // falls man aus Welcome/Info kommt
     forceUpdate();
   };
 
@@ -348,7 +346,7 @@ const App: React.FC = () => {
         onClose={() => setSettingsDialogOpen(false)}
         onReset={() => {
           setSettingsDialogOpen(false);
-          setResetDialogOpen(true);
+          setResetDialogOpen(true); // Bestätigungsdialog – danach confirmReset()
         }}
         onLoadSampleData={handleLoadSampleDataRequest}
         colors={colors}
@@ -367,7 +365,7 @@ const App: React.FC = () => {
         isOpen={isResetDialogOpen}
         onClose={() => setResetDialogOpen(false)}
         onConfirm={confirmReset}
-        title="Alle Daten löschen"
+        title="Alle Personendaten löschen"
         message="Sollen wirklich alle Personen gelöscht werden?"
         confirmButtonClass="bg-red-600 hover:bg-red-700"
       />
