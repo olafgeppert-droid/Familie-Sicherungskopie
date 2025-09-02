@@ -490,6 +490,7 @@ export const sampleData: Person[] = [
     comment: 'Kind von Mika; liebt Malen.',
   },
   {
+      {
     id: 'p030',
     name: 'Oli Geppert',
     code: '1D1111',
@@ -504,10 +505,7 @@ export const sampleData: Person[] = [
     photoUrl: null,
     inheritedFrom: null,
     comment: 'Kind von Lina; baut Legomodelle.',
-  },
-  const sampleData: Person[] = [
-  // ... deine 50 Personen-Objekte ...
+  }
 ];
 
 export default sampleData;
-];
