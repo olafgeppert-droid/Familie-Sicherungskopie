@@ -37,7 +37,7 @@ const defaultColors: AppColors = {
 const App: React.FC = () => {
   const { state, dispatch, undo, redo, canUndo, canRedo } = useFamilyData();
   const { people } = state;
-  const version = packageJson.version; // 🔽 Version aus package.json verwenden
+  const version = packageJson.version;
 
   const [appState, setAppState] = useState<'welcome' | 'info' | 'database'>('welcome');
   const [currentView, setCurrentView] = useState<View>('table');
@@ -114,6 +114,9 @@ const App: React.FC = () => {
       if (errors.length > 0) {
         setValidationErrors(errors);
       }
+
+      // 🔄 Seite neu laden
+      window.location.reload();
     }
   };
 
@@ -135,11 +138,6 @@ const App: React.FC = () => {
 
       const updatedPerson: Person = { ...basePerson, ringCode: newRingCode };
       dispatch({ type: 'UPDATE_PERSON', payload: updatedPerson });
-
-      const errors = validateData(state.people);
-      if (errors.length > 0) {
-        setValidationErrors(errors);
-      }
     } else {
       const tempId = `temp-${Date.now()}`;
       const newPersonBase: Person = {
@@ -171,13 +169,17 @@ const App: React.FC = () => {
       } else {
         dispatch({ type: 'ADD_PERSON', payload: newPersonBase });
       }
-
-      const errors = validateData(state.people);
-      if (errors.length > 0) {
-        setValidationErrors(errors);
-      }
     }
+
+    const errors = validateData(state.people);
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+    }
+
     setPersonDialogOpen(false);
+
+    // 🔄 Seite neu laden
+    window.location.reload();
   };
 
   const handleImport = async (file: File) => {
@@ -214,7 +216,7 @@ const App: React.FC = () => {
       setValidationErrors(errors);
     }
 
-    // 🔄 Seite neu laden, Passwort bleibt erhalten (wenn in localStorage)
+    // 🔄 Seite neu laden
     window.location.reload();
   };
 
@@ -234,8 +236,6 @@ const App: React.FC = () => {
   const confirmLoadSampleData = () => {
     dispatch({ type: 'LOAD_SAMPLE_DATA' });
     setLoadSampleDataDialogOpen(false);
-
-    // 🔽 wichtig: Filter zurücksetzen, damit die neuen Daten sichtbar sind
     setSearchTerm('');
 
     const errors = validateData(state.people);
@@ -243,7 +243,7 @@ const App: React.FC = () => {
       setValidationErrors(errors);
     }
 
-    // 🔄 Seite neu laden, Passwort bleibt erhalten (wenn in localStorage)
+    // 🔄 Seite neu laden
     window.location.reload();
   };
 
@@ -279,7 +279,7 @@ const App: React.FC = () => {
       <WelcomeScreen
         onShowDatabase={() => setAppState('database')}
         onShowInfo={() => setAppState('info')}
-        version={version} // 🔽 Version im Welcome-Screen anzeigen
+        version={version}
       />
     );
   }
@@ -290,7 +290,7 @@ const App: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
-      <Header version={version} color={colors.header} /> {/* 🔽 Version im Header anzeigen */}
+      <Header version={version} color={colors.header} />
 
       <div className="flex-grow flex overflow-hidden">
         <Sidebar
