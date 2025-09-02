@@ -58,7 +58,7 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                 setFormData({
                     id: person.id,
                     name: person.name,
-                    gender: person.gender,
+                    gender: person.gender === 'f' ? 'w' : person.gender, // 🔥 f → w
                     birthDate: person.birthDate,
                     deathDate: person.deathDate,
                     birthPlace: person.birthPlace,
@@ -241,7 +241,7 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                                 <label htmlFor="gender" className="block text-base font-medium text-gray-700">Geschlecht</label>
                                 <SelectField id="gender" name="gender" value={formData.gender} onChange={handleChange}>
                                     <option value="m">Männlich</option>
-                                    <option value="f">Weiblich</option>
+                                    <option value="w">Weiblich</option>
                                     <option value="d">Divers</option>
                                 </SelectField>
                             </div>
