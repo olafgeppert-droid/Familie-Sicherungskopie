@@ -108,8 +108,8 @@ export const TableView: React.FC<TableViewProps> = ({ people, onEdit, searchTerm
     return (
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg animate-fade-in">
             <h2 className="text-2xl font-bold mb-4 text-brand-primary">Personenübersicht</h2>
-            <div className="overflow-auto max-h-[65vh]">
-                <table className="min-w-full divide-y divide-gray-200 min-w-[1800px]">
+            <div className="overflow-x-auto overflow-y-auto max-h-[65vh]">
+                <table className="min-w-max divide-y divide-gray-200">
                     <thead className="bg-gray-50 sticky top-0 z-10">
                         <tr>
                             {headers.map((header, index) => {
@@ -167,8 +167,8 @@ export const TableView: React.FC<TableViewProps> = ({ people, onEdit, searchTerm
                                         </span>
                                         {highlightText(person.ringCode, searchTerm)}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                                        <strong className="mr-2">{getGenderIcon(person.gender)}</strong>
+                                    <td className="px-6 py-4 text-sm font-semibold text-gray-900 flex items-center">
+                                        <span className="mr-2">{getGenderIcon(person.gender)}</span>
                                         {highlightText(person.name, searchTerm)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{person.birthDate ? new Date(person.birthDate).toLocaleDateString('de-DE') : ''}</td>
@@ -177,7 +177,9 @@ export const TableView: React.FC<TableViewProps> = ({ people, onEdit, searchTerm
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono" title={parent?.name}>{parent?.code || ''}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono" title={partner?.name}>{partner?.code || ''}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{person.inheritedFrom || ''}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" title={person.comment || ''}>{person.comment || ''}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-500 whitespace-pre-wrap break-words max-w-xs" title={person.comment || ''}>
+                                        {person.comment || ''}
+                                    </td>
                                 </tr>
                                 </React.Fragment>
                             );
