@@ -24,7 +24,7 @@ const getGenderIcon = (gender: 'm' | 'w' | 'd') => {
     case 'w':
       return '♀';
     case 'd':
-      return '⚧';
+      return '⚥';
     default:
       return '';
   }
