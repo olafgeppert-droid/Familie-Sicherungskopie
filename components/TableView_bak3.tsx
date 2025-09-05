@@ -17,26 +17,17 @@ type SortConfig =
   | { key: keyof Person; direction: 'ascending' | 'descending' }
   | null;
 
-const getGenderIcon = (gender: 'm' | 'f' | 'd') => {
+const getGenderIcon = (gender: 'm' | 'w' | 'd') => {
   switch (gender) {
     case 'm':
       return '♂';
-    case 'f':
+    case 'w':
       return '♀';
     case 'd':
       return '⚥';
     default:
       return '';
   }
-};
-
-// Hilfsfunktion: Textbreite messen
-const measureTextWidth = (text: string, font = '14px Arial') => {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return 0;
-  ctx.font = font;
-  return ctx.measureText(text).width;
 };
 
 export const TableView: React.FC<TableViewProps> = ({
@@ -160,58 +151,6 @@ export const TableView: React.FC<TableViewProps> = ({
     'comment',
   ];
 
-  // Dynamische Breite ermitteln
-  const columnWidth = useMemo(() => {
-    let max = 0;
-
-    // Alle Werte prüfen
-    sortedPeople.forEach((p) => {
-      headers.forEach((header, idx) => {
-        let val = '';
-        switch (keyMap[idx]) {
-          case 'code':
-            val = p.code || '';
-            break;
-          case 'ringCode':
-            val = p.ringCode || '';
-            break;
-          case 'name':
-            val = p.name || '';
-            break;
-          case 'birthDate':
-            val = p.birthDate
-              ? new Date(p.birthDate).toLocaleDateString('de-DE')
-              : '';
-            break;
-          case 'birthPlace':
-            val = p.birthPlace || '';
-            break;
-          case 'deathDate':
-            val = p.deathDate
-              ? new Date(p.deathDate).toLocaleDateString('de-DE')
-              : '';
-            break;
-          case 'inheritedFrom':
-            val = p.inheritedFrom || '';
-            break;
-          case 'comment':
-            val = p.comment || '';
-            break;
-          default:
-            break;
-        }
-        max = Math.max(max, measureTextWidth(val));
-      });
-    });
-
-    // Auch Headertexte messen
-    headers.forEach((h) => {
-      max = Math.max(max, measureTextWidth(h));
-    });
-
-    return max + 40; // Padding
-  }, [sortedPeople, headers]);
-
   let lastGeneration = -1;
 
   return (
@@ -222,7 +161,7 @@ export const TableView: React.FC<TableViewProps> = ({
 
       {/* Scrollbare Box */}
       <div className="overflow-x-auto overflow-y-auto max-h-[65vh]">
-        <table className="min-w-full divide-y divide-gray-200" style={{ tableLayout: 'fixed' }}>
+        <table className="min-w-full divide-y divide-gray-200 min-w-[1800px]">
           <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
               {headers.map((header, index) => {
@@ -231,7 +170,6 @@ export const TableView: React.FC<TableViewProps> = ({
                   <th
                     key={header}
                     scope="col"
-                    style={{ width: columnWidth }}
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap bg-gray-50"
                   >
                     {sortKey ? (
@@ -261,9 +199,8 @@ export const TableView: React.FC<TableViewProps> = ({
               const partner = person.partnerId
                 ? peopleMap.get(person.partnerId)
                 : null;
-              // Fix: inheritedFrom ist ein Code → auflösen in Person
               const inheritedFrom = person.inheritedFrom
-                ? people.find(p => p.code === person.inheritedFrom)
+                ? peopleMap.get(person.inheritedFrom)
                 : null;
               const generation = getGeneration(person.code);
 
@@ -303,7 +240,7 @@ export const TableView: React.FC<TableViewProps> = ({
                     style={rowStyle}
                   >
                     {/* Foto */}
-                    <td style={{ width: columnWidth }} className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                         {person.photoUrl ? (
                           <img
@@ -318,20 +255,22 @@ export const TableView: React.FC<TableViewProps> = ({
                     </td>
 
                     {/* Generation */}
-                    <td style={{ width: columnWidth }} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {generation > 0 ? generation : ''}
                     </td>
 
                     {/* Personen-Code */}
-                    <td style={{ width: columnWidth }} className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
                       {highlightText(person.code, searchTerm)}
                     </td>
 
                     {/* Ring-Code */}
-                    <td style={{ width: columnWidth }} className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700 flex items-center">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700 flex items-center">
                       <span
                         className="inline-block w-6 text-center"
-                        title={person.hasRing ? 'Ringbesitzer' : undefined}
+                        title={
+                          person.hasRing ? 'Ringbesitzer' : undefined
+                        }
                       >
                         {person.hasRing ? (
                           <span style={{ textShadow: '0 0 3px gold' }}>
@@ -345,7 +284,7 @@ export const TableView: React.FC<TableViewProps> = ({
                     </td>
 
                     {/* Name + Gender */}
-                    <td style={{ width: columnWidth }} className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                       <strong className="mr-2">
                         {getGenderIcon(person.gender)}
                       </strong>
@@ -353,41 +292,57 @@ export const TableView: React.FC<TableViewProps> = ({
                     </td>
 
                     {/* Geburtsdatum */}
-                    <td style={{ width: columnWidth }} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {person.birthDate
-                        ? new Date(person.birthDate).toLocaleDateString('de-DE')
+                        ? new Date(person.birthDate).toLocaleDateString(
+                            'de-DE'
+                          )
                         : ''}
                     </td>
 
                     {/* Geburtsort */}
-                    <td style={{ width: columnWidth }} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {person.birthPlace || ''}
                     </td>
 
                     {/* Todesdatum */}
-                    <td style={{ width: columnWidth }} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {person.deathDate
-                        ? new Date(person.deathDate).toLocaleDateString('de-DE')
+                        ? new Date(person.deathDate).toLocaleDateString(
+                            'de-DE'
+                          )
                         : ''}
                     </td>
 
                     {/* Eltern-Code */}
-                    <td style={{ width: columnWidth }} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono" title={parent?.name}>
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono"
+                      title={parent?.name}
+                    >
                       {parent?.code || ''}
                     </td>
 
                     {/* Partner-Code */}
-                    <td style={{ width: columnWidth }} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono" title={partner?.name}>
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono"
+                      title={partner?.name}
+                    >
                       {partner?.code || ''}
                     </td>
 
                     {/* Geerbt von */}
-                    <td style={{ width: columnWidth }} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono" title={inheritedFrom?.name}>
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono"
+                      title={inheritedFrom?.name}
+                    >
                       {inheritedFrom?.code || ''}
                     </td>
 
                     {/* Kommentar */}
-                    <td style={{ width: columnWidth }} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 truncate" title={person.comment || ''}>
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate"
+                      title={person.comment || ''}
+                    >
                       {person.comment || ''}
                     </td>
                   </tr>
@@ -400,4 +355,3 @@ export const TableView: React.FC<TableViewProps> = ({
     </div>
   );
 };
-

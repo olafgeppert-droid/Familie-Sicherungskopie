@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { Person, PersonFormData, Gender } from '../types';
+import type { Person, PersonFormData } from '../types';
 import { CloseIcon, DeleteIcon, UserIcon } from './Icons';
 
 interface PersonDialogProps {
@@ -19,7 +19,6 @@ const SelectField: React.FC<React.SelectHTMLAttributes<HTMLSelectElement>> = (pr
      <select {...props} className={`mt-1 block w-full rounded-md border-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 text-base bg-gray-200 h-11 ${props.className}`} />
 );
 
-// Capitalizes the first letter of a string and after a space, hyphen, or slash.
 const formatProperNoun = (str: string | null | undefined): string | null => {
     if (!str) return null;
     return str.toLowerCase().replace(/(^|\s|\/|-)\w/g, c => c.toUpperCase());
@@ -29,7 +28,7 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
     const getInitialFormData = (): PersonFormData => ({
         id: '',
         name: '',
-        gender: 'm', // Default to male
+        gender: 'm', // default männlich
         birthDate: '',
         deathDate: null,
         birthPlace: null,
@@ -45,8 +44,19 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
     const [formData, setFormData] = useState<PersonFormData>(getInitialFormData());
     const [errors, setErrors] = useState<Record<string, string>>({});
     
-    const potentialParents = useMemo(() => people.filter(p => !p.code.endsWith('x')), [people]);
-    const potentialPartners = useMemo(() => people.filter(p => !p.partnerId && p.id !== person?.id), [people, person]);
+    const potentialParents = useMemo(
+        () => people.filter(p => !p.code.endsWith('x')),
+        [people]
+    );
+
+    const potentialPartners = useMemo(() => {
+        return people.filter(p => {
+            if (p.id === person?.id) return false;             // sich selbst nicht
+            if (p.code.endsWith('x')) return false;            // keine Partner-Datensätze
+            const isCurrentSelection = formData.partnerId ? p.id === formData.partnerId : false;
+            return !p.partnerId || isCurrentSelection;         // nur freie Partner oder aktueller
+        });
+    }, [people, person?.id, formData.partnerId]);
 
     useEffect(() => {
         if (isOpen) {
@@ -54,30 +64,37 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                 let relationship: PersonFormData['relationship'] = 'child';
                 if (person.code === '1') relationship = 'progenitor';
                 else if (person.code.endsWith('x')) relationship = 'partner';
-                
+
+                // Partner-Fallback über Code ableiten
+                let derivedPartnerId: string | null = person.partnerId ?? null;
+                if (!derivedPartnerId && person.code.endsWith('x')) {
+                    const baseCode = person.code.slice(0, -1);
+                    const partnerOf = people.find(p => p.code === baseCode);
+                    if (partnerOf) derivedPartnerId = partnerOf.id;
+                }
+
                 setFormData({
                     id: person.id,
                     name: person.name,
-                    gender: person.gender === 'f' ? 'w' : person.gender, // 🔥 f → w
+                    gender: person.gender || 'm',
                     birthDate: person.birthDate,
                     deathDate: person.deathDate,
                     birthPlace: person.birthPlace,
                     parentId: person.parentId,
-                    partnerId: person.partnerId,
-                    relationship: relationship,
+                    partnerId: derivedPartnerId,
+                    relationship,
                     inheritedFrom: person.inheritedFrom,
                     hasRing: person.hasRing,
                     comment: person.comment,
                     photoUrl: person.photoUrl,
                 });
             } else {
-                // Reset for new person
                 setFormData(getInitialFormData());
             }
             setErrors({});
         }
     }, [person, isOpen, people]);
-    
+
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
         if (!formData.name.trim()) newErrors.name = "Name ist erforderlich.";
@@ -91,6 +108,15 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
         if (formData.relationship === 'partner' && !formData.partnerId) {
             newErrors.partnerId = "Ein Partner muss ausgewählt werden.";
         }
+
+        // Zusatz: Partner darf nicht schon vergeben sein
+        if (formData.relationship === 'partner' && formData.partnerId) {
+            const selected = people.find(p => p.id === formData.partnerId);
+            if (selected && selected.partnerId && selected.partnerId !== formData.id) {
+                newErrors.partnerId = `${selected.name} ist bereits vergeben.`;
+            }
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -102,7 +128,8 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                 ...formData,
                 name: formatProperNoun(formData.name) || '',
                 birthPlace: formatProperNoun(formData.birthPlace),
-             };
+                gender: formData.gender || 'm',
+            };
             if (dataToSave.relationship !== 'child') dataToSave.parentId = null;
             if (dataToSave.relationship !== 'partner') dataToSave.partnerId = null;
             onSave(dataToSave);
@@ -140,6 +167,17 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
         setFormData(prev => ({ ...prev, photoUrl: null }));
     };
 
+    const handleDelete = () => {
+        if (person) {
+            const safePerson: Person = {
+                ...person,
+                parentId: null,
+                partnerId: null,
+            };
+            onDelete(safePerson);
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -156,7 +194,6 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                     <div className="p-6 max-h-[70vh] overflow-y-auto">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
 
-                            {/* Relationship Type */}
                             {!person && people.length > 0 && (
                                 <div className="md:col-span-2">
                                     <label className="block text-base font-medium text-gray-700">Beziehungstyp</label>
@@ -167,7 +204,6 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                                 </div>
                             )}
 
-                            {/* Parent / Partner Selectors */}
                             {formData.relationship === 'child' && people.length > 0 && (
                                 <div className="md:col-span-2">
                                     <label htmlFor="parentId" className="block text-base font-medium text-gray-700">Elternteil (aus der Stammlinie)</label>
@@ -177,6 +213,7 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                                     {errors.parentId && <p className="text-xs text-red-600 mt-1">{errors.parentId}</p>}
                                 </div>
                             )}
+
                             {formData.relationship === 'partner' && (
                                 <div className="md:col-span-2">
                                     <label htmlFor="partnerId" className="block text-base font-medium text-gray-700">Partner(in) von</label>
@@ -188,14 +225,12 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                                 </div>
                             )}
 
-                            {/* Name */}
                             <div className="md:col-span-2">
                                 <label htmlFor="name" className="block text-base font-medium text-gray-700">Vollständiger Name</label>
                                 <InputField type="text" id="name" name="name" value={formData.name} onChange={handleChange} placeholder="z.B. Max Mustermann" className={errors.name ? 'border-red-500' : ''} />
                                 {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name}</p>}
                             </div>
 
-                            {/* Photo Upload */}
                             <div className="md:col-span-2">
                                 <label className="block text-base font-medium text-gray-700">Foto</label>
                                 <div className="mt-2 flex items-center space-x-4">
@@ -220,7 +255,6 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                                 </div>
                             </div>
 
-                            {/* Birth Date & Place */}
                             <div>
                                 <label htmlFor="birthDate" className="block text-base font-medium text-gray-700">Geburtsdatum</label>
                                 <InputField type="date" id="birthDate" name="birthDate" value={formData.birthDate || ''} onChange={handleChange} className={errors.birthDate ? 'border-red-500' : ''} />
@@ -231,7 +265,6 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                                 <InputField type="text" id="birthPlace" name="birthPlace" value={formData.birthPlace || ''} onChange={handleChange} placeholder="z.B. Berlin" />
                             </div>
 
-                             {/* Death Date & Gender */}
                              <div>
                                 <label htmlFor="deathDate" className="block text-base font-medium text-gray-700">Todesdatum (optional)</label>
                                 <InputField type="date" id="deathDate" name="deathDate" value={formData.deathDate || ''} onChange={handleChange} className={errors.deathDate ? 'border-red-500' : ''} />
@@ -241,12 +274,11 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                                 <label htmlFor="gender" className="block text-base font-medium text-gray-700">Geschlecht</label>
                                 <SelectField id="gender" name="gender" value={formData.gender} onChange={handleChange}>
                                     <option value="m">Männlich</option>
-                                    <option value="w">Weiblich</option>
+                                    <option value="f">Weiblich</option>
                                     <option value="d">Divers</option>
                                 </SelectField>
                             </div>
                            
-                            {/* Inherited From & Has Ring */}
                             <div>
                                 <label htmlFor="inheritedFrom" className="block text-base font-medium text-gray-700">Ring geerbt von (Code)</label>
                                 <InputField type="text" id="inheritedFrom" name="inheritedFrom" value={formData.inheritedFrom || ''} onChange={handleChange} placeholder="Personen-Code, z.B. 1A" />
@@ -263,7 +295,6 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                                 <label htmlFor="hasRing" className="text-base font-medium text-gray-700">Wappenringbesitzer?</label>
                              </div>
 
-                            {/* Comment */}
                             <div className="md:col-span-2">
                                 <label htmlFor="comment" className="block text-base font-medium text-gray-700">Kommentar</label>
                                 <textarea id="comment" name="comment" value={formData.comment || ''} onChange={handleChange} rows={4} placeholder="Besondere Anmerkungen oder Lebenslauf..." className="mt-1 block w-full rounded-md border-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 text-base bg-gray-200" />
@@ -277,7 +308,7 @@ export const PersonDialog: React.FC<PersonDialogProps> = ({ isOpen, onClose, onS
                             {person && (
                                 <button
                                     type="button"
-                                    onClick={() => onDelete(person)}
+                                    onClick={handleDelete}
                                     className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                                 >
                                     <DeleteIcon className="w-5 h-5 mr-2" />

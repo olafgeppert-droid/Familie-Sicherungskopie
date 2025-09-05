@@ -261,10 +261,10 @@ export const TableView: React.FC<TableViewProps> = ({
               const partner = person.partnerId
                 ? peopleMap.get(person.partnerId)
                 : null;
-              // Fix: inheritedFrom ist ein Code → auflösen in Person
               const inheritedFrom = person.inheritedFrom
                 ? people.find(p => p.code === person.inheritedFrom)
                 : null;
+
               const generation = getGeneration(person.code);
 
               const rowStyle =
@@ -400,4 +400,3 @@ export const TableView: React.FC<TableViewProps> = ({
     </div>
   );
 };
-
