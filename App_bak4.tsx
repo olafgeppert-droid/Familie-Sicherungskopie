@@ -21,9 +21,6 @@ import { WappenInfo } from './components/WappenInfo';
 import { validateData } from './services/validateData';
 import { ValidationDialog } from './components/ValidationDialog';
 
-// ⬇️ WICHTIG: korrekte Typen für Validierungsfehler
-import type { ValidationError } from './services/validateData';
-
 // 🔽 Version aus package.json importieren
 import packageJson from './package.json';
 
@@ -53,9 +50,7 @@ const App: React.FC = () => {
   const [isResetDialogOpen, setResetDialogOpen] = useState(false);
   const [isFindPersonDialogOpen, setFindPersonDialogOpen] = useState(false);
   const [isLoadSampleDataDialogOpen, setLoadSampleDataDialogOpen] = useState(false);
-
-  // ⬇️ WICHTIG: richtige Struktur (ValidationError[])
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const [colors, setColors] = useState<AppColors>(() => {
     try {
@@ -124,18 +119,14 @@ const App: React.FC = () => {
         setValidationErrors(errors);
       }
 
-      setCurrentView('table');
-      setAppState('database');
+      setCurrentView('table'); // 🔽 Rücksprung in Tabelle
       forceUpdate();
     }
   };
 
   const handleSavePerson = (personData: PersonFormData) => {
-    // ⬇️ Absicherung: Gender immer gültig (m/w/d), Default 'm'
-    const safeGender = personData.gender === 'm' || personData.gender === 'w' || personData.gender === 'd' ? personData.gender : 'm';
-
     if (personData.id) {
-      const basePerson = { ...editingPerson!, ...personData, gender: safeGender };
+      const basePerson = { ...editingPerson!, ...personData };
 
       let newRingCode = basePerson.code;
       if (personData.inheritedFrom && personData.inheritedFrom !== basePerson.inheritedFrom) {
@@ -159,7 +150,6 @@ const App: React.FC = () => {
         code: '',
         ringCode: '',
         ringHistory: [],
-        gender: safeGender, // ⬅️ sicherstellen
       };
 
       const newCode = generatePersonCode(newPersonBase, people);
@@ -191,8 +181,7 @@ const App: React.FC = () => {
     }
 
     setPersonDialogOpen(false);
-    setCurrentView('table');   // 🔽 Rücksprung in die Tabelle
-    setAppState('database');
+    setCurrentView('table'); // 🔽 Rücksprung in Tabelle
     forceUpdate();
   };
 
@@ -208,8 +197,7 @@ const App: React.FC = () => {
         alert('Daten erfolgreich importiert!');
       }
 
-      setCurrentView('table');   // 🔽 Rücksprung in die Tabelle
-      setAppState('database');
+      setCurrentView('table'); // 🔽 Rücksprung in Tabelle
       forceUpdate();
     } catch (error) {
       console.error(error);
@@ -225,12 +213,12 @@ const App: React.FC = () => {
     exportData(people, format);
   };
 
-  // ⬇️ Fix: Personendaten wirklich leeren + zur TableView wechseln
+  // ⬇️ Fix: Personendaten wirklich leeren + zur TreeView wechseln
   const confirmReset = () => {
     dispatch({ type: 'RESET_PERSON_DATA' }); // vorher: RESET (gab’s nicht mehr)
     setResetDialogOpen(false);
     setSearchTerm('');
-    setCurrentView('table');       // gewünschter Wechsel zur Tabellen-Ansicht
+    setCurrentView('tree');       // gewünschter Wechsel zur Stammbaum-Ansicht
     setAppState('database');      // falls man aus Welcome/Info kommt
     forceUpdate();
   };
@@ -254,14 +242,13 @@ const App: React.FC = () => {
 
     // 🔽 Filter zurücksetzen
     setSearchTerm('');
-    setCurrentView('table');   // 🔽 Rücksprung in die Tabelle
-    setAppState('database');
 
     const errors = validateData(state.people);
     if (errors.length > 0) {
       setValidationErrors(errors);
     }
 
+    setCurrentView('table'); // 🔽 Rücksprung in Tabelle
     forceUpdate();
   };
 
