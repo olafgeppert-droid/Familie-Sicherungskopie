@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    base: '/Familie/',
+    base: '/Familie-Sicherungskopie/',
     define: {
       // GEMINI_API_KEY aus .env oder Secrets
       'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY),
