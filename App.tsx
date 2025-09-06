@@ -21,10 +21,7 @@ import { WappenInfo } from './components/WappenInfo';
 import { validateData } from './services/validateData';
 import { ValidationDialog } from './components/ValidationDialog';
 
-// ⬇️ WICHTIG: korrekte Typen für Validierungsfehler
 import type { ValidationError } from './services/validateData';
-
-// 🔽 Version aus package.json importieren
 import packageJson from './package.json';
 
 export interface AppColors {
@@ -33,14 +30,13 @@ export interface AppColors {
 }
 
 const defaultColors: AppColors = {
-  header: '#1665d8', // brand-header
-  sidebar: '#cae2fc', // brand-sidebar
+  header: '#1665d8',
+  sidebar: '#cae2fc',
 };
 
 const App: React.FC = () => {
   const { state, dispatch, undo, redo, canUndo, canRedo } = useFamilyData();
-  const { people } = state;
-  const version = packageJson.version; // 🔽 Version aus package.json verwenden
+  const version = packageJson.version;
 
   const [appState, setAppState] = useState<'welcome' | 'info' | 'database'>('welcome');
   const [currentView, setCurrentView] = useState<View>('table');
@@ -53,8 +49,6 @@ const App: React.FC = () => {
   const [isResetDialogOpen, setResetDialogOpen] = useState(false);
   const [isFindPersonDialogOpen, setFindPersonDialogOpen] = useState(false);
   const [isLoadSampleDataDialogOpen, setLoadSampleDataDialogOpen] = useState(false);
-
-  // ⬇️ WICHTIG: richtige Struktur (ValidationError[])
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
   const [colors, setColors] = useState<AppColors>(() => {
@@ -67,10 +61,6 @@ const App: React.FC = () => {
     }
   });
 
-  // 🔄 forceUpdate Hook für sanfte Aktualisierung
-  const [, setTick] = useState(0);
-  const forceUpdate = () => setTick((t) => t + 1);
-
   useEffect(() => {
     try {
       localStorage.setItem('appColors', JSON.stringify(colors));
@@ -78,6 +68,35 @@ const App: React.FC = () => {
       console.warn('Could not save colors to local storage', e);
     }
   }, [colors]);
+
+  // Validation after data changes - ONLY when in database mode
+  useEffect(() => {
+    if (appState === 'database') {
+      try {
+        const errors = validateData(state.people);
+        setValidationErrors(errors);
+      } catch (error) {
+        console.error('Validation error:', error);
+        setValidationErrors([{
+          personId: 'validation-error',
+          message: 'Fehler bei der Datenvalidierung',
+          severity: 'error'
+        }]);
+      }
+    } else {
+      setValidationErrors([]);
+    }
+  }, [state.people, appState]);
+
+  // ✅ Debug-Funktion zum Zurücksetzen
+  const resetApp = () => {
+    if (confirm('Wirklich alle Daten zurücksetzen und Willkommens-Bildschirm anzeigen?')) {
+      localStorage.removeItem('familyTreeState');
+      localStorage.removeItem('databaseHasBeenInitialized');
+      localStorage.removeItem('appColors');
+      window.location.reload();
+    }
+  };
 
   const handleAddPerson = () => {
     setEditingPerson(null);
@@ -95,7 +114,7 @@ const App: React.FC = () => {
       return;
     }
     const lowerCaseTerm = term.toLowerCase();
-    const foundPerson = people.find(
+    const foundPerson = state.people.find(
       (p) =>
         p.name.toLowerCase().includes(lowerCaseTerm) ||
         p.code.toLowerCase().includes(lowerCaseTerm)
@@ -118,28 +137,21 @@ const App: React.FC = () => {
     if (personToDelete) {
       dispatch({ type: 'DELETE_PERSON', payload: personToDelete.id });
       setPersonToDelete(null);
-
-      const errors = validateData(state.people);
-      if (errors.length > 0) {
-        setValidationErrors(errors);
-      }
-
       setCurrentView('table');
-      setAppState('database');
-      forceUpdate();
     }
   };
 
   const handleSavePerson = (personData: PersonFormData) => {
-    // ⬇️ Absicherung: Gender immer gültig (m/w/d), Default 'm'
-    const safeGender = personData.gender === 'm' || personData.gender === 'w' || personData.gender === 'd' ? personData.gender : 'm';
+    // Geschlecht direkt übernehmen
+    const gender = personData.gender;
 
     if (personData.id) {
-      const basePerson = { ...editingPerson!, ...personData, gender: safeGender };
+      // Bearbeiten einer bestehenden Person
+      const basePerson = { ...editingPerson!, ...personData, gender };
 
       let newRingCode = basePerson.code;
       if (personData.inheritedFrom && personData.inheritedFrom !== basePerson.inheritedFrom) {
-        const inheritedFromPerson = people.find((p) => p.code === personData.inheritedFrom);
+        const inheritedFromPerson = state.people.find((p) => p.code === personData.inheritedFrom);
         if (inheritedFromPerson) {
           newRingCode = `${inheritedFromPerson.ringCode} → ${basePerson.code}`;
         }
@@ -152,87 +164,71 @@ const App: React.FC = () => {
       const updatedPerson: Person = { ...basePerson, ringCode: newRingCode };
       dispatch({ type: 'UPDATE_PERSON', payload: updatedPerson });
     } else {
-      const tempId = `temp-${Date.now()}`;
-      const newPersonBase: Person = {
+      // ✅ KORRIGIERT: Keine temporäre ID verwenden
+      const newPersonBase: Omit<Person, 'id'> = {
         ...personData,
-        id: tempId,
         code: '',
         ringCode: '',
         ringHistory: [],
-        gender: safeGender, // ⬅️ sicherstellen
+        gender,
       };
 
-      const newCode = generatePersonCode(newPersonBase, people);
-      newPersonBase.code = newCode;
-      newPersonBase.ringCode = newCode;
+      const newCode = generatePersonCode(newPersonBase, state.people);
+      
+      // ✅ RICHTIG: ID wird vom Reducer/State verwaltet
+      const newPerson: Person = {
+        ...newPersonBase,
+        id: '', // Leere ID - wird im Reducer gesetzt
+        code: newCode,
+        ringCode: newCode,
+      };
 
       if (personData.inheritedFrom) {
-        const inheritedFromPerson = people.find((p) => p.code === personData.inheritedFrom);
+        const inheritedFromPerson = state.people.find((p) => p.code === personData.inheritedFrom);
         if (inheritedFromPerson) {
-          newPersonBase.ringCode = `${inheritedFromPerson.ringCode} → ${newPersonBase.code}`;
+          newPerson.ringCode = `${inheritedFromPerson.ringCode} → ${newPerson.code}`;
         }
       }
 
-      const { updates } = getCodeRecalculation(newPersonBase, people);
+      const { updates } = getCodeRecalculation(newPerson, state.people);
 
       if (updates.length > 0) {
         dispatch({
           type: 'ADD_PERSON_WITH_RECALCULATION',
-          payload: { newPerson: newPersonBase, updates },
+          payload: { newPerson, updates },
         });
       } else {
-        dispatch({ type: 'ADD_PERSON', payload: newPersonBase });
+        dispatch({ type: 'ADD_PERSON', payload: newPerson });
       }
     }
 
-    const errors = validateData(state.people);
-    if (errors.length > 0) {
-      setValidationErrors(errors);
-    }
-
     setPersonDialogOpen(false);
-    setCurrentView('table');   // 🔽 Rücksprung in die Tabelle
-    setAppState('database');
-    forceUpdate();
+    setCurrentView('table');
   };
 
   const handleImport = async (file: File) => {
     try {
       const importedPeople = await importData(file);
       dispatch({ type: 'SET_DATA', payload: importedPeople });
-
-      const errors = validateData(importedPeople);
-      if (errors.length > 0) {
-        setValidationErrors(errors);
-      } else {
-        alert('Daten erfolgreich importiert!');
-      }
-
-      setCurrentView('table');   // 🔽 Rücksprung in die Tabelle
-      setAppState('database');
-      forceUpdate();
+      setCurrentView('table');
+      setAppState('database'); // ✅ Explizit in Datenbank-Modus wechseln
+      alert('Daten erfolgreich importiert!');
     } catch (error) {
       console.error(error);
-      alert(
-        `Fehler beim Import: ${
-          error instanceof Error ? error.message : 'Unbekannter Fehler'
-        }`
-      );
+      alert(`Fehler beim Import: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     }
   };
 
   const handleExport = (format: 'json' | 'csv') => {
-    exportData(people, format);
+    exportData(state.people, format);
   };
 
-  // ⬇️ Fix: Personendaten wirklich leeren + zur TableView wechseln
   const confirmReset = () => {
-    dispatch({ type: 'RESET_PERSON_DATA' }); // vorher: RESET (gab’s nicht mehr)
+    dispatch({ type: 'RESET_PERSON_DATA' });
     setResetDialogOpen(false);
     setSearchTerm('');
-    setCurrentView('table');       // gewünschter Wechsel zur Tabellen-Ansicht
-    setAppState('database');      // falls man aus Welcome/Info kommt
-    forceUpdate();
+    setCurrentView('table');
+    setAppState('database');
   };
 
   const handlePrint = () => {
@@ -251,35 +247,27 @@ const App: React.FC = () => {
   const confirmLoadSampleData = () => {
     dispatch({ type: 'LOAD_SAMPLE_DATA' });
     setLoadSampleDataDialogOpen(false);
-
-    // 🔽 Filter zurücksetzen
     setSearchTerm('');
-    setCurrentView('table');   // 🔽 Rücksprung in die Tabelle
+    setCurrentView('table');
     setAppState('database');
-
-    const errors = validateData(state.people);
-    if (errors.length > 0) {
-      setValidationErrors(errors);
-    }
-
-    forceUpdate();
   };
 
   const filteredPeople = useMemo(() => {
-    if (!searchTerm) return people;
-    return people.filter(
+    if (!searchTerm) return state.people;
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return state.people.filter(
       (p) =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.code.toLowerCase().includes(searchTerm.toLowerCase())
+        p.name.toLowerCase().includes(lowerSearchTerm) ||
+        p.code.toLowerCase().includes(lowerSearchTerm)
     );
-  }, [people, searchTerm]);
+  }, [state.people, searchTerm]);
 
-  const MainView = () => {
+  const MainViewComponent = useMemo(() => {
     switch (currentView) {
       case 'tree':
-        return <TreeView people={people} onEdit={handleEditPerson} />;
+        return <TreeView people={state.people} onEdit={handleEditPerson} />;
       case 'stats':
-        return <StatisticsView people={people} />;
+        return <StatisticsView people={state.people} />;
       case 'table':
       default:
         return (
@@ -290,7 +278,7 @@ const App: React.FC = () => {
           />
         );
     }
-  };
+  }, [currentView, state.people, filteredPeople, searchTerm]);
 
   if (appState === 'welcome') {
     return (
@@ -317,6 +305,7 @@ const App: React.FC = () => {
           onHelp={() => setHelpDialogOpen(true)}
           onSettings={() => setSettingsDialogOpen(true)}
           onGoToWelcome={() => setAppState('welcome')}
+          onResetApp={resetApp} // ✅ Reset-Funktion hinzufügen
           color={colors.sidebar}
         />
         <div className="flex-grow flex flex-col overflow-hidden">
@@ -341,7 +330,7 @@ const App: React.FC = () => {
                 </h1>
                 <p className="text-center text-sm"></p>
               </div>
-              <MainView />
+              {MainViewComponent}
             </div>
           </main>
         </div>
@@ -353,7 +342,7 @@ const App: React.FC = () => {
         onSave={handleSavePerson}
         onDelete={handleDeleteRequest}
         person={editingPerson}
-        people={people}
+        people={state.people}
       />
 
       <HelpDialog isOpen={isHelpDialogOpen} onClose={() => setHelpDialogOpen(false)} />
@@ -363,7 +352,7 @@ const App: React.FC = () => {
         onClose={() => setSettingsDialogOpen(false)}
         onReset={() => {
           setSettingsDialogOpen(false);
-          setResetDialogOpen(true); // Bestätigungsdialog – danach confirmReset()
+          setResetDialogOpen(true);
         }}
         onLoadSampleData={handleLoadSampleDataRequest}
         colors={colors}
@@ -378,6 +367,7 @@ const App: React.FC = () => {
         message={`Möchtest du "${personToDelete?.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`}
         confirmButtonClass="bg-red-600 hover:bg-red-700"
       />
+
       <ConfirmationDialog
         isOpen={isResetDialogOpen}
         onClose={() => setResetDialogOpen(false)}
@@ -386,6 +376,7 @@ const App: React.FC = () => {
         message="Sollen wirklich alle Personen gelöscht werden?"
         confirmButtonClass="bg-red-600 hover:bg-red-700"
       />
+
       <ConfirmationDialog
         isOpen={isLoadSampleDataDialogOpen}
         onClose={() => setLoadSampleDataDialogOpen(false)}
@@ -394,6 +385,7 @@ const App: React.FC = () => {
         message="Achtung: Dies überschreibt deine gesamte aktuelle Datenbank! Möchtest du fortfahren? Es wird empfohlen, vorher deine Daten zu exportieren."
         confirmButtonClass="bg-yellow-500 hover:bg-yellow-600"
       />
+
       <FindPersonDialog
         isOpen={isFindPersonDialogOpen}
         onClose={() => setFindPersonDialogOpen(false)}
